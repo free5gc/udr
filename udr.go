@@ -3,7 +3,7 @@ package main
 import (
 	"free5gc/src/app"
 	"free5gc/src/udr/logger"
-	"free5gc/src/udr/udr_service"
+	udr_service "free5gc/src/udr/service"
 	"free5gc/src/udr/version"
 	"os"
 
