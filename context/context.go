@@ -31,6 +31,7 @@ func init() {
 
 type UDRContext struct {
 	Name                                    string
+	ServerIPv4		  						string
 	UriScheme                               models.UriScheme
 	HttpIpv4Port                            int
 	HttpIPv4Address                         string

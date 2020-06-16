@@ -115,7 +115,7 @@ func (udr *UDR) Start() {
 	self := udr_context.UDR_Self()
 	util.InitUdrContext(self)
 
-	addr := fmt.Sprintf("%s:%d", self.HttpIPv4Address, self.HttpIpv4Port)
+	addr := fmt.Sprintf("%s:%d", self.ServerIPv4, self.HttpIpv4Port)
 	profile := consumer.BuildNFInstance(self)
 	var newNrfUri string
 	var err error

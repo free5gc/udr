@@ -19,6 +19,8 @@ type Info struct {
 type Configuration struct {
 	Sbi *Sbi `yaml:"sbi"`
 
+	ServerIPv4 string `yaml:"serverIPv4,omitempty"`
+
 	Mongodb *Mongodb `yaml:"mongodb"`
 
 	NrfUri string `yaml:"nrfUri"`

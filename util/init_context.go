@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"os"
 	"free5gc/lib/openapi/models"
 	udr_context "free5gc/src/udr/context"
 	"free5gc/src/udr/factory"
@@ -15,6 +16,15 @@ func InitUdrContext(context *udr_context.UDRContext) {
 	logger.UtilLog.Infof("udrconfig Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
 	configuration := config.Configuration
 	context.NfId = uuid.New().String()
+	context.ServerIPv4 = os.Getenv(configuration.ServerIPv4)
+	if context.ServerIPv4 == "" {
+		logger.UtilLog.Warn("Problem parsing ServerIPv4 address from ENV Variable. Trying to parse it as string.")
+		context.ServerIPv4 = configuration.ServerIPv4
+		if context.ServerIPv4 == "" {
+			logger.UtilLog.Warn("Error parsing ServerIPv4 address as string. Using the localhost address as default.")
+			context.ServerIPv4 = "127.0.0.1"
+		}
+	}
 	sbi := configuration.Sbi
 	context.UriScheme = models.UriScheme(sbi.Scheme)
 	context.HttpIPv4Address = "127.0.0.1" // default localhost
@@ -30,6 +40,7 @@ func InitUdrContext(context *udr_context.UDRContext) {
 	if configuration.NrfUri != "" {
 		context.NrfUri = configuration.NrfUri
 	} else {
-		context.NrfUri = fmt.Sprintf("%s://%s:%d", context.UriScheme, context.HttpIPv4Address, 29510)
+		logger.UtilLog.Warn("NRF Uri is empty! Using localhost as NRF IPv4 address.")
+		context.NrfUri = fmt.Sprintf("%s://%s:%d", context.UriScheme, "127.0.0.1", 29510)
 	}
 }
