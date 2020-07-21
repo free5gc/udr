@@ -11,23 +11,34 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
-	"free5gc/src/udr/handler/message"
+	"free5gc/lib/openapi"
+	"free5gc/lib/openapi/models"
+	"free5gc/src/udr/logger"
+	"free5gc/src/udr/producer"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// QueryAmData - Retrieves the access and mobility subscription data of a UE
-func QueryAmData(c *gin.Context) {
-	req := http_wrapper.NewRequest(c.Request, nil)
-	req.Params["ueId"] = c.Params.ByName("ueId")
-	req.Params["servingPlmnId"] = c.Params.ByName("servingPlmnId")
+// HTTPQueryAmData - Retrieves the access and mobility subscription data of a UE
+func HTTPQueryAmData(ctx *gin.Context) {
 
-	handlerMsg := message.NewHandlerMessage(message.EventQueryAmData, req)
-	message.SendMessage(handlerMsg)
+	req := http_wrapper.NewRequest(ctx.Request, nil)
+	req.Params["ueId"] = ctx.Params.ByName("ueId")
+	req.Params["servingPlmnId"] = ctx.Params.ByName("servingPlmnId")
 
-	rsp := <-handlerMsg.ResponseChan
+	rsp := producer.HandleQueryAmData(req)
 
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		ctx.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		ctx.Data(rsp.Status, "application/json", responseBody)
+	}
 }

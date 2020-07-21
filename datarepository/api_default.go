@@ -66,22 +66,73 @@ func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
 
 // ApplicationDataPfdsAppIdDelete -
 func ApplicationDataPfdsAppIdDelete(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	req := http_wrapper.NewRequest(c.Request, nil)
+	req.Params["appId"] = c.Params.ByName("appId")
+
+	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsAppIdDelete, req)
+	message.SendMessage(handlerMsg)
+
+	rsp := <-handlerMsg.ResponseChan
+
+	HTTPResponse := rsp.HTTPResponse
+
+	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
 }
 
 // ApplicationDataPfdsAppIdGet -
 func ApplicationDataPfdsAppIdGet(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	req := http_wrapper.NewRequest(c.Request, nil)
+	req.Params["appId"] = c.Params.ByName("appId")
+
+	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsAppIdGet, req)
+	message.SendMessage(handlerMsg)
+
+	rsp := <-handlerMsg.ResponseChan
+
+	HTTPResponse := rsp.HTTPResponse
+
+	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
 }
 
 // ApplicationDataPfdsAppIdPut -
 func ApplicationDataPfdsAppIdPut(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	var pfdDataforApp models.PfdDataForApp
+	err := c.ShouldBindJSON(&pfdDataforApp)
+	if err != nil {
+		logger.HandlerLog.Errorln(err)
+		c.JSON(http.StatusBadRequest, gin.H{})
+		return
+	}
+	if pfdDataforApp.ApplicationId == "" || len(pfdDataforApp.Pfds) == 0 {
+		logger.HandlerLog.Errorln("No ApplicationId or Pfds")
+		c.JSON(http.StatusBadRequest, gin.H{})
+		return
+	}
+
+	req := http_wrapper.NewRequest(c.Request, pfdDataforApp)
+	req.Params["appId"] = c.Params.ByName("appId")
+
+	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsAppIdPut, req)
+	message.SendMessage(handlerMsg)
+
+	rsp := <-handlerMsg.ResponseChan
+
+	HTTPResponse := rsp.HTTPResponse
+
+	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
 }
 
 // ApplicationDataPfdsGet -
 func ApplicationDataPfdsGet(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	req := http_wrapper.NewRequest(c.Request, nil)
+	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsGet, req)
+	message.SendMessage(handlerMsg)
+
+	rsp := <-handlerMsg.ResponseChan
+
+	HTTPResponse := rsp.HTTPResponse
+
+	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
 }
 
 // ExposureDataSubsToNotifyPost -

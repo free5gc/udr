@@ -40,11 +40,6 @@ func Handle() {
 					// TODO
 					ueId := msg.HTTPRequest.Params["ueId"]
 					producer.HandleQueryAccessAndMobilityData(msg.ResponseChan, ueId)
-				case message.EventQueryAmData:
-					// TODO
-					ueId := msg.HTTPRequest.Params["ueId"]
-					servingPlmnId := msg.HTTPRequest.Params["servingPlmnId"]
-					producer.HandleQueryAmData(msg.ResponseChan, ueId, servingPlmnId)
 				case message.EventAmfContext3gpp:
 					// TODO
 					ueId := msg.HTTPRequest.Params["ueId"]
@@ -145,7 +140,8 @@ func Handle() {
 					producer.HandleApplicationDataPfdsAppIdPut(msg.ResponseChan, appId, msg.HTTPRequest.Body.(models.PfdDataForApp))
 				case message.EventApplicationDataPfdsGet:
 					// TODO
-					producer.HandleApplicationDataPfdsGet(msg.ResponseChan)
+					appIdArray := msg.HTTPRequest.Query["appId"]
+					producer.HandleApplicationDataPfdsGet(msg.ResponseChan, appIdArray)
 				case message.EventExposureDataSubsToNotifyPost:
 					// TODO
 					producer.HandleExposureDataSubsToNotifyPost(msg.ResponseChan, msg.HTTPRequest.Body.(models.ExposureDataSubscription))
