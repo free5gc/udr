@@ -66,13 +66,18 @@ func (*UDR) Initialize(c *cli.Context) {
 		factory.InitConfigFactory(DefaultUdrConfigPath)
 	}
 
-	initLog.Traceln("UDR debug level(string):", app.ContextSelf().Logger.UDR.DebugLevel)
 	if app.ContextSelf().Logger.UDR.DebugLevel != "" {
-		initLog.Infoln("UDR debug level(string):", app.ContextSelf().Logger.UDR.DebugLevel)
 		level, err := logrus.ParseLevel(app.ContextSelf().Logger.UDR.DebugLevel)
-		if err == nil {
+		if err != nil {
+			initLog.Warnf("Log level [%s] is not valid, set to [info] level", app.ContextSelf().Logger.UDR.DebugLevel)
+			logger.SetLogLevel(logrus.InfoLevel)
+		} else {
 			logger.SetLogLevel(level)
+			initLog.Infof("Log level is set to [%s] level", level)
 		}
+	} else {
+		initLog.Infoln("Log level is default set to [info] level")
+		logger.SetLogLevel(logrus.InfoLevel)
 	}
 
 	logger.SetReportCaller(app.ContextSelf().Logger.UDR.ReportCaller)

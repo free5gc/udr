@@ -3,9 +3,11 @@ package producer
 import (
 	"fmt"
 	udr_context "free5gc/src/udr/context"
+	"free5gc/src/udr/logger"
 
 	// "context"
 	"encoding/json"
+	"free5gc/lib/http_wrapper"
 	"free5gc/lib/openapi/models"
 	"free5gc/src/udr/handler/message"
 	"free5gc/src/udr/util"
@@ -34,18 +36,30 @@ func HandleQueryAccessAndMobilityData(respChan chan message.HandlerResponseMessa
 	message.SendHttpResponseMessage(respChan, nil, http.StatusOK, map[string]interface{}{})
 }
 
-func HandleQueryAmData(respChan chan message.HandlerResponseMessage, ueId string, servingPlmnId string) {
+func HandleQueryAmData(request *http_wrapper.Request) *http_wrapper.Response {
+	logger.DataRepoLog.Infof("HandleQueryAmData")
+
 	collName := "subscriptionData.provisionedData.amData"
-	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	ueId := request.Params["ueId"]
+	servingPlmnId := request.Params["servingPlmnId"]
+	response, problemDetails := QueryAmDataProcedure(collName, ueId, servingPlmnId)
 
-	accessAndMobilitySubscriptionData := RestfulAPIGetOne(collName, filter)
-
-	if accessAndMobilitySubscriptionData != nil {
-		message.SendHttpResponseMessage(respChan, nil, http.StatusOK, accessAndMobilitySubscriptionData)
+	if problemDetails == nil {
+		return http_wrapper.NewResponse(http.StatusOK, nil, response)
 	} else {
-		var problemDetails models.ProblemDetails
+		return http_wrapper.NewResponse(http.StatusNotFound, nil, problemDetails)
+	}
+}
+
+func QueryAmDataProcedure(collName string, ueId string, servingPlmnId string) (response *map[string]interface{}, problemDetails *models.ProblemDetails) {
+	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	accessAndMobilitySubscriptionData := RestfulAPIGetOne(collName, filter)
+	if accessAndMobilitySubscriptionData != nil {
+		return &accessAndMobilitySubscriptionData, nil
+	} else {
+		problemDetails = &models.ProblemDetails{}
 		problemDetails.Cause = "USER_NOT_FOUND"
-		message.SendHttpResponseMessage(respChan, nil, http.StatusNotFound, problemDetails)
+		return nil, problemDetails
 	}
 }
 
@@ -274,20 +288,70 @@ func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(respChan ch
 	message.SendHttpResponseMessage(respChan, nil, http.StatusOK, map[string]interface{}{})
 }
 
-func HandleApplicationDataPfdsAppIdDelete(respChan chan message.HandlerResponseMessage, appId string) {
-	message.SendHttpResponseMessage(respChan, nil, http.StatusOK, map[string]interface{}{})
+func HandleApplicationDataPfdsAppIdDelete(respChan chan message.HandlerResponseMessage, pfdsAppId string) {
+	collName := "applicationData.pfds"
+	filter := bson.M{"applicationId": pfdsAppId}
+
+	RestfulAPIDeleteOne(collName, filter)
+
+	message.SendHttpResponseMessage(respChan, nil, http.StatusNoContent, map[string]interface{}{})
 }
 
-func HandleApplicationDataPfdsAppIdGet(respChan chan message.HandlerResponseMessage, appId string) {
-	message.SendHttpResponseMessage(respChan, nil, http.StatusOK, map[string]interface{}{})
+func HandleApplicationDataPfdsAppIdGet(respChan chan message.HandlerResponseMessage, pfdsAppId string) {
+	collName := "applicationData.pfds"
+	filter := bson.M{"applicationId": pfdsAppId}
+
+	getData := RestfulAPIGetOne(collName, filter)
+
+	if getData != nil {
+		delete(getData, "_id")
+		message.SendHttpResponseMessage(respChan, nil, http.StatusOK, getData)
+	} else {
+		var problemDetails models.ProblemDetails
+		problemDetails.Cause = "DATA_NOT_FOUND"
+		message.SendHttpResponseMessage(respChan, nil, http.StatusNotFound, problemDetails)
+	}
 }
 
-func HandleApplicationDataPfdsAppIdPut(respChan chan message.HandlerResponseMessage, appId string, body models.PfdDataForApp) {
-	message.SendHttpResponseMessage(respChan, nil, http.StatusOK, map[string]interface{}{})
+func HandleApplicationDataPfdsAppIdPut(respChan chan message.HandlerResponseMessage, pfdsAppId string, body models.PfdDataForApp) {
+	putData := toBsonM(body)
+
+	collName := "applicationData.pfds"
+	filter := bson.M{"applicationId": pfdsAppId}
+
+	isExisted := RestfulAPIPutOne(collName, filter, putData)
+
+	if isExisted {
+		message.SendHttpResponseMessage(respChan, nil, http.StatusOK, putData)
+
+		//PreHandlePolicyDataChangeNotification("", pfdsAppId, body)
+	} else {
+		message.SendHttpResponseMessage(respChan, nil, http.StatusCreated, putData)
+	}
 }
 
-func HandleApplicationDataPfdsGet(respChan chan message.HandlerResponseMessage) {
-	message.SendHttpResponseMessage(respChan, nil, http.StatusOK, map[string]interface{}{})
+func HandleApplicationDataPfdsGet(respChan chan message.HandlerResponseMessage, pfdsAppIdArray []string) {
+	collName := "applicationData.pfds"
+	filter := bson.M{}
+
+	var pfdsArray []map[string]interface{}
+	if len(pfdsAppIdArray) == 0 {
+		pfdsArray = RestfulAPIGetMany(collName, filter)
+		for i := 0; i < len(pfdsArray); i++ {
+			delete(pfdsArray[i], "_id")
+		}
+	} else {
+		for _, e := range pfdsAppIdArray {
+			filter["applicationId"] = e
+			getData := RestfulAPIGetOne(collName, filter)
+			if getData != nil {
+				delete(getData, "_id")
+				pfdsArray = append(pfdsArray, getData)
+			}
+		}
+	}
+
+	message.SendHttpResponseMessage(respChan, nil, http.StatusOK, pfdsArray)
 }
 
 func HandleExposureDataSubsToNotifyPost(respChan chan message.HandlerResponseMessage, body models.ExposureDataSubscription) {

@@ -230,10 +230,10 @@ var routes = Routes{
 	},
 
 	{
-		"QueryAmData",
+		"HTTPQueryAmData",
 		strings.ToUpper("Get"),
 		"/subscription-data/:ueId/:servingPlmnId/provisioned-data/am-data",
-		QueryAmData,
+		HTTPQueryAmData,
 	},
 
 	{
