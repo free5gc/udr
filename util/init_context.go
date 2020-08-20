@@ -32,7 +32,7 @@ func InitUdrContext(context *udr_context.UDRContext) {
 			logger.UtilLog.Info("Problem parsing ServerIPv4 address from ENV Variable. Trying to parse it as string.")
 			context.BindingIPv4 = sbi.BindingIPv4
 			if context.BindingIPv4 == "" {
-				logger.UtilLog.Info("Error parsing ServerIPv4 address as string. Using the localhost address as default.")
+				logger.UtilLog.Info("Error parsing ServerIPv4 address as string. Using the 0.0.0.0 address as default.")
 				context.BindingIPv4 = "0.0.0.0"
 			}
 		}
