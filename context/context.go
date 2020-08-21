@@ -32,8 +32,9 @@ func init() {
 type UDRContext struct {
 	Name                                    string
 	UriScheme                               models.UriScheme
+	BindingIPv4                             string
 	HttpIpv4Port                            int
-	HttpIPv4Address                         string
+	HttpIPv4Address                         string // IP register to NRF
 	HttpIPv6Address                         string
 	NfId                                    string
 	NrfUri                                  string
