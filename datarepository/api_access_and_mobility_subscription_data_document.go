@@ -21,11 +21,11 @@ import (
 )
 
 // HTTPQueryAmData - Retrieves the access and mobility subscription data of a UE
-func HTTPQueryAmData(ctx *gin.Context) {
+func HTTPQueryAmData(c *gin.Context) {
 
-	req := http_wrapper.NewRequest(ctx.Request, nil)
-	req.Params["ueId"] = ctx.Params.ByName("ueId")
-	req.Params["servingPlmnId"] = ctx.Params.ByName("servingPlmnId")
+	req := http_wrapper.NewRequest(c.Request, nil)
+	req.Params["ueId"] = c.Params.ByName("ueId")
+	req.Params["servingPlmnId"] = c.Params.ByName("servingPlmnId")
 
 	rsp := producer.HandleQueryAmData(req)
 
@@ -37,8 +37,8 @@ func HTTPQueryAmData(ctx *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 			Detail: err.Error(),
 		}
-		ctx.JSON(http.StatusInternalServerError, problemDetails)
+		c.JSON(http.StatusInternalServerError, problemDetails)
 	} else {
-		ctx.Data(rsp.Status, "application/json", responseBody)
+		c.Data(rsp.Status, "application/json", responseBody)
 	}
 }

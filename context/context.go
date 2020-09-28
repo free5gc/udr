@@ -2,13 +2,13 @@ package context
 
 import (
 	"fmt"
+	"sync"
+
 	"free5gc/lib/openapi/models"
 )
 
 var udrContext = UDRContext{}
 
-type ueId = string
-type ueGroupId = string
 type subsId = string
 
 type UDRServiceType int
@@ -23,8 +23,6 @@ func init() {
 	UDR_Self().SdmSubscriptionIDGenerator = 1
 	UDR_Self().SubscriptionDataSubscriptionIDGenerator = 1
 	UDR_Self().PolicyDataSubscriptionIDGenerator = 1
-	UDR_Self().UESubsCollection = make(map[ueId]*UESubsData)
-	UDR_Self().UEGroupCollection = make(map[ueGroupId]*UEGroupSubsData)
 	UDR_Self().SubscriptionDataSubscriptions = make(map[subsId]*models.SubscriptionDataSubscriptions)
 	UDR_Self().PolicyDataSubscriptions = make(map[subsId]*models.PolicyDataSubscription)
 }
@@ -33,16 +31,16 @@ type UDRContext struct {
 	Name                                    string
 	UriScheme                               models.UriScheme
 	BindingIPv4                             string
-	HttpIpv4Port                            int
-	HttpIPv4Address                         string // IP register to NRF
+	SBIPort                                 int
+	RegisterIPv4                            string // IP register to NRF
 	HttpIPv6Address                         string
 	NfId                                    string
 	NrfUri                                  string
 	EeSubscriptionIDGenerator               int
 	SdmSubscriptionIDGenerator              int
 	PolicyDataSubscriptionIDGenerator       int
-	UESubsCollection                        map[ueId]*UESubsData
-	UEGroupCollection                       map[ueGroupId]*UEGroupSubsData
+	UESubsCollection                        sync.Map //map[ueId]*UESubsData
+	UEGroupCollection                       sync.Map //map[ueGroupId]*UEGroupSubsData
 	SubscriptionDataSubscriptionIDGenerator int
 	SubscriptionDataSubscriptions           map[subsId]*models.SubscriptionDataSubscriptions
 	PolicyDataSubscriptions                 map[subsId]*models.PolicyDataSubscription
@@ -64,12 +62,14 @@ type EeSubscriptionCollection struct {
 
 // Reset UDR Context
 func (context *UDRContext) Reset() {
-	for key := range context.UESubsCollection {
-		delete(context.UESubsCollection, key)
-	}
-	for key := range context.UEGroupCollection {
-		delete(context.UEGroupCollection, key)
-	}
+	context.UESubsCollection.Range(func(key, value interface{}) bool {
+		context.UESubsCollection.Delete(key)
+		return true
+	})
+	context.UEGroupCollection.Range(func(key, value interface{}) bool {
+		context.UEGroupCollection.Delete(key)
+		return true
+	})
 	for key := range context.SubscriptionDataSubscriptions {
 		delete(context.SubscriptionDataSubscriptions, key)
 	}
@@ -85,7 +85,7 @@ func (context *UDRContext) Reset() {
 }
 
 func (context *UDRContext) GetIPv4Uri() string {
-	return fmt.Sprintf("%s://%s:%d", context.UriScheme, context.HttpIPv4Address, context.HttpIpv4Port)
+	return fmt.Sprintf("%s://%s:%d", context.UriScheme, context.RegisterIPv4, context.SBIPort)
 }
 
 func (context *UDRContext) GetIPv4GroupUri(udrServiceType UDRServiceType) string {
@@ -98,7 +98,7 @@ func (context *UDRContext) GetIPv4GroupUri(udrServiceType UDRServiceType) string
 		serviceUri = ""
 	}
 
-	return fmt.Sprintf("%s://%s:%d%s", context.UriScheme, context.HttpIPv4Address, context.HttpIpv4Port, serviceUri)
+	return fmt.Sprintf("%s://%s:%d%s", context.UriScheme, context.RegisterIPv4, context.SBIPort, serviceUri)
 }
 
 // Create new UDR context

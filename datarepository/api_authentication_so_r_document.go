@@ -11,44 +11,81 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
+	"free5gc/lib/openapi"
 	"free5gc/lib/openapi/models"
-	"free5gc/src/udr/handler/message"
 	"free5gc/src/udr/logger"
+	"free5gc/src/udr/producer"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CreateAuthenticationSoR - To store the SoR acknowledgement information of a UE
-func CreateAuthenticationSoR(c *gin.Context) {
+// HTTPCreateAuthenticationSoR - To store the SoR acknowledgement information of a UE
+func HTTPCreateAuthenticationSoR(c *gin.Context) {
 	var sorData models.SorData
-	if err := c.ShouldBindJSON(&sorData); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&sorData, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, sorData)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventCreateAuthenticationSoR, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleCreateAuthenticationSoR(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// QueryAuthSoR - Retrieves the SoR acknowledgement information of a UE
-func QueryAuthSoR(c *gin.Context) {
+// HTTPQueryAuthSoR - Retrieves the SoR acknowledgement information of a UE
+func HTTPQueryAuthSoR(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventQueryAuthSoR, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleQueryAuthSoR(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }

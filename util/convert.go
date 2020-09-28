@@ -4,25 +4,38 @@ import (
 	"encoding/json"
 	"fmt"
 	"free5gc/lib/openapi/models"
+	"free5gc/src/udr/logger"
 	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func MapToByte(data map[string]interface{}) (ret []byte) {
-	ret, _ = json.Marshal(data)
-	return
+func MapToByte(data map[string]interface{}) []byte {
+	ret, err := json.Marshal(data)
+	if err != nil {
+		logger.UtilLog.Error(err)
+	}
+	return ret
 }
 
-func MapArrayToByte(data []map[string]interface{}) (ret []byte) {
-	ret, _ = json.Marshal(data)
-	return
+func MapArrayToByte(data []map[string]interface{}) []byte {
+	ret, err := json.Marshal(data)
+	if err != nil {
+		logger.UtilLog.Error(err)
+	}
+	return ret
 }
 
 func ToBsonM(data interface{}) bson.M {
-	tmp, _ := json.Marshal(data)
+	tmp, err := json.Marshal(data)
+	if err != nil {
+		logger.UtilLog.Error(err)
+	}
 	var putData = bson.M{}
-	_ = json.Unmarshal(tmp, &putData)
+	err = json.Unmarshal(tmp, &putData)
+	if err != nil {
+		logger.UtilLog.Error(err)
+	}
 	return putData
 }
 

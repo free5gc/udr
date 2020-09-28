@@ -8,7 +8,8 @@ import (
 	"net/http"
 )
 
-func SendSearchNFInstances(nrfUri string, targetNfType, requestNfType models.NfType, param Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (result models.SearchResult, err error) {
+func SendSearchNFInstances(nrfUri string, targetNfType, requestNfType models.NfType,
+	param Nnrf_NFDiscovery.SearchNFInstancesParamOpts) (models.SearchResult, error) {
 
 	// Set client and set url
 	configuration := Nnrf_NFDiscovery.NewConfiguration()
@@ -16,9 +17,9 @@ func SendSearchNFInstances(nrfUri string, targetNfType, requestNfType models.NfT
 	client := Nnrf_NFDiscovery.NewAPIClient(configuration)
 
 	var res *http.Response
-	result, res, err = client.NFInstancesStoreApi.SearchNFInstances(context.TODO(), targetNfType, requestNfType, &param)
+	result, res, err := client.NFInstancesStoreApi.SearchNFInstances(context.TODO(), targetNfType, requestNfType, &param)
 	if res != nil && res.StatusCode == http.StatusTemporaryRedirect {
 		err = fmt.Errorf("Temporary Redirect For Non NRF Consumer")
 	}
-	return
+	return result, err
 }

@@ -11,62 +11,104 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
+	"free5gc/lib/openapi"
 	"free5gc/lib/openapi/models"
-	"free5gc/src/udr/handler/message"
 	"free5gc/src/udr/logger"
+	"free5gc/src/udr/producer"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CreateSmfContextNon3gpp - To create an individual SMF context data of a UE in the UDR
-func CreateSmfContextNon3gpp(c *gin.Context) {
+// HTTPCreateSmfContextNon3gpp - To create an individual SMF context data of a UE in the UDR
+func HTTPCreateSmfContextNon3gpp(c *gin.Context) {
 	var smfRegistration models.SmfRegistration
-	if err := c.ShouldBindJSON(&smfRegistration); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&smfRegistration, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, smfRegistration)
 	req.Params["ueId"] = c.Params.ByName("ueId")
-	req.Params["pduSessionId"] = c.Params.ByName("pduSessionId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventCreateSmfContextNon3gpp, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleCreateSmfContextNon3gpp(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// DeleteSmfContext - To remove an individual SMF context data of a UE the UDR
-func DeleteSmfContext(c *gin.Context) {
+// HTTPDeleteSmfContext - To remove an individual SMF context data of a UE the UDR
+func HTTPDeleteSmfContext(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["pduSessionId"] = c.Params.ByName("pduSessionId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventDeleteSmfContext, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleDeleteSmfContext(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// QuerySmfRegistration - Retrieves the individual SMF registration of a UE
-func QuerySmfRegistration(c *gin.Context) {
+// HTTPQuerySmfRegistration - Retrieves the individual SMF registration of a UE
+func HTTPQuerySmfRegistration(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["pduSessionId"] = c.Params.ByName("pduSessionId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventQuerySmfRegistration, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleQuerySmfRegistration(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }

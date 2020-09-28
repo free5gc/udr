@@ -15,17 +15,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateSessionManagementData - Creates and updates the session management data for a UE and for an individual PDU session
-func CreateSessionManagementData(c *gin.Context) {
+// HTTPCreateSessionManagementData - Creates and updates the session management data for a UE and for an individual PDU session
+func HTTPCreateSessionManagementData(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// DeleteSessionManagementData - Deletes the session management data for a UE and for an individual PDU session
-func DeleteSessionManagementData(c *gin.Context) {
+// HTTPDeleteSessionManagementData - Deletes the session management data for a UE and for an individual PDU session
+func HTTPDeleteSessionManagementData(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// QuerySessionManagementData - Retrieves the session management data for a UE and for an individual PDU session
-func QuerySessionManagementData(c *gin.Context) {
+// HTTPQuerySessionManagementData - Retrieves the session management data for a UE and for an individual PDU session
+func HTTPQuerySessionManagementData(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }

@@ -3,22 +3,24 @@ package service
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"os/exec"
+	"sync"
+
+	"github.com/sirupsen/logrus"
+	"github.com/urfave/cli"
+
+	"free5gc/lib/MongoDBLibrary"
 	"free5gc/lib/http2_util"
+	"free5gc/lib/logger_util"
 	"free5gc/lib/path_util"
 	"free5gc/src/app"
 	"free5gc/src/udr/consumer"
 	udr_context "free5gc/src/udr/context"
 	"free5gc/src/udr/datarepository"
 	"free5gc/src/udr/factory"
-	"free5gc/src/udr/handler"
 	"free5gc/src/udr/logger"
 	"free5gc/src/udr/util"
-	"os/exec"
-	"sync"
-
-	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
 )
 
 type UDR struct{}
@@ -105,11 +107,11 @@ func (udr *UDR) Start() {
 	initLog.Infof("UDR Config Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
 
 	// Connect to MongoDB
-	datarepository.SetMongoDB(mongodb.Name, mongodb.Url)
+	MongoDBLibrary.SetMongoDB(mongodb.Name, mongodb.Url)
 
 	initLog.Infoln("Server started")
 
-	router := gin.Default()
+	router := logger_util.NewGinWithLogrus(logger.GinLog)
 
 	datarepository.AddService(router)
 
@@ -120,7 +122,7 @@ func (udr *UDR) Start() {
 	self := udr_context.UDR_Self()
 	util.InitUdrContext(self)
 
-	addr := fmt.Sprintf("%s:%d", self.BindingIPv4, self.HttpIpv4Port)
+	addr := fmt.Sprintf("%s:%d", self.BindingIPv4, self.SBIPort)
 	profile := consumer.BuildNFInstance(self)
 	var newNrfUri string
 	var err error
@@ -131,15 +133,14 @@ func (udr *UDR) Start() {
 		initLog.Errorf("Send Register NFInstance Error[%s]", err.Error())
 	}
 
-	go handler.Handle()
 	server, err := http2_util.NewServer(addr, udrLogPath, router)
 	if server == nil {
-		initLog.Errorln("Initialize HTTP server failed: %+v", err)
+		initLog.Errorf("Initialize HTTP server failed: %+v", err)
 		return
 	}
 
 	if err != nil {
-		initLog.Warnln("Initialize HTTP server: +%v", err)
+		initLog.Warnf("Initialize HTTP server: %+v", err)
 	}
 
 	serverScheme := factory.UdrConfig.Configuration.Sbi.Scheme
@@ -150,7 +151,7 @@ func (udr *UDR) Start() {
 	}
 
 	if err != nil {
-		initLog.Fatalln("HTTP server setup failed: %+v", err)
+		initLog.Fatalf("HTTP server setup failed: %+v", err)
 	}
 }
 
@@ -165,9 +166,11 @@ func (udr *UDR) Exec(c *cli.Context) error {
 
 	udr.Initialize(c)
 
-	stdout, err := command.StdoutPipe()
-	if err != nil {
+	var stdout io.ReadCloser
+	if readCloser, err := command.StdoutPipe(); err != nil {
 		initLog.Fatalln(err)
+	} else {
+		stdout = readCloser
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(3)
@@ -179,9 +182,11 @@ func (udr *UDR) Exec(c *cli.Context) error {
 		wg.Done()
 	}()
 
-	stderr, err := command.StderrPipe()
-	if err != nil {
+	var stderr io.ReadCloser
+	if readCloser, err := command.StderrPipe(); err != nil {
 		initLog.Fatalln(err)
+	} else {
+		stderr = readCloser
 	}
 	go func() {
 		in := bufio.NewScanner(stderr)
@@ -191,14 +196,15 @@ func (udr *UDR) Exec(c *cli.Context) error {
 		wg.Done()
 	}()
 
+	var err error
 	go func() {
-		if err := command.Start(); err != nil {
+		if errormessage := command.Start(); err != nil {
 			fmt.Println("command.Start Fails!")
+			err = errormessage
 		}
 		wg.Done()
 	}()
 
 	wg.Wait()
-
 	return err
 }

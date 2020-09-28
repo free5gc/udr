@@ -11,64 +11,129 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
+	"free5gc/lib/openapi"
 	"free5gc/lib/openapi/models"
-	"free5gc/src/udr/handler/message"
 	"free5gc/src/udr/logger"
-
+	"free5gc/src/udr/producer"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
-// AmfContext3gpp - To modify the AMF context data of a UE using 3gpp access in the UDR
-func AmfContext3gpp(c *gin.Context) {
+// HTTPAmfContext3gpp - To modify the AMF context data of a UE using 3gpp access in the UDR
+func HTTPAmfContext3gpp(c *gin.Context) {
 	var patchItemArray []models.PatchItem
-	if err := c.ShouldBindJSON(&patchItemArray); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, patchItemArray)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventAmfContext3gpp, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleAmfContext3gpp(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// CreateAmfContext3gpp - To store the AMF context data of a UE using 3gpp access in the UDR
-func CreateAmfContext3gpp(c *gin.Context) {
+// HTTPCreateAmfContext3gpp - To store the AMF context data of a UE using 3gpp access in the UDR
+func HTTPCreateAmfContext3gpp(c *gin.Context) {
 	var amf3GppAccessRegistration models.Amf3GppAccessRegistration
-	if err := c.ShouldBindJSON(&amf3GppAccessRegistration); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&amf3GppAccessRegistration, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, amf3GppAccessRegistration)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventCreateAmfContext3gpp, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleCreateAmfContext3gpp(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// QueryAmfContext3gpp - Retrieves the AMF context data of a UE using 3gpp access
-func QueryAmfContext3gpp(c *gin.Context) {
+// HTTPQueryAmfContext3gpp - Retrieves the AMF context data of a UE using 3gpp access
+func HTTPQueryAmfContext3gpp(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventQueryAmfContext3gpp, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleQueryAmfContext3gpp(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }

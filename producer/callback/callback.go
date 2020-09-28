@@ -21,7 +21,8 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 			dataChangeNotify.UeId = ueId
 			dataChangeNotify.OriginalCallbackReference = []string{subscriptionDataSubscription.OriginalCallbackReference}
 			dataChangeNotify.NotifyItems = notifyItems
-			httpResponse, err := client.DataChangeNotifyCallbackDocumentApi.OnDataChangeNotify(context.TODO(), onDataChangeNotifyUrl, dataChangeNotify)
+			httpResponse, err := client.DataChangeNotifyCallbackDocumentApi.OnDataChangeNotify(context.TODO(),
+				onDataChangeNotifyUrl, dataChangeNotify)
 			if err != nil {
 				if httpResponse == nil {
 					logger.HttpLog.Errorln(err.Error())
@@ -41,7 +42,8 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 
 		configuration := Nudr_DataRepository.NewConfiguration()
 		client := Nudr_DataRepository.NewAPIClient(configuration)
-		httpResponse, err := client.PolicyDataChangeNotificationCallbackDocumentApi.PolicyDataChangeNotification(context.TODO(), policyDataChangeNotificationUrl, policyDataChangeNotification)
+		httpResponse, err := client.PolicyDataChangeNotificationCallbackDocumentApi.PolicyDataChangeNotification(
+			context.TODO(), policyDataChangeNotificationUrl, policyDataChangeNotification)
 		if err != nil {
 			if httpResponse == nil {
 				logger.HttpLog.Errorln(err.Error())

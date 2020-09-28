@@ -11,22 +11,32 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
-	"free5gc/src/udr/handler/message"
+	"free5gc/lib/openapi"
+	"free5gc/lib/openapi/models"
+	"free5gc/src/udr/logger"
+	"free5gc/src/udr/producer"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// RemovesubscriptionDataSubscriptions - Deletes a subscriptionDataSubscriptions
-func RemovesubscriptionDataSubscriptions(c *gin.Context) {
+// HTTPRemovesubscriptionDataSubscriptions - Deletes a subscriptionDataSubscriptions
+func HTTPRemovesubscriptionDataSubscriptions(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
-	req.Params["subsId"] = c.Params.ByName("subsId")
+	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventRemovesubscriptionDataSubscriptions, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleRemovesubscriptionDataSubscriptions(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }

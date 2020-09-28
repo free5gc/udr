@@ -11,24 +11,33 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
-	"free5gc/src/udr/handler/message"
+	"free5gc/lib/openapi"
+	"free5gc/lib/openapi/models"
+	"free5gc/src/udr/logger"
+	"free5gc/src/udr/producer"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GetSharedData - retrieve shared data
-func GetSharedData(c *gin.Context) {
+// HTTPGetSharedData - retrieve shared data
+func HTTPGetSharedData(c *gin.Context) {
 	sharedDataIdArray := c.QueryArray("shared-data-ids")
-
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Query["sharedDataIds"] = sharedDataIdArray
 
-	handlerMsg := message.NewHandlerMessage(message.EventGetSharedData, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleGetSharedData(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }

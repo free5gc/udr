@@ -12,7 +12,8 @@ import (
 	"time"
 )
 
-func BuildNFInstance(context *udr_context.UDRContext) (profile models.NfProfile) {
+func BuildNFInstance(context *udr_context.UDRContext) models.NfProfile {
+	var profile models.NfProfile
 	config := factory.UdrConfig
 	profile.NfInstanceId = context.NfId
 	profile.NfType = models.NfType_UDR
@@ -20,7 +21,7 @@ func BuildNFInstance(context *udr_context.UDRContext) (profile models.NfProfile)
 	version := config.Info.Version
 	tmpVersion := strings.Split(version, ".")
 	versionUri := "v" + tmpVersion[0]
-	apiPrefix := fmt.Sprintf("%s://%s:%d", context.UriScheme, context.HttpIPv4Address, context.HttpIpv4Port)
+	apiPrefix := fmt.Sprintf("%s://%s:%d", context.UriScheme, context.RegisterIPv4, context.SBIPort)
 	services := []models.NfService{
 		{
 			ServiceInstanceId: "datarepository",
@@ -36,9 +37,9 @@ func BuildNFInstance(context *udr_context.UDRContext) (profile models.NfProfile)
 			ApiPrefix:       apiPrefix,
 			IpEndPoints: &[]models.IpEndPoint{
 				{
-					Ipv4Address: context.HttpIPv4Address,
+					Ipv4Address: context.RegisterIPv4,
 					Transport:   models.TransportProtocol_TCP,
-					Port:        int32(context.HttpIpv4Port),
+					Port:        int32(context.SBIPort),
 				},
 			},
 		},
@@ -53,19 +54,20 @@ func BuildNFInstance(context *udr_context.UDRContext) (profile models.NfProfile)
 			models.DataSetId_SUBSCRIPTION,
 		},
 	}
-	return
+	return profile
 }
 
-func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfile) (resouceNrfUri string, retrieveNfInstanceId string, err error) {
+func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfile) (string, string, error) {
 
 	// Set client and set url
 	configuration := Nnrf_NFManagement.NewConfiguration()
 	configuration.SetBasePath(nrfUri)
 	client := Nnrf_NFManagement.NewAPIClient(configuration)
+	var resouceNrfUri string
+	var retrieveNfInstanceId string
 
-	var res *http.Response
 	for {
-		_, res, err = client.NFInstanceIDDocumentApi.RegisterNFInstance(context.TODO(), nfInstanceId, profile)
+		_, res, err := client.NFInstanceIDDocumentApi.RegisterNFInstance(context.TODO(), nfInstanceId, profile)
 		if err != nil || res == nil {
 			//TODO : add log
 			fmt.Println(fmt.Errorf("UDR register to NRF Error[%s]", err.Error()))
@@ -75,17 +77,16 @@ func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfil
 		status := res.StatusCode
 		if status == http.StatusOK {
 			// NFUpdate
-			break
+			return resouceNrfUri, retrieveNfInstanceId, err
 		} else if status == http.StatusCreated {
 			// NFRegister
 			resourceUri := res.Header.Get("Location")
 			resouceNrfUri = resourceUri[:strings.Index(resourceUri, "/nnrf-nfm/")]
 			retrieveNfInstanceId = resourceUri[strings.LastIndex(resourceUri, "/")+1:]
-			break
+			return resouceNrfUri, retrieveNfInstanceId, err
 		} else {
 			fmt.Println("handler returned wrong status code", status)
 			fmt.Println("NRF return wrong status code", status)
 		}
 	}
-	return
 }

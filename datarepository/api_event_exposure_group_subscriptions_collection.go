@@ -11,47 +11,80 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
+	"free5gc/lib/openapi"
 	"free5gc/lib/openapi/models"
-	"free5gc/src/udr/handler/message"
 	"free5gc/src/udr/logger"
+	"free5gc/src/udr/producer"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CreateEeGroupSubscriptions - Create individual EE subscription for a group of UEs or any UE
-func CreateEeGroupSubscriptions(c *gin.Context) {
+// HTTPCreateEeGroupSubscriptions - Create individual EE subscription for a group of UEs or any UE
+func HTTPCreateEeGroupSubscriptions(c *gin.Context) {
 	var eeSubscription models.EeSubscription
-	if err := c.ShouldBindJSON(&eeSubscription); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, eeSubscription)
 	req.Params["ueGroupId"] = c.Params.ByName("ueGroupId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventCreateEeGroupSubscriptions, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleCreateEeGroupSubscriptions(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-	for key, val := range HTTPResponse.Header {
-		c.Header(key, val[0])
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
 	}
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
 }
 
-// QueryEeGroupSubscriptions - Retrieves the ee subscriptions of a group of UEs or any UE
-func QueryEeGroupSubscriptions(c *gin.Context) {
+// HTTPQueryEeGroupSubscriptions - Retrieves the ee subscriptions of a group of UEs or any UE
+func HTTPQueryEeGroupSubscriptions(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueGroupId"] = c.Params.ByName("ueGroupId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventQueryEeGroupSubscriptions, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleQueryEeGroupSubscriptions(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }

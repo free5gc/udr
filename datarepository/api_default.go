@@ -11,504 +11,881 @@ package datarepository
 
 import (
 	"free5gc/lib/http_wrapper"
+	"free5gc/lib/openapi"
 	"free5gc/lib/openapi/models"
-	"free5gc/src/udr/handler/message"
 	"free5gc/src/udr/logger"
+	"free5gc/src/udr/producer"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-// ApplicationDataInfluenceDataGet -
-func ApplicationDataInfluenceDataGet(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataGet -
+func HTTPApplicationDataInfluenceDataGet(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataInfluenceIdDelete -
-func ApplicationDataInfluenceDataInfluenceIdDelete(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataInfluenceIdDelete -
+func HTTPApplicationDataInfluenceDataInfluenceIdDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataInfluenceIdPatch -
-func ApplicationDataInfluenceDataInfluenceIdPatch(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataInfluenceIdPatch -
+func HTTPApplicationDataInfluenceDataInfluenceIdPatch(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataInfluenceIdPut -
-func ApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataInfluenceIdPut -
+func HTTPApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataSubsToNotifyGet -
-func ApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataSubsToNotifyGet -
+func HTTPApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataSubsToNotifyPost -
-func ApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataSubsToNotifyPost -
+func HTTPApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
-func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
+func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet -
-func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet -
+func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut -
-func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
+// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut -
+func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ApplicationDataPfdsAppIdDelete -
-func ApplicationDataPfdsAppIdDelete(c *gin.Context) {
+// HTTPApplicationDataPfdsAppIdDelete -
+func HTTPApplicationDataPfdsAppIdDelete(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["appId"] = c.Params.ByName("appId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsAppIdDelete, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleApplicationDataPfdsAppIdDelete(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
-}
-
-// ApplicationDataPfdsAppIdGet -
-func ApplicationDataPfdsAppIdGet(c *gin.Context) {
-	req := http_wrapper.NewRequest(c.Request, nil)
-	req.Params["appId"] = c.Params.ByName("appId")
-
-	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsAppIdGet, req)
-	message.SendMessage(handlerMsg)
-
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
-}
-
-// ApplicationDataPfdsAppIdPut -
-func ApplicationDataPfdsAppIdPut(c *gin.Context) {
-	var pfdDataforApp models.PfdDataForApp
-	err := c.ShouldBindJSON(&pfdDataforApp)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
 	if err != nil {
-		logger.HandlerLog.Errorln(err)
-		c.JSON(http.StatusBadRequest, gin.H{})
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
+}
+
+// HTTPApplicationDataPfdsAppIdGet -
+func HTTPApplicationDataPfdsAppIdGet(c *gin.Context) {
+	req := http_wrapper.NewRequest(c.Request, nil)
+	req.Params["appId"] = c.Params.ByName("appId")
+
+	rsp := producer.HandleApplicationDataPfdsAppIdGet(req)
+
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
+}
+
+// HTTPApplicationDataPfdsAppIdPut -
+func HTTPApplicationDataPfdsAppIdPut(c *gin.Context) {
+	var pfdDataforApp models.PfdDataForApp
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
-	if pfdDataforApp.ApplicationId == "" || len(pfdDataforApp.Pfds) == 0 {
-		logger.HandlerLog.Errorln("No ApplicationId or Pfds")
-		c.JSON(http.StatusBadRequest, gin.H{})
+
+	err = openapi.Deserialize(&pfdDataforApp, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, pfdDataforApp)
 	req.Params["appId"] = c.Params.ByName("appId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsAppIdPut, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandleApplicationDataPfdsAppIdPut(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// ApplicationDataPfdsGet -
-func ApplicationDataPfdsGet(c *gin.Context) {
+// HTTPApplicationDataPfdsGet -
+func HTTPApplicationDataPfdsGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
-	handlerMsg := message.NewHandlerMessage(message.EventApplicationDataPfdsGet, req)
-	message.SendMessage(handlerMsg)
 
-	rsp := <-handlerMsg.ResponseChan
+	rsp := producer.HandleApplicationDataPfdsGet(req)
 
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// ExposureDataSubsToNotifyPost -
-func ExposureDataSubsToNotifyPost(c *gin.Context) {
+// HTTPExposureDataSubsToNotifyPost -
+func HTTPExposureDataSubsToNotifyPost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ExposureDataSubsToNotifySubIdDelete - Deletes a subcription for notifications
-func ExposureDataSubsToNotifySubIdDelete(c *gin.Context) {
+// HTTPExposureDataSubsToNotifySubIdDelete - Deletes a subcription for notifications
+func HTTPExposureDataSubsToNotifySubIdDelete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// ExposureDataSubsToNotifySubIdPut - updates a subcription for notifications
-func ExposureDataSubsToNotifySubIdPut(c *gin.Context) {
+// HTTPExposureDataSubsToNotifySubIdPut - updates a subcription for notifications
+func HTTPExposureDataSubsToNotifySubIdPut(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
-// PolicyDataBdtDataBdtReferenceIdDelete -
-func PolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
-	req := http_wrapper.NewRequest(c.Request, nil)
-	req.Params["bdtReferenceId"] = c.Params.ByName("bdtReferenceId")
-
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataBdtDataBdtReferenceIdDelete, req)
-	message.SendMessage(handlerMsg)
-
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
-}
-
-// PolicyDataBdtDataBdtReferenceIdGet -
-func PolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
+// HTTPPolicyDataBdtDataBdtReferenceIdDelete -
+func HTTPPolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["bdtReferenceId"] = c.Params.ByName("bdtReferenceId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataBdtDataBdtReferenceIdGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataBdtDataBdtReferenceIdDelete(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataBdtDataBdtReferenceIdPut -
-func PolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
+// HTTPPolicyDataBdtDataBdtReferenceIdGet -
+func HTTPPolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
+	req := http_wrapper.NewRequest(c.Request, nil)
+	req.Params["bdtReferenceId"] = c.Params.ByName("bdtReferenceId")
+
+	rsp := producer.HandlePolicyDataBdtDataBdtReferenceIdGet(req)
+
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
+}
+
+// HTTPPolicyDataBdtDataBdtReferenceIdPut -
+func HTTPPolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
 	var bdtData models.BdtData
-	if err := c.ShouldBindJSON(&bdtData); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&bdtData, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, bdtData)
 	req.Params["bdtReferenceId"] = c.Params.ByName("bdtReferenceId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataBdtDataBdtReferenceIdPut, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataBdtDataBdtReferenceIdPut(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataBdtDataGet -
-func PolicyDataBdtDataGet(c *gin.Context) {
+// HTTPPolicyDataBdtDataGet -
+func HTTPPolicyDataBdtDataGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataBdtDataGet, req)
-	message.SendMessage(handlerMsg)
 
-	rsp := <-handlerMsg.ResponseChan
+	rsp := producer.HandlePolicyDataBdtDataGet(req)
 
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataPlmnsPlmnIdUePolicySetGet -
-func PolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
+// HTTPPolicyDataPlmnsPlmnIdUePolicySetGet -
+func HTTPPolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["plmnId"] = c.Params.ByName("plmnId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataPlmnsPlmnIdUePolicySetGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataPlmnsPlmnIdUePolicySetGet(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataSponsorConnectivityDataSponsorIdGet -
-func PolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Context) {
+// HTTPPolicyDataSponsorConnectivityDataSponsorIdGet -
+func HTTPPolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["sponsorId"] = c.Params.ByName("sponsorId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataSponsorConnectivityDataSponsorIdGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataSponsorConnectivityDataSponsorIdGet(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataSubsToNotifyPost -
-func PolicyDataSubsToNotifyPost(c *gin.Context) {
+// HTTPPolicyDataSubsToNotifyPost -
+func HTTPPolicyDataSubsToNotifyPost(c *gin.Context) {
 	var policyDataSubscription models.PolicyDataSubscription
-	if err := c.ShouldBindJSON(&policyDataSubscription); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&policyDataSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, policyDataSubscription)
+	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataSubsToNotifyPost, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataSubsToNotifyPost(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-	for key, val := range HTTPResponse.Header {
+	for key, val := range rsp.Header {
 		c.Header(key, val[0])
 	}
 
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataSubsToNotifySubsIdDelete -
-func PolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
+// HTTPPolicyDataSubsToNotifySubsIdDelete -
+func HTTPPolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["subsId"] = c.Params.ByName("subsId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataSubsToNotifySubsIdDelete, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataSubsToNotifySubsIdDelete(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataSubsToNotifySubsIdPut -
-func PolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
+// HTTPPolicyDataSubsToNotifySubsIdPut -
+func HTTPPolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
 	var policyDataSubscription models.PolicyDataSubscription
-	if err := c.ShouldBindJSON(&policyDataSubscription); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&policyDataSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, policyDataSubscription)
 	req.Params["subsId"] = c.Params.ByName("subsId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataSubsToNotifySubsIdPut, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataSubsToNotifySubsIdPut(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdAmDataGet -
-func PolicyDataUesUeIdAmDataGet(c *gin.Context) {
+// HTTPPolicyDataUesUeIdAmDataGet -
+func HTTPPolicyDataUesUeIdAmDataGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdAmDataGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdAmDataGet(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdOperatorSpecificDataGet -
-func PolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
+// HTTPPolicyDataUesUeIdOperatorSpecificDataGet -
+func HTTPPolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdOperatorSpecificDataGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdOperatorSpecificDataGet(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdOperatorSpecificDataPatch - Need to be fixed
-func PolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context) {
+// HTTPPolicyDataUesUeIdOperatorSpecificDataPatch - Need to be fixed
+func HTTPPolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context) {
 	var patchItemArray []models.PatchItem
-	if err := c.ShouldBindJSON(&patchItemArray); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, patchItemArray)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdOperatorSpecificDataPatch, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdOperatorSpecificDataPatch(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdOperatorSpecificDataPut -
-func PolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) {
+// HTTPPolicyDataUesUeIdOperatorSpecificDataPut -
+func HTTPPolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) {
 	var operatorSpecificDataContainerMap map[string]models.OperatorSpecificDataContainer
-	if err := c.ShouldBindJSON(&operatorSpecificDataContainerMap); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&operatorSpecificDataContainerMap, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, operatorSpecificDataContainerMap)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdOperatorSpecificDataPut, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdOperatorSpecificDataPut(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdSmDataGet -
-func PolicyDataUesUeIdSmDataGet(c *gin.Context) {
+// HTTPPolicyDataUesUeIdSmDataGet -
+func HTTPPolicyDataUesUeIdSmDataGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdSmDataGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdSmDataGet(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdSmDataPatch - Need to be fixed
-func PolicyDataUesUeIdSmDataPatch(c *gin.Context) {
+// HTTPPolicyDataUesUeIdSmDataPatch - Need to be fixed
+func HTTPPolicyDataUesUeIdSmDataPatch(c *gin.Context) {
 	var usageMonDataMap map[string]models.UsageMonData
-	if err := c.ShouldBindJSON(&usageMonDataMap); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&usageMonDataMap, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, usageMonDataMap)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdSmDataPatch, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdSmDataPatch(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdSmDataUsageMonIdDelete -
-func PolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
+// HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete -
+func HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["usageMonId"] = c.Params.ByName("usageMonId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdSmDataUsageMonIdDelete, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdSmDataUsageMonIdGet -
-func PolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
+// HTTPPolicyDataUesUeIdSmDataUsageMonIdGet -
+func HTTPPolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["usageMonId"] = c.Params.ByName("usageMonId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdSmDataUsageMonIdGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdSmDataUsageMonIdGet(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdSmDataUsageMonIdPut -
-func PolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
+// HTTPPolicyDataUesUeIdSmDataUsageMonIdPut -
+func HTTPPolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
 	var usageMonData models.UsageMonData
-	if err := c.ShouldBindJSON(&usageMonData); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&usageMonData, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, usageMonData)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["usageMonId"] = c.Params.ByName("usageMonId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdSmDataUsageMonIdPut, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdSmDataUsageMonIdPut(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdUePolicySetGet -
-func PolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
+// HTTPPolicyDataUesUeIdUePolicySetGet -
+func HTTPPolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
 	req := http_wrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdUePolicySetGet, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdUePolicySetGet(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdUePolicySetPatch -
-func PolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
+// HTTPPolicyDataUesUeIdUePolicySetPatch -
+func HTTPPolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
 	var uePolicySet models.UePolicySet
-	if err := c.ShouldBindJSON(&uePolicySet); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&uePolicySet, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, uePolicySet)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdUePolicySetPatch, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdUePolicySetPatch(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }
 
-// PolicyDataUesUeIdUePolicySetPut -
-func PolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
+// HTTPPolicyDataUesUeIdUePolicySetPut -
+func HTTPPolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
 	var uePolicySet models.UePolicySet
-	if err := c.ShouldBindJSON(&uePolicySet); err != nil {
-		logger.DataRepoLog.Panic(err.Error())
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&uePolicySet, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
 	}
 
 	req := http_wrapper.NewRequest(c.Request, uePolicySet)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
-	handlerMsg := message.NewHandlerMessage(message.EventPolicyDataUesUeIdUePolicySetPut, req)
-	message.SendMessage(handlerMsg)
+	rsp := producer.HandlePolicyDataUesUeIdUePolicySetPut(req)
 
-	rsp := <-handlerMsg.ResponseChan
-
-	HTTPResponse := rsp.HTTPResponse
-
-	c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorln(err)
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Cause:  "SYSTEM_FAILURE",
+			Detail: err.Error(),
+		}
+		c.JSON(http.StatusInternalServerError, problemDetails)
+	} else {
+		c.Data(rsp.Status, "application/json", responseBody)
+	}
 }

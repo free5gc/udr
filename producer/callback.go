@@ -5,7 +5,8 @@ import (
 	"free5gc/src/udr/producer/callback"
 )
 
-func PreHandleOnDataChangeNotify(ueId string, resourceId string, patchItems []models.PatchItem, origValue interface{}, newValue interface{}) {
+func PreHandleOnDataChangeNotify(ueId string, resourceId string, patchItems []models.PatchItem,
+	origValue interface{}, newValue interface{}) {
 	notifyItems := []models.NotifyItem{}
 	changes := []models.ChangeItem{}
 
