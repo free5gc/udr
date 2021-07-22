@@ -16,16 +16,28 @@ import (
 )
 
 func BuildNFInstance(context *udr_context.UDRContext) models.NfProfile {
-	var profile models.NfProfile
 	config := factory.UdrConfig
-	profile.NfInstanceId = context.NfId
-	profile.NfType = models.NfType_UDR
-	profile.NfStatus = models.NfStatus_REGISTERED
+
+	profile := models.NfProfile{
+		NfInstanceId:  context.NfId,
+		NfType:        models.NfType_UDR,
+		NfStatus:      models.NfStatus_REGISTERED,
+		Ipv4Addresses: []string{context.RegisterIPv4},
+		UdrInfo: &models.UdrInfo{
+			SupportedDataSets: []models.DataSetId{
+				// models.DataSetId_APPLICATION,
+				// models.DataSetId_EXPOSURE,
+				// models.DataSetId_POLICY,
+				models.DataSetId_SUBSCRIPTION,
+			},
+		},
+	}
+
 	version := config.Info.Version
 	tmpVersion := strings.Split(version, ".")
 	versionUri := "v" + tmpVersion[0]
 	apiPrefix := fmt.Sprintf("%s://%s:%d", context.UriScheme, context.RegisterIPv4, context.SBIPort)
-	services := []models.NfService{
+	profile.NfServices = &[]models.NfService{
 		{
 			ServiceInstanceId: "datarepository",
 			ServiceName:       models.ServiceName_NUDR_DR,
@@ -47,16 +59,8 @@ func BuildNFInstance(context *udr_context.UDRContext) models.NfProfile {
 			},
 		},
 	}
-	profile.NfServices = &services
+
 	// TODO: finish the Udr Info
-	profile.UdrInfo = &models.UdrInfo{
-		SupportedDataSets: []models.DataSetId{
-			// models.DataSetId_APPLICATION,
-			// models.DataSetId_EXPOSURE,
-			// models.DataSetId_POLICY,
-			models.DataSetId_SUBSCRIPTION,
-		},
-	}
 	return profile
 }
 
