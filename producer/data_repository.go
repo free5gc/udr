@@ -1240,7 +1240,8 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 		filter["smPolicySnssaiData."+util.SnssaiModelsToHex(snssai)] = bson.M{"$exists": true}
 	}
 	if !reflect.DeepEqual(snssai, models.Snssai{}) && dnn != "" {
-		filter["smPolicySnssaiData."+util.SnssaiModelsToHex(snssai)+".smPolicyDnnData."+dnn] = bson.M{"$exists": true}
+		dnnKey := util.EscapeDnn(dnn)
+		filter["smPolicySnssaiData."+util.SnssaiModelsToHex(snssai)+".smPolicyDnnData."+dnnKey] = bson.M{"$exists": true}
 	}
 
 	smPolicyData := MongoDBLibrary.RestfulAPIGetOne(collName, filter)
@@ -1250,6 +1251,17 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 		if err != nil {
 			logger.DataRepoLog.Warnln(err)
 		}
+		tmpSmPolicySnssaiData := make(map[string]models.SmPolicySnssaiData)
+		for snssai, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
+			tmpSmPolicyDnnData := make(map[string]models.SmPolicyDnnData)
+			for escapedDnn, dnnData := range snssaiData.SmPolicyDnnData {
+				dnn := util.UnescapeDnn(escapedDnn)
+				tmpSmPolicyDnnData[dnn] = dnnData
+			}
+			snssaiData.SmPolicyDnnData = tmpSmPolicyDnnData
+			tmpSmPolicySnssaiData[snssai] = snssaiData
+		}
+		smPolicyDataResp.SmPolicySnssaiData = tmpSmPolicySnssaiData
 		{
 			collName := "policyData.ues.smData.usageMonData"
 			filter := bson.M{"ueId": ueId}
@@ -2178,6 +2190,15 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 			if err != nil {
 				panic(err)
 			}
+			for _, smData := range tmp {
+				dnnConfigurations := smData.DnnConfigurations
+				tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
+				for escapedDnn, dnnConf := range dnnConfigurations {
+					dnn := util.UnescapeDnn(escapedDnn)
+					tmpDnnConfigurations[dnn] = dnnConf
+				}
+				smData.DnnConfigurations = tmpDnnConfigurations
+			}
 			provisionedDataSets.SmData = tmp
 		}
 	}
@@ -2532,11 +2553,26 @@ func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
 	}
 
 	if dnn != "" {
-		filter["dnnConfigurations."+dnn] = bson.M{"$exists": true}
+		dnnKey := util.EscapeDnn(dnn)
+		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
 	}
 
 	sessionManagementSubscriptionDatas := MongoDBLibrary.RestfulAPIGetMany(collName, filter)
-
+	for _, smData := range sessionManagementSubscriptionDatas {
+		var tmpSmData models.SessionManagementSubscriptionData
+		err := json.Unmarshal(util.MapToByte(smData), &tmpSmData)
+		if err != nil {
+			logger.DataRepoLog.Debug("SmData Unmarshal error")
+			continue
+		}
+		dnnConfigurations := tmpSmData.DnnConfigurations
+		tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
+		for escapedDnn, dnnConf := range dnnConfigurations {
+			dnn := util.UnescapeDnn(escapedDnn)
+			tmpDnnConfigurations[dnn] = dnnConf
+		}
+		smData["DnnConfigurations"] = tmpDnnConfigurations
+	}
 	return &sessionManagementSubscriptionDatas
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 
@@ -63,4 +64,12 @@ func SnssaiHexToModels(hexString string) (*models.Snssai, error) {
 func SnssaiModelsToHex(snssai models.Snssai) string {
 	sst := fmt.Sprintf("%02x", snssai.Sst)
 	return sst + snssai.Sd
+}
+
+func EscapeDnn(dnn string) string {
+	return strings.ReplaceAll(dnn, ".", "_")
+}
+
+func UnescapeDnn(dnnKey string) string {
+	return strings.ReplaceAll(dnnKey, "_", ".")
 }
