@@ -72,7 +72,7 @@ func (udr *UDR) Initialize(c *cli.Context) error {
 		}
 	}
 
-	udr.setLogLevel()
+	udr.SetLogLevel()
 
 	if err := factory.CheckConfigVersion(); err != nil {
 		return err
@@ -85,7 +85,7 @@ func (udr *UDR) Initialize(c *cli.Context) error {
 	return nil
 }
 
-func (udr *UDR) setLogLevel() {
+func (udr *UDR) SetLogLevel() {
 	if factory.UdrConfig.Logger == nil {
 		logger.InitLog.Warnln("UDR config without log level setting!!!")
 		return
