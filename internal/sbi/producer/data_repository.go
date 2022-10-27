@@ -74,7 +74,8 @@ func HandleQueryAmData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func QueryAmDataProcedure(collName string, ueId string, servingPlmnId string) (*map[string]interface{},
-	*models.ProblemDetails) {
+	*models.ProblemDetails,
+) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -144,7 +145,8 @@ func HandleCreateAmfContext3gpp(request *httpwrapper.Request) *httpwrapper.Respo
 }
 
 func CreateAmfContext3gppProcedure(collName string, ueId string,
-	Amf3GppAccessRegistration models.Amf3GppAccessRegistration) {
+	Amf3GppAccessRegistration models.Amf3GppAccessRegistration,
+) {
 	filter := bson.M{"ueId": ueId}
 	putData := util.ToBsonM(Amf3GppAccessRegistration)
 	putData["ueId"] = ueId
@@ -200,7 +202,8 @@ func HandleAmfContextNon3gpp(request *httpwrapper.Request) *httpwrapper.Response
 }
 
 func AmfContextNon3gppProcedure(ueId string, collName string, patchItem []models.PatchItem,
-	filter bson.M) *models.ProblemDetails {
+	filter bson.M,
+) *models.ProblemDetails {
 	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("AmfContextNon3gppProcedure err: %+v", err)
 		return util.ProblemDetailsModifyNotAllowed("")
@@ -221,7 +224,8 @@ func HandleCreateAmfContextNon3gpp(request *httpwrapper.Request) *httpwrapper.Re
 }
 
 func CreateAmfContextNon3gppProcedure(AmfNon3GppAccessRegistration models.AmfNon3GppAccessRegistration,
-	collName string, ueId string) {
+	collName string, ueId string,
+) {
 	putData := util.ToBsonM(AmfNon3GppAccessRegistration)
 	putData["ueId"] = ueId
 	filter := bson.M{"ueId": ueId}
@@ -400,7 +404,8 @@ func HandleQueryAuthenticationStatus(request *httpwrapper.Request) *httpwrapper.
 }
 
 func QueryAuthenticationStatusProcedure(collName string, ueId string) (*map[string]interface{},
-	*models.ProblemDetails) {
+	*models.ProblemDetails,
+) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -429,7 +434,8 @@ func HandleApplicationDataInfluenceDataGet(queryParams map[string][]string) *htt
 }
 
 func getApplicationDataInfluenceDatafromDB(influIDs, dnns, snssais,
-	intGroupIDs, supis []string) []map[string]interface{} {
+	intGroupIDs, supis []string,
+) []map[string]interface{} {
 	filter := bson.M{}
 	allInfluDatas, err := mongoapi.RestfulAPIGetMany(APPDATA_INFLUDATA_DB_COLLECTION_NAME, filter)
 	if err != nil {
@@ -450,7 +456,8 @@ func getApplicationDataInfluenceDatafromDB(influIDs, dnns, snssais,
 }
 
 func filterDataByString(filterName string, filterValues []string,
-	datas []map[string]interface{}) []map[string]interface{} {
+	datas []map[string]interface{},
+) []map[string]interface{} {
 	if len(filterValues) == 0 {
 		return datas
 	}
@@ -467,7 +474,8 @@ func filterDataByString(filterName string, filterValues []string,
 }
 
 func filterDataBySnssai(snssaiValues []string,
-	datas []map[string]interface{}) []map[string]interface{} {
+	datas []map[string]interface{},
+) []map[string]interface{} {
 	if len(snssaiValues) == 0 {
 		return datas
 	}
@@ -510,7 +518,8 @@ func deleteApplicationDataIndividualInfluenceDataFromDB(influId string) {
 }
 
 func HandleApplicationDataInfluenceDataInfluenceIdPatch(influID string,
-	trInfluDataPatch *models.TrafficInfluDataPatch) *httpwrapper.Response {
+	trInfluDataPatch *models.TrafficInfluDataPatch,
+) *httpwrapper.Response {
 	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPatch: influID=%q", influID)
 
 	response, status := patchApplicationDataIndividualInfluenceDataToDB(influID, trInfluDataPatch)
@@ -519,7 +528,8 @@ func HandleApplicationDataInfluenceDataInfluenceIdPatch(influID string,
 }
 
 func patchApplicationDataIndividualInfluenceDataToDB(influID string,
-	trInfluDataPatch *models.TrafficInfluDataPatch) (bson.M, int) {
+	trInfluDataPatch *models.TrafficInfluDataPatch,
+) (bson.M, int) {
 	filter := bson.M{"influenceId": influID}
 
 	oldData, pd := getDataFromDB(APPDATA_INFLUDATA_DB_COLLECTION_NAME, filter)
@@ -559,7 +569,8 @@ func patchApplicationDataIndividualInfluenceDataToDB(influID string,
 }
 
 func HandleApplicationDataInfluenceDataInfluenceIdPut(influID string,
-	trInfluData *models.TrafficInfluData) *httpwrapper.Response {
+	trInfluData *models.TrafficInfluData,
+) *httpwrapper.Response {
 	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPut: influID=%q", influID)
 
 	response, status := putApplicationDataIndividualInfluenceDataToDB(influID, trInfluData)
@@ -568,7 +579,8 @@ func HandleApplicationDataInfluenceDataInfluenceIdPut(influID string,
 }
 
 func putApplicationDataIndividualInfluenceDataToDB(influID string,
-	trInfluData *models.TrafficInfluData) (bson.M, int) {
+	trInfluData *models.TrafficInfluData,
+) (bson.M, int) {
 	filter := bson.M{"influenceId": influID}
 	data := util.ToBsonM(*trInfluData)
 
@@ -623,7 +635,8 @@ func HandleApplicationDataInfluenceDataSubsToNotifyGet(queryParams map[string][]
 }
 
 func getApplicationDataInfluenceDataSubsToNotifyfromDB(dnn, snssai, intGroupID,
-	supi []string) []map[string]interface{} {
+	supi []string,
+) []map[string]interface{} {
 	filter := bson.M{}
 	if len(dnn) != 0 {
 		filter["dnns"] = dnn[0]
@@ -652,7 +665,8 @@ func getApplicationDataInfluenceDataSubsToNotifyfromDB(dnn, snssai, intGroupID,
 }
 
 func filterDataBySnssais(snssaiValue string,
-	datas []map[string]interface{}) []map[string]interface{} {
+	datas []map[string]interface{},
+) []map[string]interface{} {
 	var matchedDatas []map[string]interface{}
 	var filterSnssai models.Snssai
 	if err := json.Unmarshal([]byte(snssaiValue), &filterSnssai); err != nil {
@@ -695,7 +709,8 @@ func HandleApplicationDataInfluenceDataSubsToNotifyPost(trInfluSub *models.Traff
 }
 
 func postApplicationDataInfluenceDataSubsToNotifyToDB(subscID string,
-	trInfluSub *models.TrafficInfluSub) (bson.M, int) {
+	trInfluSub *models.TrafficInfluSub,
+) (bson.M, int) {
 	filter := bson.M{"subscriptionId": subscID}
 	data := util.ToBsonM(*trInfluSub)
 
@@ -737,7 +752,8 @@ func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(subscID str
 }
 
 func getApplicationDataIndividualInfluenceDataSubsToNotifyFromDB(
-	subscID string) (map[string]interface{}, *models.ProblemDetails) {
+	subscID string,
+) (map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"subscriptionId": subscID}
 	data, pd := getDataFromDB(APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME, filter)
 	if pd != nil {
@@ -750,7 +766,8 @@ func getApplicationDataIndividualInfluenceDataSubsToNotifyFromDB(
 }
 
 func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(
-	subscID string, trInfluSub *models.TrafficInfluSub) *httpwrapper.Response {
+	subscID string, trInfluSub *models.TrafficInfluSub,
+) *httpwrapper.Response {
 	logger.DataRepoLog.Infof(
 		"Handle HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut: subscID=%q", subscID)
 
@@ -760,7 +777,8 @@ func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(
 }
 
 func putApplicationDataIndividualInfluenceDataSubsToNotifyToDB(subscID string,
-	trInfluSub *models.TrafficInfluSub) (bson.M, int) {
+	trInfluSub *models.TrafficInfluSub,
+) (bson.M, int) {
 	filter := bson.M{"subscriptionId": subscID}
 	newData := util.ToBsonM(*trInfluSub)
 
@@ -917,7 +935,8 @@ func HandlePolicyDataBdtDataBdtReferenceIdGet(request *httpwrapper.Request) *htt
 }
 
 func PolicyDataBdtDataBdtReferenceIdGetProcedure(collName string, bdtReferenceId string) (*map[string]interface{},
-	*models.ProblemDetails) {
+	*models.ProblemDetails,
+) {
 	filter := bson.M{"bdtReferenceId": bdtReferenceId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -944,7 +963,8 @@ func HandlePolicyDataBdtDataBdtReferenceIdPut(request *httpwrapper.Request) *htt
 }
 
 func PolicyDataBdtDataBdtReferenceIdPutProcedure(collName string, bdtReferenceId string,
-	bdtData models.BdtData) bson.M {
+	bdtData models.BdtData,
+) bson.M {
 	putData := util.ToBsonM(bdtData)
 	putData["bdtReferenceId"] = bdtReferenceId
 	filter := bson.M{"bdtReferenceId": bdtReferenceId}
@@ -999,7 +1019,8 @@ func HandlePolicyDataPlmnsPlmnIdUePolicySetGet(request *httpwrapper.Request) *ht
 }
 
 func PolicyDataPlmnsPlmnIdUePolicySetGetProcedure(collName string,
-	plmnId string) (*map[string]interface{}, *models.ProblemDetails) {
+	plmnId string,
+) (*map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"plmnId": plmnId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -1028,7 +1049,8 @@ func HandlePolicyDataSponsorConnectivityDataSponsorIdGet(request *httpwrapper.Re
 }
 
 func PolicyDataSponsorConnectivityDataSponsorIdGetProcedure(collName string,
-	sponsorId string) (*map[string]interface{}, int) {
+	sponsorId string,
+) (*map[string]interface{}, int) {
 	filter := bson.M{"sponsorId": sponsorId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -1106,7 +1128,8 @@ func HandlePolicyDataSubsToNotifySubsIdPut(request *httpwrapper.Request) *httpwr
 }
 
 func PolicyDataSubsToNotifySubsIdPutProcedure(subsId string,
-	policyDataSubscription models.PolicyDataSubscription) (*models.PolicyDataSubscription, *models.ProblemDetails) {
+	policyDataSubscription models.PolicyDataSubscription,
+) (*models.PolicyDataSubscription, *models.ProblemDetails) {
 	udrSelf := udr_context.UDR_Self()
 	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
 	if !ok {
@@ -1137,7 +1160,8 @@ func HandlePolicyDataUesUeIdAmDataGet(request *httpwrapper.Request) *httpwrapper
 }
 
 func PolicyDataUesUeIdAmDataGetProcedure(collName string,
-	ueId string) (*map[string]interface{}, *models.ProblemDetails) {
+	ueId string,
+) (*map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -1166,7 +1190,8 @@ func HandlePolicyDataUesUeIdOperatorSpecificDataGet(request *httpwrapper.Request
 }
 
 func PolicyDataUesUeIdOperatorSpecificDataGetProcedure(collName string,
-	ueId string) (*interface{}, *models.ProblemDetails) {
+	ueId string,
+) (*interface{}, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -1194,7 +1219,8 @@ func HandlePolicyDataUesUeIdOperatorSpecificDataPatch(request *httpwrapper.Reque
 }
 
 func PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(collName string, ueId string,
-	patchItem []models.PatchItem) *models.ProblemDetails {
+	patchItem []models.PatchItem,
+) *models.ProblemDetails {
 	filter := bson.M{"ueId": ueId}
 
 	patchJSON, err := json.Marshal(patchItem)
@@ -1226,7 +1252,8 @@ func HandlePolicyDataUesUeIdOperatorSpecificDataPut(request *httpwrapper.Request
 }
 
 func PolicyDataUesUeIdOperatorSpecificDataPutProcedure(collName string, ueId string,
-	OperatorSpecificDataContainer map[string]models.OperatorSpecificDataContainer) {
+	OperatorSpecificDataContainer map[string]models.OperatorSpecificDataContainer,
+) {
 	filter := bson.M{"ueId": ueId}
 
 	putData := map[string]interface{}{"operatorSpecificDataContainerMap": OperatorSpecificDataContainer}
@@ -1263,7 +1290,8 @@ func HandlePolicyDataUesUeIdSmDataGet(request *httpwrapper.Request) *httpwrapper
 }
 
 func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai models.Snssai,
-	dnn string) (*models.SmPolicyData, *models.ProblemDetails) {
+	dnn string,
+) (*models.SmPolicyData, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId}
 
 	if !reflect.DeepEqual(snssai, models.Snssai{}) {
@@ -1330,7 +1358,8 @@ func HandlePolicyDataUesUeIdSmDataPatch(request *httpwrapper.Request) *httpwrapp
 }
 
 func PolicyDataUesUeIdSmDataPatchProcedure(collName string, ueId string,
-	UsageMonData map[string]models.UsageMonData) *models.ProblemDetails {
+	UsageMonData map[string]models.UsageMonData,
+) *models.ProblemDetails {
 	filter := bson.M{"ueId": ueId}
 
 	successAll := true
@@ -1420,7 +1449,8 @@ func HandlePolicyDataUesUeIdSmDataUsageMonIdGet(request *httpwrapper.Request) *h
 }
 
 func PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(collName string, usageMonId string,
-	ueId string) *map[string]interface{} {
+	ueId string,
+) *map[string]interface{} {
 	filter := bson.M{"ueId": ueId, "usageMonId": usageMonId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -1444,7 +1474,8 @@ func HandlePolicyDataUesUeIdSmDataUsageMonIdPut(request *httpwrapper.Request) *h
 }
 
 func PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(collName string, ueId string, usageMonId string,
-	usageMonData models.UsageMonData) *bson.M {
+	usageMonData models.UsageMonData,
+) *bson.M {
 	putData := util.ToBsonM(usageMonData)
 	putData["ueId"] = ueId
 	putData["usageMonId"] = usageMonId
@@ -1476,7 +1507,8 @@ func HandlePolicyDataUesUeIdUePolicySetGet(request *httpwrapper.Request) *httpwr
 }
 
 func PolicyDataUesUeIdUePolicySetGetProcedure(collName string, ueId string) (*map[string]interface{},
-	*models.ProblemDetails) {
+	*models.ProblemDetails,
+) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -1503,7 +1535,8 @@ func HandlePolicyDataUesUeIdUePolicySetPatch(request *httpwrapper.Request) *http
 }
 
 func PolicyDataUesUeIdUePolicySetPatchProcedure(collName string, ueId string,
-	UePolicySet models.UePolicySet) *models.ProblemDetails {
+	UePolicySet models.UePolicySet,
+) *models.ProblemDetails {
 	patchData := util.ToBsonM(UePolicySet)
 	patchData["ueId"] = ueId
 	filter := bson.M{"ueId": ueId}
@@ -1547,7 +1580,8 @@ func HandlePolicyDataUesUeIdUePolicySetPut(request *httpwrapper.Request) *httpwr
 }
 
 func PolicyDataUesUeIdUePolicySetPutProcedure(collName string, ueId string,
-	UePolicySet models.UePolicySet) (bson.M, int) {
+	UePolicySet models.UePolicySet,
+) (bson.M, int) {
 	putData := util.ToBsonM(UePolicySet)
 	putData["ueId"] = ueId
 	filter := bson.M{"ueId": ueId}
@@ -1580,7 +1614,8 @@ func HandleCreateAMFSubscriptions(request *httpwrapper.Request) *httpwrapper.Res
 }
 
 func CreateAMFSubscriptionsProcedure(subsId string, ueId string,
-	AmfSubscriptionInfo []models.AmfSubscriptionInfo) *models.ProblemDetails {
+	AmfSubscriptionInfo []models.AmfSubscriptionInfo,
+) *models.ProblemDetails {
 	udrSelf := udr_context.UDR_Self()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -1652,7 +1687,8 @@ func HandleModifyAmfSubscriptionInfo(request *httpwrapper.Request) *httpwrapper.
 }
 
 func ModifyAmfSubscriptionInfoProcedure(ueId string, subsId string,
-	patchItem []models.PatchItem) *models.ProblemDetails {
+	patchItem []models.PatchItem,
+) *models.ProblemDetails {
 	udrSelf := udr_context.UDR_Self()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -1719,7 +1755,8 @@ func HandleGetAmfSubscriptionInfo(request *httpwrapper.Request) *httpwrapper.Res
 }
 
 func GetAmfSubscriptionInfoProcedure(subsId string, ueId string) (*[]models.AmfSubscriptionInfo,
-	*models.ProblemDetails) {
+	*models.ProblemDetails,
+) {
 	udrSelf := udr_context.UDR_Self()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
@@ -1818,7 +1855,8 @@ func HandleUpdateEeGroupSubscriptions(request *httpwrapper.Request) *httpwrapper
 }
 
 func UpdateEeGroupSubscriptionsProcedure(ueGroupId string, subsId string,
-	EeSubscription models.EeSubscription) *models.ProblemDetails {
+	EeSubscription models.EeSubscription,
+) *models.ProblemDetails {
 	udrSelf := udr_context.UDR_Self()
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
 	if !ok {
@@ -1957,7 +1995,8 @@ func HandleUpdateEesubscriptions(request *httpwrapper.Request) *httpwrapper.Resp
 }
 
 func UpdateEesubscriptionsProcedure(ueId string, subsId string,
-	EeSubscription models.EeSubscription) *models.ProblemDetails {
+	EeSubscription models.EeSubscription,
+) *models.ProblemDetails {
 	udrSelf := udr_context.UDR_Self()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -2162,7 +2201,8 @@ func HandleQueryProvisionedData(request *httpwrapper.Request) *httpwrapper.Respo
 }
 
 func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
-	provisionedDataSets models.ProvisionedDataSets) (*models.ProvisionedDataSets, *models.ProblemDetails) {
+	provisionedDataSets models.ProvisionedDataSets,
+) (*models.ProvisionedDataSets, *models.ProblemDetails) {
 	var collName string
 	var filter bson.M
 
@@ -2389,7 +2429,8 @@ func HandleGetSharedData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func GetSharedDataProcedure(collName string, sharedDataIds []string) (*[]map[string]interface{},
-	*models.ProblemDetails) {
+	*models.ProblemDetails,
+) {
 	var sharedDataArray []map[string]interface{}
 	for _, sharedDataId := range sharedDataIds {
 		filter := bson.M{"sharedDataId": sharedDataId}
@@ -2459,7 +2500,8 @@ func HandleUpdatesdmsubscriptions(request *httpwrapper.Request) *httpwrapper.Res
 }
 
 func UpdatesdmsubscriptionsProcedure(ueId string, subsId string,
-	SdmSubscription models.SdmSubscription) *models.ProblemDetails {
+	SdmSubscription models.SdmSubscription,
+) *models.ProblemDetails {
 	udrSelf := udr_context.UDR_Self()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -2493,7 +2535,8 @@ func HandleCreateSdmSubscriptions(request *httpwrapper.Request) *httpwrapper.Res
 }
 
 func CreateSdmSubscriptionsProcedure(SdmSubscription models.SdmSubscription,
-	collName string, ueId string) (string, models.SdmSubscription) {
+	collName string, ueId string,
+) (string, models.SdmSubscription) {
 	udrSelf := udr_context.UDR_Self()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
@@ -2573,7 +2616,8 @@ func HandleQuerySmData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
-	singleNssai models.Snssai, dnn string) *[]map[string]interface{} {
+	singleNssai models.Snssai, dnn string,
+) *[]map[string]interface{} {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 
 	if !reflect.DeepEqual(singleNssai, models.Snssai{}) {
@@ -2637,7 +2681,8 @@ func HandleCreateSmfContextNon3gpp(request *httpwrapper.Request) *httpwrapper.Re
 }
 
 func CreateSmfContextNon3gppProcedure(SmfRegistration models.SmfRegistration,
-	collName string, ueId string, pduSessionIdInt int64) (bson.M, int) {
+	collName string, ueId string, pduSessionIdInt int64,
+) (bson.M, int) {
 	putData := util.ToBsonM(SmfRegistration)
 	putData["ueId"] = ueId
 	putData["pduSessionId"] = int32(pduSessionIdInt)
@@ -2694,7 +2739,8 @@ func HandleQuerySmfRegistration(request *httpwrapper.Request) *httpwrapper.Respo
 }
 
 func QuerySmfRegistrationProcedure(collName string, ueId string,
-	pduSessionId string) (*map[string]interface{}, *models.ProblemDetails) {
+	pduSessionId string,
+) (*map[string]interface{}, *models.ProblemDetails) {
 	pduSessionIdInt, err := strconv.ParseInt(pduSessionId, 10, 32)
 	if err != nil {
 		logger.DataRepoLog.Error(err)
@@ -2753,7 +2799,8 @@ func HandleQuerySmfSelectData(request *httpwrapper.Request) *httpwrapper.Respons
 }
 
 func QuerySmfSelectDataProcedure(collName string, ueId string,
-	servingPlmnId string) (*map[string]interface{}, *models.ProblemDetails) {
+	servingPlmnId string,
+) (*map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -2912,7 +2959,8 @@ func HandleQuerySmsMngData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func QuerySmsMngDataProcedure(collName string, ueId string,
-	servingPlmnId string) (*map[string]interface{}, *models.ProblemDetails) {
+	servingPlmnId string,
+) (*map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -2942,7 +2990,8 @@ func HandleQuerySmsData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func QuerySmsDataProcedure(collName string, ueId string,
-	servingPlmnId string) (*map[string]interface{}, *models.ProblemDetails) {
+	servingPlmnId string,
+) (*map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -2965,7 +3014,8 @@ func HandlePostSubscriptionDataSubscriptions(request *httpwrapper.Request) *http
 }
 
 func PostSubscriptionDataSubscriptionsProcedure(
-	SubscriptionDataSubscriptions models.SubscriptionDataSubscriptions) string {
+	SubscriptionDataSubscriptions models.SubscriptionDataSubscriptions,
+) string {
 	udrSelf := udr_context.UDR_Self()
 
 	newSubscriptionID := strconv.Itoa(udrSelf.SubscriptionDataSubscriptionIDGenerator)
@@ -3024,7 +3074,8 @@ func HandleQueryTraceData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func QueryTraceDataProcedure(collName string, ueId string,
-	servingPlmnId string) (*map[string]interface{}, *models.ProblemDetails) {
+	servingPlmnId string,
+) (*map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
