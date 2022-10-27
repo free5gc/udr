@@ -310,7 +310,11 @@ func QueryAuthSubsDataProcedure(collName string, ueId string) (map[string]interf
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
-		logger.DataRepoLog.Errorf("QueryAuthSubsDataProcedure err: %s", pd.Detail)
+		if pd.Status == http.StatusNotFound {
+			logger.DataRepoLog.Warnf("QueryAuthSubsDataProcedure err: %s", pd.Title)
+		} else {
+			logger.DataRepoLog.Errorf("QueryAuthSubsDataProcedure err: %s", pd.Detail)
+		}
 		return nil, pd
 	}
 	return data, nil
