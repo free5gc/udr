@@ -309,12 +309,12 @@ func HandleQueryAuthSubsData(request *httpwrapper.Request) *httpwrapper.Response
 func QueryAuthSubsDataProcedure(collName string, ueId string) (map[string]interface{}, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
-	if pd != nil && pd.Status == 404 {
-		logger.DataRepoLog.Warnf("QueryAuthSubsDataProcedure err: %s", pd.Title)
-		return nil, pd
-	}
 	if pd != nil {
-		logger.DataRepoLog.Errorf("QueryAuthSubsDataProcedure err: %s", pd.Detail)
+		if pd.Status == http.StatusNotFound {
+			logger.DataRepoLog.Warnf("QueryAuthSubsDataProcedure err: %s", pd.Title)
+		} else {
+			logger.DataRepoLog.Errorf("QueryAuthSubsDataProcedure err: %s", pd.Detail)
+		}
 		return nil, pd
 	}
 	return data, nil
