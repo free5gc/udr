@@ -1318,13 +1318,19 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 	}
 	tmpSmPolicySnssaiData := make(map[string]models.SmPolicySnssaiData)
 	for snssai, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
+		var snssaiTS29571 string
+		snssaiTS29571, err = util.SnssaiHexToTS29571String(snssai)
+		if err != nil {
+			logger.DataRepoLog.Warnf("Invalid S-NNSAI key %s: %s", snssai, err)
+			return nil, util.ProblemDetailsSystemFailure(err.Error())
+		}
 		tmpSmPolicyDnnData := make(map[string]models.SmPolicyDnnData)
 		for escapedDnn, dnnData := range snssaiData.SmPolicyDnnData {
 			dnn := util.UnescapeDnn(escapedDnn)
 			tmpSmPolicyDnnData[dnn] = dnnData
 		}
 		snssaiData.SmPolicyDnnData = tmpSmPolicyDnnData
-		tmpSmPolicySnssaiData[snssai] = snssaiData
+		tmpSmPolicySnssaiData[snssaiTS29571] = snssaiData
 	}
 	smPolicyDataResp.SmPolicySnssaiData = tmpSmPolicySnssaiData
 	filter = bson.M{"ueId": ueId}
@@ -2242,6 +2248,18 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 				"QueryProvisionedDataProcedure smfSelectionSubscriptionData decode err: %+v", err)
 			return nil, util.ProblemDetailsSystemFailure(err.Error())
 		}
+		if l := len(tmp.SubscribedSnssaiInfos); l != 0 {
+			fixedSubscribedSnssaiInfos := make(map[string]models.SnssaiInfo, l)
+			for snssai, info := range tmp.SubscribedSnssaiInfos {
+				snssaiTS29571, err := util.SnssaiHexToTS29571String(snssai)
+				if err != nil {
+					logger.DataRepoLog.Warnf("Invalid S-NNSAI key %s: %s", snssai, err)
+					return nil, util.ProblemDetailsSystemFailure(err.Error())
+				}
+				fixedSubscribedSnssaiInfos[snssaiTS29571] = info
+			}
+			tmp.SubscribedSnssaiInfos = fixedSubscribedSnssaiInfos
+		}
 		provisionedDataSets.SmfSelData = &tmp
 	}
 
@@ -2810,6 +2828,20 @@ func QuerySmfSelectDataProcedure(collName string, ueId string,
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QuerySmfSelectDataProcedure err: %s", pd.Detail)
 		return nil, pd
+	}
+	if origSubscribedSnssaiInfos, ok := data["subscribedSnssaiInfos"].(map[string]interface{}); ok {
+		if l := len(origSubscribedSnssaiInfos); l != 0 {
+			fixedSubscribedSnssaiInfos := make(map[string]interface{}, l)
+			for snssai, info := range origSubscribedSnssaiInfos {
+				snssaiTS29571, err := util.SnssaiHexToTS29571String(snssai)
+				if err != nil {
+					logger.DataRepoLog.Warnf("Invalid S-NNSAI key %s: %s", snssai, err)
+					return nil, util.ProblemDetailsSystemFailure(err.Error())
+				}
+				fixedSubscribedSnssaiInfos[snssaiTS29571] = info
+			}
+			data["subscribedSnssaiInfos"] = fixedSubscribedSnssaiInfos
+		}
 	}
 	return &data, nil
 }
