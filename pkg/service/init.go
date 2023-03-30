@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	//"io/ioutil"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime/debug"
 	"sync"
 	"syscall"
+	//"unsafe"
 
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -23,6 +25,8 @@ import (
 	"github.com/free5gc/util/httpwrapper"
 	logger_util "github.com/free5gc/util/logger"
 	"github.com/free5gc/util/mongoapi"
+
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type UDR struct {
@@ -52,6 +56,10 @@ var cliCmd = []cli.Flag{
 		Usage: "Output free5gc log to `FILE`",
 	},
 }
+
+var (
+	gethClient *ethclient.Client
+)
 
 func (*UDR) GetCliCmd() (flags []cli.Flag) {
 	return cliCmd
@@ -129,9 +137,25 @@ func (udr *UDR) Start() {
 
 	logger.InitLog.Infof("UDR Config Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
 
+	// TODO zsm 配置文件配置，选择MongoDB Or Eth，默认MongoDB
 	// Connect to MongoDB
 	if err := mongoapi.SetMongoDB(mongodb.Name, mongodb.Url); err != nil {
 		logger.InitLog.Errorf("UDR start err: %+v", err)
+		return
+	}
+
+	// connect to eth
+	gethClient, _ = ethclient.Dial("http://192.168.32.129:8545")
+	// TODO zsm eth地址放到配置文件中
+	// 通过读取文件，配置eth地址
+	//ipPortByte, _ := ioutil.ReadFile("./nginxaddr.txt")
+	//ipPort := (*string)(unsafe.Pointer(&ipPortByte))
+	//client, _ = ethclient.Dial(*ipPort)
+
+	if gethClient == nil {
+		//fmt.Println("+++Dial err+++")
+		//panic("连接错误")
+		logger.InitLog.Errorf("geth 连接错误")
 		return
 	}
 
