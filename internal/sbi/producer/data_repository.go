@@ -11,12 +11,13 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/util/httpwrapper"
 	"github.com/free5gc/util/mongoapi"
 )
@@ -32,7 +33,7 @@ var CurrentResourceUri string
 func getDataFromDB(collName string, filter bson.M) (map[string]interface{}, *models.ProblemDetails) {
 	data, err := mongoapi.RestfulAPIGetOne(collName, filter)
 	if err != nil {
-		return nil, util.ProblemDetailsSystemFailure(err.Error())
+		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 	}
 	if data == nil {
 		return nil, util.ProblemDetailsNotFound("DATA_NOT_FOUND")
@@ -419,388 +420,525 @@ func QueryAuthenticationStatusProcedure(collName string, ueId string) (*map[stri
 	return &data, nil
 }
 
-func HandleApplicationDataInfluenceDataGet(queryParams map[string][]string) *httpwrapper.Response {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataGet: queryParams=%#v", queryParams)
-
-	influIDs := queryParams["influence-Ids"]
-	dnns := queryParams["dnns"]
-	snssais := queryParams["snssais"]
-	intGroupIDs := queryParams["internal-Group-Ids"]
-	supis := queryParams["supis"]
-	if len(influIDs) == 0 && len(dnns) == 0 && len(snssais) == 0 && len(intGroupIDs) == 0 && len(supis) == 0 {
-		pd := util.ProblemDetailsMalformedReqSyntax("No query parameters")
-		return httpwrapper.NewResponse(int(pd.Status), nil, pd)
+func HandleApplicationDataInfluenceDataGet(request *httpwrapper.Request) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataGet")
+	collName := "applicationData.influenceData"
+	var filter []bson.M
+	influenceIdsParam := request.Query["influence-Ids"]
+	dnnsParam := request.Query["dnns"]
+	internalGroupIdsParam := request.Query["internal-Group-Ids"]
+	supisParam := request.Query["supis"]
+	snssaisParam := request.Query["snssais"]
+	if len(influenceIdsParam) != 0 {
+		influenceIds := strings.Split(influenceIdsParam[0], ",")
+		filter = append(filter, bson.M{"influenceId": bson.M{"$in": influenceIds}})
 	}
-
-	response := getApplicationDataInfluenceDatafromDB(influIDs, dnns, snssais, intGroupIDs, supis)
-
+	if len(dnnsParam) != 0 {
+		dnns := strings.Split(dnnsParam[0], ",")
+		filter = append(filter, bson.M{"dnn": bson.M{"$in": dnns}})
+	}
+	if len(internalGroupIdsParam) != 0 {
+		internalGroupIds := strings.Split(internalGroupIdsParam[0], ",")
+		withAnyUeIndFilter := []bson.M{
+			{
+				"interGroupId": bson.M{"$in": internalGroupIds},
+			},
+			{
+				"interGroupId": "AnyUE",
+			},
+		}
+		filter = append(filter, bson.M{"$or": withAnyUeIndFilter})
+	} else if len(supisParam) != 0 {
+		supis := strings.Split(supisParam[0], ",")
+		withAnyUeIndFilter := []bson.M{
+			{
+				"supi": bson.M{"$in": supis},
+			},
+			{
+				"interGroupId": "AnyUE",
+			},
+		}
+		filter = append(filter, bson.M{"$or": withAnyUeIndFilter})
+	}
+	if len(snssaisParam) != 0 {
+		snssais := parseSnssaisFromQueryParam(snssaisParam[0])
+		// NOTE: The following code would have bugs with several tries that return null value from Mongo DB, while most of
+		//       tries would be correct. The errors seem to occur only when the receiving filters on Mongo DB have reverse
+		//       orders of snssai fields, i.e. first sd then sst, even though bson.M{} is used
+		// matchList := buildSnssaiMatchList(snssais)
+		// filter = append(filter, bson.M{"snssai": bson.M{"$in": matchList}})
+		matchList := buildSnssaiMatchList(snssais)
+		filter = append(filter, bson.M{"$or": matchList})
+	}
+	response := ApplicationDataInfluenceDataGetProcedure(collName, filter)
 	return httpwrapper.NewResponse(http.StatusOK, nil, response)
 }
 
-func getApplicationDataInfluenceDatafromDB(influIDs, dnns, snssais,
-	intGroupIDs, supis []string,
-) []map[string]interface{} {
-	filter := bson.M{}
-	allInfluDatas, err := mongoapi.RestfulAPIGetMany(APPDATA_INFLUDATA_DB_COLLECTION_NAME, filter)
+func parseSnssaisFromQueryParam(snssaiStr string) []models.Snssai {
+	var snssais []models.Snssai
+	err := json.Unmarshal([]byte("["+snssaiStr+"]"), &snssais)
 	if err != nil {
-		logger.DataRepoLog.Errorf("getApplicationDataInfluenceDatafromDB err: %+v", err)
-		return nil
+		logger.DataRepoLog.Warnln("Unmarshal Error in snssaiStruct", err)
 	}
-	var matchedInfluDatas []map[string]interface{}
-	matchedInfluDatas = filterDataByString("influenceId", influIDs, allInfluDatas)
-	matchedInfluDatas = filterDataByString("dnn", dnns, matchedInfluDatas)
-	matchedInfluDatas = filterDataByString("interGroupId", intGroupIDs, matchedInfluDatas)
-	matchedInfluDatas = filterDataByString("supi", supis, matchedInfluDatas)
-	matchedInfluDatas = filterDataBySnssai(snssais, matchedInfluDatas)
-	for i := 0; i < len(matchedInfluDatas); i++ {
-		// Delete "influenceId" entry which is added by us
-		delete(matchedInfluDatas[i], "influenceId")
-	}
-	return matchedInfluDatas
+	return snssais
 }
 
-func filterDataByString(filterName string, filterValues []string,
-	datas []map[string]interface{},
-) []map[string]interface{} {
-	if len(filterValues) == 0 {
-		return datas
+// func buildSnssaiMatchList(snssais []models.Snssai) (matchList []bson.M) {
+// 	for _, v := range snssais {
+// 		bsonData := util.ToBsonM(v)
+// 		matchList = append(matchList, bsonData)
+// 	}
+// 	return
+// }
+
+func buildSnssaiMatchList(snssais []models.Snssai) (matchList []bson.M) {
+	for _, v := range snssais {
+		matchList = append(matchList, bson.M{"snssai.sst": v.Sst, "snssai.sd": v.Sd})
 	}
-	var matchedDatas []map[string]interface{}
-	for _, data := range datas {
-		for _, v := range filterValues {
-			if data[filterName].(string) == v {
-				matchedDatas = append(matchedDatas, data)
-				break
-			}
+	return
+}
+
+func ApplicationDataInfluenceDataGetProcedure(collName string, filter []bson.M) (
+	response *[]map[string]interface{},
+) {
+	influenceDataArray := make([]map[string]interface{}, 0)
+	if len(filter) != 0 {
+		var err error
+		influenceDataArray, err = mongoapi.RestfulAPIGetMany(collName, bson.M{"$and": filter})
+		if err != nil {
+			logger.DataRepoLog.Errorf("ApplicationDataInfluenceDataGetProcedure err: %+v", err)
+			return nil
 		}
 	}
-	return matchedDatas
-}
-
-func filterDataBySnssai(snssaiValues []string,
-	datas []map[string]interface{},
-) []map[string]interface{} {
-	if len(snssaiValues) == 0 {
-		return datas
+	for _, influenceData := range influenceDataArray {
+		groupUri := udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR)
+		influenceData["resUri"] = fmt.Sprintf("%s/application-data/influenceData/%s",
+			groupUri, influenceData["influenceId"].(string))
+		delete(influenceData, "_id")
+		delete(influenceData, "influenceId")
 	}
-	var matchedDatas []map[string]interface{}
-	for _, data := range datas {
-		var dataSnssai models.Snssai
-		if err := json.Unmarshal(
-			util.MapToByte(data["snssai"].(map[string]interface{})), &dataSnssai); err != nil {
-			logger.DataRepoLog.Warnln(err)
-			break
+	return &influenceDataArray
+}
+
+func HandleApplicationDataInfluenceDataInfluenceIdDelete(request *httpwrapper.Request) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdDelete")
+
+	collName := "applicationData.influenceData"
+	influenceId := request.Params["influenceId"]
+	status := ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(collName, influenceId)
+
+	if status == http.StatusNoContent {
+		return httpwrapper.NewResponse(http.StatusNoContent, nil, nil)
+	}
+
+	problemDetails := &models.ProblemDetails{
+		Status: http.StatusInternalServerError,
+		Cause:  "UNSPECIFIED",
+	}
+	return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
+}
+
+func ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(collName, influenceId string) int {
+	filter := bson.M{"influenceId": influenceId}
+
+	mapData, err := mongoapi.RestfulAPIGetOne(collName, filter)
+	if err != nil {
+		logger.DataRepoLog.Errorf("ApplicationDataInfluenceDataInfluenceIdDeleteProcedure err: %+v", err)
+		return http.StatusInternalServerError
+	}
+	var original *models.TrafficInfluData
+	if len(mapData) != 0 {
+		original = new(models.TrafficInfluData)
+		byteData, err := json.Marshal(mapData)
+		if err != nil {
+			logger.DataRepoLog.Errorf(err.Error())
+			return http.StatusInternalServerError
 		}
-		logger.DataRepoLog.Debugf("dataSnssai=%#v", dataSnssai)
-		for _, v := range snssaiValues {
-			var filterSnssai models.Snssai
-			if err := json.Unmarshal([]byte(v), &filterSnssai); err != nil {
-				logger.DataRepoLog.Warnln(err)
-				break
-			}
-			logger.DataRepoLog.Debugf("filterSnssai=%#v", filterSnssai)
-			if dataSnssai.Sd == filterSnssai.Sd && dataSnssai.Sst == filterSnssai.Sst {
-				matchedDatas = append(matchedDatas, data)
-				break
-			}
+		err = json.Unmarshal(byteData, &original)
+		if err != nil {
+			logger.DataRepoLog.Errorf(err.Error())
+			return http.StatusInternalServerError
 		}
 	}
-	return matchedDatas
+
+	if err := mongoapi.RestfulAPIDeleteOne(collName, filter); err != nil {
+		logger.DataRepoLog.Errorf("InfluIdDelProcedure: %+v", err)
+		return http.StatusInternalServerError
+	}
+
+	// Notify the change of influence data
+	PreHandleInfluenceDataUpdateNotification(influenceId, original, nil)
+
+	return http.StatusNoContent
 }
 
-func HandleApplicationDataInfluenceDataInfluenceIdDelete(influId string) *httpwrapper.Response {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdDelete: influId=%q", influId)
+func HandleApplicationDataInfluenceDataInfluenceIdPatch(request *httpwrapper.Request) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPatch")
 
-	deleteApplicationDataIndividualInfluenceDataFromDB(influId)
+	collName := "application.influenceData"
+	influenceId := request.Params["influenceId"]
+	trafficInfluDataPatch := request.Body.(models.TrafficInfluDataPatch)
 
-	return httpwrapper.NewResponse(http.StatusNoContent, nil, map[string]interface{}{})
+	response, status := ApplicationDataInfluenceDataInfluenceIdPatchProcedure(
+		collName, influenceId, &trafficInfluDataPatch)
+
+	if status == http.StatusOK || status == http.StatusNoContent {
+		return httpwrapper.NewResponse(status, nil, response)
+	} else if status == http.StatusNotFound {
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusNotFound,
+			Detail: "Resource not found",
+		}
+		return httpwrapper.NewResponse(status, nil, problemDetails)
+	}
+
+	problemDetails := &models.ProblemDetails{
+		Status: http.StatusInternalServerError,
+		Cause:  "UNSPECIFIED",
+	}
+	return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
 }
 
-func deleteApplicationDataIndividualInfluenceDataFromDB(influId string) {
-	filter := bson.M{"influenceId": influId}
-	deleteDataFromDB(APPDATA_INFLUDATA_DB_COLLECTION_NAME, filter)
-}
+func ApplicationDataInfluenceDataInfluenceIdPatchProcedure(
+	collName, influenceId string, request *models.TrafficInfluDataPatch) (
+	*models.TrafficInfluDataPatch, int,
+) {
+	filter := bson.M{"influenceId": influenceId}
 
-func HandleApplicationDataInfluenceDataInfluenceIdPatch(influID string,
-	trInfluDataPatch *models.TrafficInfluDataPatch,
-) *httpwrapper.Response {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPatch: influID=%q", influID)
-
-	response, status := patchApplicationDataIndividualInfluenceDataToDB(influID, trInfluDataPatch)
-
-	return httpwrapper.NewResponse(status, nil, response)
-}
-
-func patchApplicationDataIndividualInfluenceDataToDB(influID string,
-	trInfluDataPatch *models.TrafficInfluDataPatch,
-) (bson.M, int) {
-	filter := bson.M{"influenceId": influID}
-
-	oldData, pd := getDataFromDB(APPDATA_INFLUDATA_DB_COLLECTION_NAME, filter)
-	if pd != nil {
-		logger.DataRepoLog.Errorf("patchApplicationDataIndividualInfluenceDataToDB err: %s", pd.Detail)
+	mapData, err := mongoapi.RestfulAPIGetOne(collName, filter)
+	if err != nil {
+		logger.DataRepoLog.Errorf(err.Error())
+		return nil, http.StatusInternalServerError
+	}
+	var original *models.TrafficInfluData
+	if len(mapData) != 0 {
+		original = new(models.TrafficInfluData)
+		byteData, err := json.Marshal(mapData)
+		if err != nil {
+			logger.DataRepoLog.Errorf(err.Error())
+			return nil, http.StatusInternalServerError
+		}
+		err = json.Unmarshal(byteData, &original)
+		if err != nil {
+			logger.DataRepoLog.Errorf(err.Error())
+			return nil, http.StatusInternalServerError
+		}
+	} else {
 		return nil, http.StatusNotFound
 	}
 
-	trInfluData := models.TrafficInfluData{
-		UpPathChgNotifCorreId: trInfluDataPatch.UpPathChgNotifCorreId,
-		AppReloInd:            trInfluDataPatch.AppReloInd,
-		AfAppId:               oldData["afAppId"].(string),
-		Dnn:                   trInfluDataPatch.Dnn,
-		EthTrafficFilters:     trInfluDataPatch.EthTrafficFilters,
-		Snssai:                trInfluDataPatch.Snssai,
-		InterGroupId:          trInfluDataPatch.InternalGroupId,
-		Supi:                  trInfluDataPatch.Supi,
-		TrafficFilters:        trInfluDataPatch.TrafficFilters,
-		TrafficRoutes:         trInfluDataPatch.TrafficRoutes,
-		ValidStartTime:        trInfluDataPatch.ValidStartTime,
-		ValidEndTime:          trInfluDataPatch.ValidEndTime,
-		NwAreaInfo:            trInfluDataPatch.NwAreaInfo,
-		UpPathChgNotifUri:     trInfluDataPatch.UpPathChgNotifUri,
-	}
-	newData := util.ToBsonM(trInfluData)
-
-	// Add "influenceId" entry to DB
-	newData["influenceId"] = influID
-	if _, err := mongoapi.RestfulAPIPutOne(APPDATA_INFLUDATA_DB_COLLECTION_NAME, filter, newData); err != nil {
-		logger.DataRepoLog.Errorf("patchApplicationDataIndividualInfluenceDataToDB err: %+v", err)
-		return nil, http.StatusInternalServerError
-	}
-	// Roll back to origin data before return
-	delete(newData, "influenceId")
-
-	return newData, http.StatusOK
-}
-
-func HandleApplicationDataInfluenceDataInfluenceIdPut(influID string,
-	trInfluData *models.TrafficInfluData,
-) *httpwrapper.Response {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPut: influID=%q", influID)
-
-	response, status := putApplicationDataIndividualInfluenceDataToDB(influID, trInfluData)
-
-	return httpwrapper.NewResponse(status, nil, response)
-}
-
-func putApplicationDataIndividualInfluenceDataToDB(influID string,
-	trInfluData *models.TrafficInfluData,
-) (bson.M, int) {
-	filter := bson.M{"influenceId": influID}
-	data := util.ToBsonM(*trInfluData)
-
-	// Add "influenceId" entry to DB
-	data["influenceId"] = influID
-	existed, err := mongoapi.RestfulAPIPutOne(APPDATA_INFLUDATA_DB_COLLECTION_NAME, filter, data)
-	if err != nil {
-		logger.DataRepoLog.Errorf("putApplicationDataIndividualInfluenceDataToDB err: %+v", err)
-		return nil, http.StatusInternalServerError
+	patchTrafficInfluData := models.TrafficInfluData{
+		UpPathChgNotifCorreId: request.UpPathChgNotifCorreId,
+		AppReloInd:            request.AppReloInd,
+		AfAppId:               original.AfAppId,
+		Dnn:                   request.Dnn,
+		EthTrafficFilters:     request.EthTrafficFilters,
+		Snssai:                request.Snssai,
+		InterGroupId:          request.InternalGroupId,
+		Supi:                  request.Supi,
+		TrafficFilters:        request.TrafficFilters,
+		TrafficRoutes:         request.TrafficRoutes,
+		TraffCorreInd:         original.TraffCorreInd,
+		ValidStartTime:        request.ValidStartTime,
+		ValidEndTime:          request.ValidEndTime,
+		TempValidities:        original.TempValidities,
+		NwAreaInfo:            request.NwAreaInfo,
+		UpPathChgNotifUri:     request.UpPathChgNotifUri,
+		SubscribedEvents:      original.SubscribedEvents,
+		DnaiChgType:           original.DnaiChgType,
+		AfAckInd:              original.AfAckInd,
+		AddrPreserInd:         original.AddrPreserInd,
+		SupportedFeatures:     original.SupportedFeatures,
+		ResUri:                original.ResUri,
 	}
 
-	// Roll back to origin data before return
-	delete(data, "influenceId")
-
-	if existed {
-		return data, http.StatusOK
-	}
-	return data, http.StatusCreated
-}
-
-func HandleApplicationDataInfluenceDataSubsToNotifyGet(queryParams map[string][]string) *httpwrapper.Response {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyGet: queryParams=%#v", queryParams)
-
-	dnn := queryParams["dnn"]
-	snssai := queryParams["snssai"]
-	intGroupID := queryParams["internal-Group-Id"]
-	supi := queryParams["supi"]
-	if len(dnn) == 0 && len(snssai) == 0 && len(intGroupID) == 0 && len(supi) == 0 {
-		pd := util.ProblemDetailsMalformedReqSyntax("No query parameters")
-		return httpwrapper.NewResponse(int(pd.Status), nil, pd)
-	}
-	if len(dnn) > 1 {
-		pd := util.ProblemDetailsMalformedReqSyntax("Too many dnn query parameters")
-		return httpwrapper.NewResponse(int(pd.Status), nil, pd)
-	}
-	if len(snssai) > 1 {
-		pd := util.ProblemDetailsMalformedReqSyntax("Too many snssai query parameters")
-		return httpwrapper.NewResponse(int(pd.Status), nil, pd)
-	}
-	if len(intGroupID) > 1 {
-		pd := util.ProblemDetailsMalformedReqSyntax("Too many internal-Group-Id query parameters")
-		return httpwrapper.NewResponse(int(pd.Status), nil, pd)
-	}
-	if len(supi) > 1 {
-		pd := util.ProblemDetailsMalformedReqSyntax("Too many supi query parameters")
-		return httpwrapper.NewResponse(int(pd.Status), nil, pd)
-	}
-
-	response := getApplicationDataInfluenceDataSubsToNotifyfromDB(dnn, snssai, intGroupID, supi)
-
-	return httpwrapper.NewResponse(http.StatusOK, nil, response)
-}
-
-func getApplicationDataInfluenceDataSubsToNotifyfromDB(dnn, snssai, intGroupID,
-	supi []string,
-) []map[string]interface{} {
-	filter := bson.M{}
-	if len(dnn) != 0 {
-		filter["dnns"] = dnn[0]
-	}
-	if len(intGroupID) != 0 {
-		filter["internalGroupIds"] = intGroupID[0]
-	}
-	if len(supi) != 0 {
-		filter["supis"] = supi[0]
-	}
-	matchedSubs, err := mongoapi.RestfulAPIGetMany(APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME, filter)
-	if err != nil {
-		logger.DataRepoLog.Errorf("getApplicationDataInfluenceDataSubsToNotifyfromDB err: %+v", err)
-		return nil
-	}
-	if len(snssai) != 0 {
-		matchedSubs = filterDataBySnssais(snssai[0], matchedSubs)
-	}
-	for i := 0; i < len(matchedSubs); i++ {
-		// Delete "_id" entry which is auto-inserted by MongoDB
-		delete(matchedSubs[i], "_id")
-		// Delete "subscriptionId" entry which is added by us
-		delete(matchedSubs[i], "subscriptionId")
-	}
-	return matchedSubs
-}
-
-func filterDataBySnssais(snssaiValue string,
-	datas []map[string]interface{},
-) []map[string]interface{} {
-	var matchedDatas []map[string]interface{}
-	var filterSnssai models.Snssai
-	if err := json.Unmarshal([]byte(snssaiValue), &filterSnssai); err != nil {
-		logger.DataRepoLog.Warnln(err)
-	}
-	logger.DataRepoLog.Debugf("filterSnssai=%#v", filterSnssai)
-	for _, data := range datas {
-		var dataSnssais []models.Snssai
-		if err := json.Unmarshal(
-			util.PrimitiveAToByte(data["snssais"].(primitive.A)), &dataSnssais); err != nil {
-			logger.DataRepoLog.Warnln(err)
-			break
+	if reflect.DeepEqual(*original, patchTrafficInfluData) {
+		return nil, http.StatusNoContent
+	} else {
+		putData := util.ToBsonM(patchTrafficInfluData)
+		putData["influenceId"] = influenceId
+		if _, err := mongoapi.RestfulAPIPutOne(collName, filter, putData); err != nil {
+			return nil, http.StatusInternalServerError
 		}
-		logger.DataRepoLog.Debugf("dataSnssais=%#v", dataSnssais)
-		for _, v := range dataSnssais {
-			if v.Sd == filterSnssai.Sd && v.Sst == filterSnssai.Sst {
-				matchedDatas = append(matchedDatas, data)
-				break
+		// Notify the change of influence data
+		PreHandleInfluenceDataUpdateNotification(influenceId, original, &patchTrafficInfluData)
+		return request, http.StatusOK
+	}
+}
+
+func HandleApplicationDataInfluenceDataInfluenceIdPut(request *httpwrapper.Request) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPut")
+
+	collName := "applicationData.influenceData"
+	influenceId := request.Params["influenceId"]
+	trafficInfluData := request.Body.(models.TrafficInfluData)
+
+	response, problemDetails, status := ApplicationDataInfluenceDataInfluenceIdPutProcedure(
+		collName, influenceId, &trafficInfluData)
+	if status == http.StatusCreated {
+		// According to 3GPP TS 29.519 V16.5.0 clause 6.2.6.3.1
+		// Contain the URI of the newly created resource with `Location` key in the header
+		groupUri := udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR)
+		resourceUri := fmt.Sprintf("%s/application-data/influenceData/%s", groupUri, influenceId)
+		header := http.Header{
+			"Location": {resourceUri},
+		}
+		return httpwrapper.NewResponse(http.StatusCreated, header, response)
+	} else if status == http.StatusOK {
+		return httpwrapper.NewResponse(http.StatusOK, nil, response)
+	} else if status == http.StatusNoContent {
+		return httpwrapper.NewResponse(http.StatusNoContent, nil, nil)
+	} else if problemDetails != nil {
+		return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
+	}
+
+	problemDetails = &models.ProblemDetails{
+		Status: http.StatusInternalServerError,
+		Cause:  "UNSPECIFIED",
+	}
+	return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
+}
+
+func ApplicationDataInfluenceDataInfluenceIdPutProcedure(
+	collName, influenceId string, request *models.TrafficInfluData) (
+	*models.TrafficInfluData, *models.ProblemDetails, int,
+) {
+	putData := util.ToBsonM(*request)
+	putData["influenceId"] = influenceId
+	filter := bson.M{"influenceId": influenceId}
+
+	var original *models.TrafficInfluData
+
+	if mapData, err := mongoapi.RestfulAPIGetOne(collName, filter); err != nil {
+		logger.DataRepoLog.Errorf(err.Error())
+		problemDetails := &models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+		return nil, problemDetails, http.StatusInternalServerError
+	} else {
+		if len(mapData) != 0 {
+			original = new(models.TrafficInfluData)
+			byteData, err := json.Marshal(mapData)
+			if err != nil {
+				logger.DataRepoLog.Errorf(err.Error())
+				problemDetails := &models.ProblemDetails{
+					Status: http.StatusInternalServerError,
+					Detail: err.Error(),
+				}
+				return nil, problemDetails, http.StatusInternalServerError
+			}
+			err = json.Unmarshal(byteData, &original)
+			if err != nil {
+				logger.DataRepoLog.Errorf(err.Error())
+				problemDetails := &models.ProblemDetails{
+					Status: http.StatusInternalServerError,
+					Detail: err.Error(),
+				}
+				return nil, problemDetails, http.StatusInternalServerError
 			}
 		}
 	}
-	return matchedDatas
-}
 
-func HandleApplicationDataInfluenceDataSubsToNotifyPost(trInfluSub *models.TrafficInfluSub) *httpwrapper.Response {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyPost")
-	udrSelf := udr_context.UDR_Self()
-
-	newSubscID := strconv.FormatUint(udrSelf.NewAppDataInfluDataSubscriptionID(), 10)
-	response, status := postApplicationDataInfluenceDataSubsToNotifyToDB(newSubscID, trInfluSub)
-
-	/* Contains the URI of the newly created resource, according
-	   to the structure: {apiRoot}/application-data/influenceData/subs-to-notify/{subscID} */
-	locationHeader := fmt.Sprintf("%s/application-data/influenceData/subs-to-notify/%s",
-		udrSelf.GetIPv4GroupUri(udr_context.NUDR_DR), newSubscID)
-	logger.DataRepoLog.Infof("locationHeader:%q", locationHeader)
-	headers := http.Header{}
-	headers.Set("Location", locationHeader)
-	return httpwrapper.NewResponse(status, headers, response)
-}
-
-func postApplicationDataInfluenceDataSubsToNotifyToDB(subscID string,
-	trInfluSub *models.TrafficInfluSub,
-) (bson.M, int) {
-	filter := bson.M{"subscriptionId": subscID}
-	data := util.ToBsonM(*trInfluSub)
-
-	// Add "subscriptionId" entry to DB
-	data["subscriptionId"] = subscID
-	_, err := mongoapi.RestfulAPIPutOne(APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME, filter, data)
+	isExisted, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
 	if err != nil {
-		logger.DataRepoLog.Errorf("postApplicationDataInfluenceDataSubsToNotifyToDB err: %+v", err)
-		return nil, http.StatusInternalServerError
+		logger.DataRepoLog.Errorf("ApplicationDataInfluenceDataInfluenceIdPutProcedure err: %+v", err)
+		problemDetails := &models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+		}
+		return nil, problemDetails, http.StatusInternalServerError
 	}
-	// Revert back to origin data before return
-	delete(data, "subscriptionId")
-	return data, http.StatusCreated
+	if original == nil || !reflect.DeepEqual(*original, *request) {
+		// Notify the change of influence data
+		PreHandleInfluenceDataUpdateNotification(influenceId, original, request)
+	}
+
+	if isExisted {
+		return request, nil, http.StatusOK
+	} else {
+		return request, nil, http.StatusCreated
+	}
 }
 
-func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(subscID string) *httpwrapper.Response {
-	logger.DataRepoLog.Infof(
-		"Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete: subscID=%q", subscID)
+func HandleApplicationDataInfluenceDataSubsToNotifyGet(request *httpwrapper.Request) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyGet")
 
-	deleteApplicationDataIndividualInfluenceDataSubsToNotifyFromDB(subscID)
+	dnn := request.Query.Get("dnn")
+	internalGroupId := request.Query.Get("internal-Group-Id")
+	supi := request.Query.Get("supi")
 
-	return httpwrapper.NewResponse(http.StatusNoContent, nil, map[string]interface{}{})
-}
+	var snssai *models.Snssai
+	if request.Query.Get("snssai") != "" {
+		snssai = new(models.Snssai)
+		err := openapi.Deserialize(snssai, []byte(request.Query.Get("snssai")), "application/json")
+		if err != nil {
+			problemDetails := models.ProblemDetails{
+				Status: http.StatusBadRequest,
+				Detail: err.Error(),
+			}
+			return httpwrapper.NewResponse(http.StatusBadRequest, nil, problemDetails)
+		}
+	}
 
-func deleteApplicationDataIndividualInfluenceDataSubsToNotifyFromDB(subscID string) {
-	filter := bson.M{"subscriptionId": subscID}
-	deleteDataFromDB(APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME, filter)
-}
+	if dnn == "" && snssai == nil && internalGroupId == "" && supi == "" {
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusBadRequest,
+			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
+		}
+		return httpwrapper.NewResponse(http.StatusBadRequest, nil, problemDetails)
+	}
 
-func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(subscID string) *httpwrapper.Response {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet: subscID=%q", subscID)
+	rspData, problemDetails := ApplicationDataInfluenceDataSubsToNotifyGetProcedure(dnn, snssai, internalGroupId, supi)
 
-	response, problemDetails := getApplicationDataIndividualInfluenceDataSubsToNotifyFromDB(subscID)
-
-	if problemDetails != nil {
+	if problemDetails == nil {
+		return httpwrapper.NewResponse(http.StatusOK, nil, rspData)
+	} else {
 		return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
 	}
-	return httpwrapper.NewResponse(http.StatusOK, nil, response)
 }
 
-func getApplicationDataIndividualInfluenceDataSubsToNotifyFromDB(
-	subscID string,
-) (map[string]interface{}, *models.ProblemDetails) {
-	filter := bson.M{"subscriptionId": subscID}
-	data, pd := getDataFromDB(APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME, filter)
-	if pd != nil {
-		logger.DataRepoLog.Errorf("getApplicationDataIndividualInfluenceDataSubsToNotifyFromDB err: %s", pd.Detail)
-		return nil, pd
+func ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
+	dnn string, snssai *models.Snssai, internalGroupId, supi string) (
+	[]models.TrafficInfluSub, *models.ProblemDetails,
+) {
+	var response []models.TrafficInfluSub
+
+	udrSelf := udr_context.GetSelf()
+	udrSelf.InfluenceDataSubscriptions.Range(func(key, value interface{}) bool {
+		subs, ok := value.(*models.TrafficInfluSub)
+		if !ok {
+			logger.DataRepoLog.Errorf("Failed to load influence Data subscription ID [%+v]", key)
+			return true
+		} else if dnn != "" && !util.Contain(dnn, subs.Dnns) {
+			return true
+		} else if snssai != nil && !util.Contain(*snssai, subs.Snssais) {
+			return true
+		} else if internalGroupId != "" && !util.Contain(internalGroupId, subs.InternalGroupIds) {
+			return true
+		} else if supi != "" && !util.Contain(supi, subs.Supis) {
+			return true
+		} else {
+			response = append(response, *subs)
+		}
+		return true
+	})
+	return response, nil
+}
+
+func HandleApplicationDataInfluenceDataSubsToNotifyPost(
+	request *httpwrapper.Request,
+) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyPost")
+
+	requestMsg := request.Body.(models.TrafficInfluSub)
+
+	subscriptionId := udr_context.NewInfluenceDataSubscriptionId()
+
+	rspData, problemDetails := ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure(
+		subscriptionId, &requestMsg)
+
+	if rspData != nil {
+		header := http.Header{
+			"Location": {
+				fmt.Sprintf("%s/application-data/influenceData/subs-to-notify/%s",
+					udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), subscriptionId),
+			},
+		}
+		return httpwrapper.NewResponse(http.StatusCreated, header, rspData)
+	} else if problemDetails != nil {
+		return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
 	}
-	// Delete "subscriptionId" entry which is added by us
-	delete(data, "subscriptionId")
-	return data, nil
+
+	problemDetails = &models.ProblemDetails{
+		Status: http.StatusForbidden,
+		Cause:  "UNSPECIFIED",
+	}
+	return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
+}
+
+func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(
+	request *httpwrapper.Request,
+) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete")
+
+	subscriptionId := request.Params["subscriptionId"]
+
+	udrSelf := udr_context.GetSelf()
+
+	udrSelf.InfluenceDataSubscriptions.Delete(subscriptionId)
+
+	return httpwrapper.NewResponse(http.StatusNoContent, nil, nil)
+}
+
+func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(
+	request *httpwrapper.Request,
+) *httpwrapper.Response {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet")
+
+	subscriptionId := request.Params["subscriptionId"]
+
+	udrSelf := udr_context.GetSelf()
+
+	if subscription, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok {
+		return httpwrapper.NewResponse(http.StatusOK, nil, subscription)
+	} else {
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusNotFound,
+			Detail: "Resource not found",
+		}
+		return httpwrapper.NewResponse(http.StatusNotFound, nil, problemDetails)
+	}
 }
 
 func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(
-	subscID string, trInfluSub *models.TrafficInfluSub,
+	request *httpwrapper.Request,
 ) *httpwrapper.Response {
-	logger.DataRepoLog.Infof(
-		"Handle HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut: subscID=%q", subscID)
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptiondIdPut")
 
-	response, status := putApplicationDataIndividualInfluenceDataSubsToNotifyToDB(subscID, trInfluSub)
+	subscriptionId := request.Params["subscriptionId"]
+	requestMsg := request.Body.(models.TrafficInfluSub)
 
-	return httpwrapper.NewResponse(status, nil, response)
+	rspData, problemDetails := ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure(
+		subscriptionId, &requestMsg)
+
+	if rspData != nil {
+		return httpwrapper.NewResponse(http.StatusOK, nil, rspData)
+	} else if problemDetails == nil {
+		return httpwrapper.NewResponse(http.StatusNoContent, nil, nil)
+	} else {
+		return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
+	}
 }
 
-func putApplicationDataIndividualInfluenceDataSubsToNotifyToDB(subscID string,
-	trInfluSub *models.TrafficInfluSub,
-) (bson.M, int) {
-	filter := bson.M{"subscriptionId": subscID}
-	newData := util.ToBsonM(*trInfluSub)
+func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure(
+	subscriptionId string, request *models.TrafficInfluSub) (
+	*models.TrafficInfluSub, *models.ProblemDetails,
+) {
+	if len(request.Dnns) == 0 &&
+		len(request.Snssais) == 0 &&
+		len(request.InternalGroupIds) == 0 &&
+		len(request.Supis) == 0 {
+		return nil, &models.ProblemDetails{
+			Status: http.StatusBadRequest,
+			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
+		}
+	}
 
-	_, pd := getDataFromDB(APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME, filter)
-	if pd != nil {
-		logger.DataRepoLog.Errorf("putApplicationDataIndividualInfluenceDataSubsToNotifyToDB err: %s", pd.Detail)
-		return nil, http.StatusNotFound
+	if request.NotificationUri == "" {
+		return nil, &models.ProblemDetails{
+			Status: http.StatusBadRequest,
+			Detail: "Notification URI shall be provided",
+		}
 	}
-	// Add "subscriptionId" entry to DB
-	newData["subscriptionId"] = subscID
-	// Modify with new data
-	if _, err := mongoapi.RestfulAPIPutOne(APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME, filter, newData); err != nil {
-		logger.DataRepoLog.Errorf("putApplicationDataIndividualInfluenceDataSubsToNotifyToDB err: %+v", err)
-		return nil, http.StatusInternalServerError
+
+	udrSelf := udr_context.GetSelf()
+	if subs, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok && reflect.DeepEqual(*request, subs) {
+		return nil, nil
+	} else {
+		udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, request)
+		return request, nil
 	}
-	// Roll back to origin data before return
-	delete(newData, "subscriptionId")
-	return newData, http.StatusOK
 }
 
 func HandleApplicationDataPfdsAppIdDelete(appID string) *httpwrapper.Response {
@@ -1077,7 +1215,7 @@ func HandlePolicyDataSubsToNotifyPost(request *httpwrapper.Request) *httpwrapper
 }
 
 func PolicyDataSubsToNotifyPostProcedure(PolicyDataSubscription models.PolicyDataSubscription) string {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	newSubscriptionID := strconv.Itoa(udrSelf.PolicyDataSubscriptionIDGenerator)
 	udrSelf.PolicyDataSubscriptions[newSubscriptionID] = &PolicyDataSubscription
@@ -1106,7 +1244,7 @@ func HandlePolicyDataSubsToNotifySubsIdDelete(request *httpwrapper.Request) *htt
 }
 
 func PolicyDataSubsToNotifySubsIdDeleteProcedure(subsId string) (problemDetails *models.ProblemDetails) {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
 	if !ok {
 		return util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -1134,7 +1272,7 @@ func HandlePolicyDataSubsToNotifySubsIdPut(request *httpwrapper.Request) *httpwr
 func PolicyDataSubsToNotifySubsIdPutProcedure(subsId string,
 	policyDataSubscription models.PolicyDataSubscription,
 ) (*models.PolicyDataSubscription, *models.ProblemDetails) {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
 	if !ok {
 		return nil, util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -1558,7 +1696,7 @@ func PolicyDataUesUeIdUePolicySetPatchProcedure(collName string, ueId string,
 	}
 	if err := json.Unmarshal(util.MapToByte(uePolicySetBsonM), &uePolicySet); err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %+v", err)
-		return util.ProblemDetailsSystemFailure(err.Error())
+		return openapi.ProblemDetailsSystemFailure(err.Error())
 	}
 	PreHandlePolicyDataChangeNotification(ueId, "", uePolicySet)
 	return nil
@@ -1620,7 +1758,7 @@ func HandleCreateAMFSubscriptions(request *httpwrapper.Request) *httpwrapper.Res
 func CreateAMFSubscriptionsProcedure(subsId string, ueId string,
 	AmfSubscriptionInfo []models.AmfSubscriptionInfo,
 ) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -1652,7 +1790,7 @@ func HandleRemoveAmfSubscriptionsInfo(request *httpwrapper.Request) *httpwrapper
 }
 
 func RemoveAmfSubscriptionsInfoProcedure(subsId string, ueId string) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -1693,7 +1831,7 @@ func HandleModifyAmfSubscriptionInfo(request *httpwrapper.Request) *httpwrapper.
 func ModifyAmfSubscriptionInfoProcedure(ueId string, subsId string,
 	patchItem []models.PatchItem,
 ) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -1761,7 +1899,7 @@ func HandleGetAmfSubscriptionInfo(request *httpwrapper.Request) *httpwrapper.Res
 func GetAmfSubscriptionInfoProcedure(subsId string, ueId string) (*[]models.AmfSubscriptionInfo,
 	*models.ProblemDetails,
 ) {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -1825,7 +1963,7 @@ func HandleRemoveEeGroupSubscriptions(request *httpwrapper.Request) *httpwrapper
 }
 
 func RemoveEeGroupSubscriptionsProcedure(ueGroupId string, subsId string) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -1861,7 +1999,7 @@ func HandleUpdateEeGroupSubscriptions(request *httpwrapper.Request) *httpwrapper
 func UpdateEeGroupSubscriptionsProcedure(ueGroupId string, subsId string,
 	EeSubscription models.EeSubscription,
 ) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -1892,7 +2030,7 @@ func HandleCreateEeGroupSubscriptions(request *httpwrapper.Request) *httpwrapper
 }
 
 func CreateEeGroupSubscriptionsProcedure(ueGroupId string, EeSubscription models.EeSubscription) string {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
 	if !ok {
@@ -1910,7 +2048,7 @@ func CreateEeGroupSubscriptionsProcedure(ueGroupId string, EeSubscription models
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/nudr-dr/v1/subscription-data/group-data/{ueGroupId}/ee-subscriptions */
-	locationHeader := fmt.Sprintf("%s/nudr-dr/v1/subscription-data/group-data/%s/ee-subscriptions/%s",
+	locationHeader := fmt.Sprintf("%s"+factory.UdrDrResUriPrefix+"/subscription-data/group-data/%s/ee-subscriptions/%s",
 		udrSelf.GetIPv4GroupUri(udr_context.NUDR_DR), ueGroupId, newSubscriptionID)
 
 	return locationHeader
@@ -1934,7 +2072,7 @@ func HandleQueryEeGroupSubscriptions(request *httpwrapper.Request) *httpwrapper.
 }
 
 func QueryEeGroupSubscriptionsProcedure(ueGroupId string) ([]models.EeSubscription, *models.ProblemDetails) {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
 	if !ok {
@@ -1966,7 +2104,7 @@ func HandleRemoveeeSubscriptions(request *httpwrapper.Request) *httpwrapper.Resp
 }
 
 func RemoveeeSubscriptionsProcedure(ueId string, subsId string) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -2001,7 +2139,7 @@ func HandleUpdateEesubscriptions(request *httpwrapper.Request) *httpwrapper.Resp
 func UpdateEesubscriptionsProcedure(ueId string, subsId string,
 	EeSubscription models.EeSubscription,
 ) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -2032,7 +2170,7 @@ func HandleCreateEeSubscriptions(request *httpwrapper.Request) *httpwrapper.Resp
 }
 
 func CreateEeSubscriptionsProcedure(ueId string, EeSubscription models.EeSubscription) string {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -2075,7 +2213,7 @@ func HandleQueryeesubscriptions(request *httpwrapper.Request) *httpwrapper.Respo
 }
 
 func QueryeesubscriptionsProcedure(ueId string) ([]models.EeSubscription, *models.ProblemDetails) {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -2223,7 +2361,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 		if err := mapstructure.Decode(accessAndMobilitySubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure accessAndMobilitySubscriptionData decode err: %+v", err)
-			return nil, util.ProblemDetailsSystemFailure(err.Error())
+			return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 		}
 		provisionedDataSets.AmData = &tmp
 	}
@@ -2240,7 +2378,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 		if err := mapstructure.Decode(smfSelectionSubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smfSelectionSubscriptionData decode err: %+v", err)
-			return nil, util.ProblemDetailsSystemFailure(err.Error())
+			return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 		}
 		provisionedDataSets.SmfSelData = &tmp
 	}
@@ -2257,7 +2395,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 		if err := mapstructure.Decode(smsSubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smsSubscriptionData decode err: %+v", err)
-			return nil, util.ProblemDetailsSystemFailure(err.Error())
+			return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 		}
 		provisionedDataSets.SmsSubsData = &tmp
 	}
@@ -2267,14 +2405,14 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetMany(collName, filter)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get sessionManagementSubscriptionDatas err: %+v", err)
-		return nil, util.ProblemDetailsSystemFailure(err.Error())
+		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 	}
 	if sessionManagementSubscriptionDatas != nil {
 		var tmp []models.SessionManagementSubscriptionData
 		if err := mapstructure.Decode(sessionManagementSubscriptionDatas, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure sessionManagementSubscriptionDatas decode err: %+v", err)
-			return nil, util.ProblemDetailsSystemFailure(err.Error())
+			return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 		}
 		for _, smData := range tmp {
 			dnnConfigurations := smData.DnnConfigurations
@@ -2299,7 +2437,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 		var tmp models.TraceData
 		if err := mapstructure.Decode(traceData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure traceData decode err: %+v", err)
-			return nil, util.ProblemDetailsSystemFailure(err.Error())
+			return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 		}
 		provisionedDataSets.TraceData = &tmp
 	}
@@ -2317,7 +2455,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 		if err := mapstructure.Decode(smsManagementSubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smsManagementSubscriptionData decode err: %+v", err)
-			return nil, util.ProblemDetailsSystemFailure(err.Error())
+			return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 		}
 		provisionedDataSets.SmsMngData = &tmp
 	}
@@ -2470,7 +2608,7 @@ func HandleRemovesdmSubscriptions(request *httpwrapper.Request) *httpwrapper.Res
 }
 
 func RemovesdmSubscriptionsProcedure(ueId string, subsId string) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -2506,7 +2644,7 @@ func HandleUpdatesdmsubscriptions(request *httpwrapper.Request) *httpwrapper.Res
 func UpdatesdmsubscriptionsProcedure(ueId string, subsId string,
 	SdmSubscription models.SdmSubscription,
 ) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		return util.ProblemDetailsNotFound("USER_NOT_FOUND")
@@ -2541,7 +2679,7 @@ func HandleCreateSdmSubscriptions(request *httpwrapper.Request) *httpwrapper.Res
 func CreateSdmSubscriptionsProcedure(SdmSubscription models.SdmSubscription,
 	collName string, ueId string,
 ) (string, models.SdmSubscription) {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -2584,7 +2722,7 @@ func HandleQuerysdmsubscriptions(request *httpwrapper.Request) *httpwrapper.Resp
 }
 
 func QuerysdmsubscriptionsProcedure(ueId string) (*[]models.SdmSubscription, *models.ProblemDetails) {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
@@ -3020,7 +3158,7 @@ func HandlePostSubscriptionDataSubscriptions(request *httpwrapper.Request) *http
 func PostSubscriptionDataSubscriptionsProcedure(
 	SubscriptionDataSubscriptions models.SubscriptionDataSubscriptions,
 ) string {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	newSubscriptionID := strconv.Itoa(udrSelf.SubscriptionDataSubscriptionIDGenerator)
 	udrSelf.SubscriptionDataSubscriptions[newSubscriptionID] = &SubscriptionDataSubscriptions
@@ -3049,7 +3187,7 @@ func HandleRemovesubscriptionDataSubscriptions(request *httpwrapper.Request) *ht
 }
 
 func RemovesubscriptionDataSubscriptionsProcedure(subsId string) *models.ProblemDetails {
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	_, ok := udrSelf.SubscriptionDataSubscriptions[subsId]
 	if !ok {
 		return util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")

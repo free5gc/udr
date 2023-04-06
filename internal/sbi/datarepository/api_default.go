@@ -30,7 +30,7 @@ func sendResponse(c *gin.Context, rsp *httpwrapper.Response) {
 	serializedBody, err := openapi.Serialize(rsp.Body, "application/json")
 	if err != nil {
 		logger.DataRepoLog.Errorf("Serialize Response Body error: %+v", err)
-		pd := util.ProblemDetailsSystemFailure(err.Error())
+		pd := openapi.ProblemDetailsSystemFailure(err.Error())
 		c.JSON(http.StatusInternalServerError, pd)
 	} else {
 		c.Data(rsp.Status, "application/json", serializedBody)
@@ -41,7 +41,7 @@ func getDataFromRequestBody(c *gin.Context, data interface{}) error {
 	reqBody, err := c.GetRawData()
 	if err != nil {
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		pd := util.ProblemDetailsSystemFailure(err.Error())
+		pd := openapi.ProblemDetailsSystemFailure(err.Error())
 		c.JSON(http.StatusInternalServerError, pd)
 		return err
 	}
@@ -54,94 +54,6 @@ func getDataFromRequestBody(c *gin.Context, data interface{}) error {
 		return err
 	}
 	return err
-}
-
-// HTTPApplicationDataInfluenceDataGet -
-func HTTPApplicationDataInfluenceDataGet(c *gin.Context) {
-	queryParams := c.Request.URL.Query()
-	rsp := producer.HandleApplicationDataInfluenceDataGet(queryParams)
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataInfluenceIdDelete -
-func HTTPApplicationDataInfluenceDataInfluenceIdDelete(c *gin.Context) {
-	rsp := producer.HandleApplicationDataInfluenceDataInfluenceIdDelete(c.Params.ByName("influenceId"))
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataInfluenceIdPatch -
-func HTTPApplicationDataInfluenceDataInfluenceIdPatch(c *gin.Context) {
-	var trInfluDataPatch models.TrafficInfluDataPatch
-
-	if err := getDataFromRequestBody(c, &trInfluDataPatch); err != nil {
-		return
-	}
-
-	rsp := producer.HandleApplicationDataInfluenceDataInfluenceIdPatch(c.Params.ByName("influenceId"),
-		&trInfluDataPatch)
-
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataInfluenceIdPut -
-func HTTPApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context) {
-	var trInfluData models.TrafficInfluData
-
-	if err := getDataFromRequestBody(c, &trInfluData); err != nil {
-		return
-	}
-
-	rsp := producer.HandleApplicationDataInfluenceDataInfluenceIdPut(c.Params.ByName("influenceId"), &trInfluData)
-
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataSubsToNotifyGet -
-func HTTPApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Context) {
-	queryParams := c.Request.URL.Query()
-	rsp := producer.HandleApplicationDataInfluenceDataSubsToNotifyGet(queryParams)
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataSubsToNotifyPost -
-func HTTPApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Context) {
-	var trInfluSub models.TrafficInfluSub
-
-	if err := getDataFromRequestBody(c, &trInfluSub); err != nil {
-		return
-	}
-
-	rsp := producer.HandleApplicationDataInfluenceDataSubsToNotifyPost(&trInfluSub)
-
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
-func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
-	rsp := producer.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(
-		c.Params.ByName("subscriptionId"))
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet -
-func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
-	rsp := producer.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(
-		c.Params.ByName("subscriptionId"))
-	sendResponse(c, rsp)
-}
-
-// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut -
-func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
-	var trInfluSub models.TrafficInfluSub
-
-	if err := getDataFromRequestBody(c, &trInfluSub); err != nil {
-		return
-	}
-
-	rsp := producer.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(
-		c.Params.ByName("subscriptionId"), &trInfluSub)
-
-	sendResponse(c, rsp)
 }
 
 // HTTPApplicationDataPfdsAppIdDelete -

@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/pkg/factory"
 	logger_util "github.com/free5gc/util/logger"
 )
 
@@ -106,22 +107,20 @@ func eeMsgDispatchHandlerFunc(c *gin.Context) {
 	c.String(http.StatusMethodNotAllowed, "Method Not Allowed")
 }
 
-// Handler to distinguish "subs-to-notify" from ":influenceId".
-func appInfluDataMsgDispatchHandlerFunc(c *gin.Context) {
-	influID := c.Param("influenceId")
-	for _, route := range appInfluDataRoutes {
-		if route.Method == c.Request.Method {
-			if influID == "subs-to-notify" {
-				if strings.Contains(route.Pattern, "subs-to-notify") {
-					route.HandlerFunc(c)
-					return
-				}
-			} else {
-				if !strings.Contains(route.Pattern, "subs-to-notify") {
-					route.HandlerFunc(c)
-					return
-				}
-			}
+func appMsgDispatchHandlerFunc(c *gin.Context) {
+	subsToNotify := c.Param("influenceId")
+	for _, route := range appRoutes {
+		if subsToNotify == "subs-to-notify" &&
+			strings.Contains(route.Pattern, "subs-to-notify") &&
+			route.Method == c.Request.Method {
+			route.HandlerFunc(c)
+			return
+		}
+		if subsToNotify != "subs-to-notify" &&
+			!strings.Contains(route.Pattern, "subs-to-notify") &&
+			route.Method == c.Request.Method {
+			route.HandlerFunc(c)
+			return
 		}
 	}
 	c.String(http.StatusMethodNotAllowed, "Method Not Allowed")
@@ -146,7 +145,7 @@ func expoMsgDispatchHandlerFunc(c *gin.Context) {
 }
 
 func AddService(engine *gin.Engine) *gin.RouterGroup {
-	group := engine.Group("/nudr-dr/v1")
+	group := engine.Group(factory.UdrDrResUriPrefix)
 
 	for _, route := range routes {
 		switch route.Method {
@@ -182,9 +181,8 @@ func AddService(engine *gin.Engine) *gin.RouterGroup {
 	 * Only can use '/application-data/influenceData/:influenceId' pattern and
 	 * use a dispatch handler to distinguish "subs-to-notify" from ":influenceId".
 	 */
-	appInfluDataPattern := "/application-data/influenceData/:influenceId"
-	group.Any(appInfluDataPattern, appInfluDataMsgDispatchHandlerFunc)
-
+	appPattern := "/application-data/influenceData/:influenceId"
+	group.Any(appPattern, appMsgDispatchHandlerFunc)
 	expoPatternShort := "/exposure-data/:ueId/:subId"
 	group.Any(expoPatternShort, expoMsgDispatchHandlerFunc)
 
@@ -197,6 +195,36 @@ func AddService(engine *gin.Engine) *gin.RouterGroup {
 // Index is the index handler.
 func Index(c *gin.Context) {
 	c.String(http.StatusOK, "Hello World!")
+}
+
+// HandleAppDataInfluDataSubsToNotifyConflictDelete filters invalid requested resource on subs-to-notify DELETE
+func HandleAppDataInfluDataSubsToNotifyConflictDelete(c *gin.Context) {
+	influenceId := c.Param("influenceId")
+	if influenceId == "subs-to-notify" {
+		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c)
+		return
+	}
+	c.String(http.StatusNotFound, "404 page not found")
+}
+
+// HandleAppDataInfluDataSubsToNotifyConflictGet filters invalid requested resource on subs-to-notify GET
+func HandleAppDataInfluDataSubsToNotifyConflictGet(c *gin.Context) {
+	influenceId := c.Param("influenceId")
+	if influenceId == "subs-to-notify" {
+		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c)
+		return
+	}
+	c.String(http.StatusNotFound, "404 page not found")
+}
+
+// HandleAppDataInfluDataSubsToNotifyConflictPut filters invalid requested resource on subs-to-notify PUT
+func HandleAppDataInfluDataSubsToNotifyConflictPut(c *gin.Context) {
+	influenceId := c.Param("influenceId")
+	if influenceId == "subs-to-notify" {
+		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c)
+		return
+	}
+	c.String(http.StatusNotFound, "404 page not found")
 }
 
 var routes = Routes{
@@ -316,21 +344,24 @@ var routes = Routes{
 		"HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete",
 		strings.ToUpper("Delete"),
 		"/application-data/influenceData/:influenceId/:subscriptionId",
-		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
+		HandleAppDataInfluDataSubsToNotifyConflictDelete,
+		// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
 	},
 
 	{
 		"HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet",
 		strings.ToUpper("Get"),
 		"/application-data/influenceData/:influenceId/:subscriptionId",
-		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
+		HandleAppDataInfluDataSubsToNotifyConflictGet,
+		// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
 	},
 
 	{
 		"HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut",
 		strings.ToUpper("Put"),
 		"/application-data/influenceData/:influenceId/:subscriptionId",
-		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
+		HandleAppDataInfluDataSubsToNotifyConflictPut,
+		// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
 	},
 
 	{
@@ -877,7 +908,7 @@ var expoRoutes = Routes{
 	},
 }
 
-var appInfluDataRoutes = Routes{
+var appRoutes = Routes{
 	{
 		"HTTPApplicationDataInfluenceDataSubsToNotifyGet",
 		strings.ToUpper("Get"),
@@ -911,19 +942,5 @@ var appInfluDataRoutes = Routes{
 		strings.ToUpper("Put"),
 		"/application-data/influenceData/:influenceId",
 		HTTPApplicationDataInfluenceDataInfluenceIdPut,
-	},
-
-	{
-		"HTTPApplicationDataInfluenceDataSubsToNotifyGet",
-		strings.ToUpper("Get"),
-		"/application-data/influenceData/:influenceId",
-		HTTPApplicationDataInfluenceDataSubsToNotifyGet,
-	},
-
-	{
-		"HTTPApplicationDataInfluenceDataSubsToNotifyPost",
-		strings.ToUpper("Post"),
-		"/application-data/influenceData/:influenceId",
-		HTTPApplicationDataInfluenceDataSubsToNotifyPost,
 	},
 }
