@@ -8,6 +8,7 @@ import (
 	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/util"
 )
 
 func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
@@ -18,7 +19,7 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 		}
 	}()
 
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 	configuration := Nudr_DataRepository.NewConfiguration()
 	client := Nudr_DataRepository.NewAPIClient(configuration)
 
@@ -33,11 +34,9 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 			httpResponse, err := client.DataChangeNotifyCallbackDocumentApi.OnDataChangeNotify(context.TODO(),
 				onDataChangeNotifyUrl, dataChangeNotify)
 			if err != nil {
-				if httpResponse == nil {
-					logger.HttpLog.Errorln(err.Error())
-				} else if err.Error() != httpResponse.Status {
-					logger.HttpLog.Errorln(err.Error())
-				}
+				logger.HttpLog.Errorln(err.Error())
+			} else if httpResponse == nil {
+				logger.HttpLog.Errorln("Empty HTTP response")
 			}
 		}
 	}
@@ -51,21 +50,82 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 		}
 	}()
 
-	udrSelf := udr_context.UDR_Self()
+	udrSelf := udr_context.GetSelf()
 
 	for _, policyDataSubscription := range udrSelf.PolicyDataSubscriptions {
 		policyDataChangeNotificationUrl := policyDataSubscription.NotificationUri
 
 		configuration := Nudr_DataRepository.NewConfiguration()
 		client := Nudr_DataRepository.NewAPIClient(configuration)
-		httpResponse, err := client.PolicyDataChangeNotificationCallbackDocumentApi.PolicyDataChangeNotification(
+		httpResponse, err := client.PolicyDataChangeNotifyCallbackDocumentApi.PolicyDataChangeNotify(
 			context.TODO(), policyDataChangeNotificationUrl, policyDataChangeNotification)
 		if err != nil {
-			if httpResponse == nil {
-				logger.HttpLog.Errorln(err.Error())
-			} else if err.Error() != httpResponse.Status {
-				logger.HttpLog.Errorln(err.Error())
-			}
+			logger.HttpLog.Errorln(err.Error())
+		} else if httpResponse == nil {
+			logger.HttpLog.Errorln("Empty HTTP response")
 		}
 	}
+}
+
+func SendInfluenceDataUpdateNotification(resUri string, original, modified *models.TrafficInfluData) {
+	udrSelf := udr_context.GetSelf()
+
+	configuration := Nudr_DataRepository.NewConfiguration()
+	client := Nudr_DataRepository.NewAPIClient(configuration)
+
+	var trafficInfluDataNotif models.TrafficInfluDataNotif
+	trafficInfluDataNotif.ResUri = resUri
+	udrSelf.InfluenceDataSubscriptions.Range(func(key, value interface{}) bool {
+		influenceDataSubscription, ok := value.(*models.TrafficInfluSub)
+		if !ok {
+			logger.HttpLog.Errorf("Failed to load influenceData subscription ID [%+v]", key)
+			return true
+		}
+		influenceDataChangeNotificationUrl := influenceDataSubscription.NotificationUri
+
+		// Check if the modified data is subscribed
+		// If positive, send notification about the update
+		if checkInfluenceDataSubscription(modified, influenceDataSubscription) {
+			logger.HttpLog.Tracef("Send notification about update of influence data")
+			trafficInfluDataNotif.TrafficInfluData = modified
+			httpResponse, err := client.InfluenceDataUpdateNotifyCallbackDocumentApi.InfluenceDataChangeNotify(context.TODO(),
+				influenceDataChangeNotificationUrl, []models.TrafficInfluDataNotif{trafficInfluDataNotif})
+			if err != nil {
+				logger.HttpLog.Errorln(err.Error())
+			} else if httpResponse == nil {
+				logger.HttpLog.Errorln("Empty HTTP response")
+			}
+		} else if checkInfluenceDataSubscription(original, influenceDataSubscription) {
+			// If the modified data is not subscribed or nil, check if the original data is subscribed
+			// If positive, send notification about the removal
+			logger.HttpLog.Tracef("Send notification about removal of influence data")
+			trafficInfluDataNotif.TrafficInfluData = nil
+			httpResponse, err := client.InfluenceDataUpdateNotifyCallbackDocumentApi.InfluenceDataChangeNotify(context.TODO(),
+				influenceDataChangeNotificationUrl, []models.TrafficInfluDataNotif{trafficInfluDataNotif})
+			if err != nil {
+				logger.HttpLog.Errorln(err.Error())
+			} else if httpResponse == nil {
+				logger.HttpLog.Errorln("Empty HTTP response")
+			}
+		}
+		return true
+	})
+}
+
+func checkInfluenceDataSubscription(data *models.TrafficInfluData, sub *models.TrafficInfluSub) bool {
+	if data == nil || sub == nil {
+		return false
+	}
+	if data.Dnn != "" && !util.Contain(data.Dnn, sub.Dnns) {
+		return false
+	} else if data.Snssai != nil && !util.Contain(*data.Snssai, sub.Snssais) {
+		return false
+	} else if data.InterGroupId != "AnyUE" {
+		if data.InterGroupId != "" && !util.Contain(data.InterGroupId, sub.InternalGroupIds) {
+			return false
+		} else if data.Supi != "" && !util.Contain(data.Supi, sub.Supis) {
+			return false
+		}
+	}
+	return true
 }

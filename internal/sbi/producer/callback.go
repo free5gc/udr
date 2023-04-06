@@ -1,7 +1,10 @@
 package producer
 
 import (
+	"fmt"
+
 	"github.com/free5gc/openapi/models"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/sbi/producer/callback"
 )
 
@@ -60,4 +63,11 @@ func PreHandlePolicyDataChangeNotification(ueId string, dataId string, value int
 	}
 
 	go callback.SendPolicyDataChangeNotification(policyDataChangeNotification)
+}
+
+func PreHandleInfluenceDataUpdateNotification(influenceId string, original, modified *models.TrafficInfluData) {
+	resUri := fmt.Sprintf("%s/application-data/influenceData/%s",
+		udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), influenceId)
+
+	go callback.SendInfluenceDataUpdateNotification(resUri, original, modified)
 }

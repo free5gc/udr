@@ -1,27 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime/debug"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/urfave/cli"
 
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/udr/internal/util"
-	udr_service "github.com/free5gc/udr/pkg/service"
+	"github.com/free5gc/udr/pkg/factory"
+	"github.com/free5gc/udr/pkg/service"
+	logger_util "github.com/free5gc/util/logger"
 	"github.com/free5gc/util/version"
 )
 
-var UDR = &udr_service.UDR{}
+var UDR *service.UdrApp
 
 func main() {
 	defer func() {
 		if p := recover(); p != nil {
 			// Print stack for panic to log. Fatalf() will let program exit.
-			logger.AppLog.Fatalf("panic: %v\n%s", p, string(debug.Stack()))
+			logger.MainLog.Fatalf("panic: %v\n%s", p, string(debug.Stack()))
 		}
 	}()
 
@@ -29,57 +28,64 @@ func main() {
 	app.Name = "udr"
 	app.Usage = "5G Unified Data Repository (UDR)"
 	app.Action = action
-	app.Flags = UDR.GetCliCmd()
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "config, c",
+			Usage: "Load configuration from `FILE`",
+		},
+		cli.StringSliceFlag{
+			Name:  "log, l",
+			Usage: "Output NF log to `FILE`",
+		},
+	}
 	if err := app.Run(os.Args); err != nil {
-		fmt.Printf("UDR Run error: %v\n", err)
+		logger.MainLog.Errorf("UDR Run error: %v\n", err)
 	}
 }
 
-func action(c *cli.Context) error {
-	if err := initLogFile(c.String("log"), c.String("log5gc")); err != nil {
-		logger.AppLog.Errorf("%+v", err)
+func action(cliCtx *cli.Context) error {
+	tlsKeyLogPath, err := initLogFile(cliCtx.StringSlice("log"))
+	if err != nil {
 		return err
 	}
 
-	if err := UDR.Initialize(c); err != nil {
-		switch errType := err.(type) {
-		case govalidator.Errors:
-			validErrs := err.(govalidator.Errors).Errors()
-			for _, validErr := range validErrs {
-				logger.CfgLog.Errorf("%+v", validErr)
-			}
-		default:
-			logger.CfgLog.Errorf("%+v", errType)
-		}
-		logger.CfgLog.Errorf("[-- PLEASE REFER TO SAMPLE CONFIG FILE COMMENTS --]")
-		return fmt.Errorf("Failed to initialize !!")
+	logger.MainLog.Infoln("UDR version: ", version.GetVersion())
+	cfg, err := factory.ReadConfig(cliCtx.String("config"))
+	if err != nil {
+		return err
 	}
+	factory.UdrConfig = cfg
+	udr, err := service.NewApp(cfg)
+	if err != nil {
+		return err
+	}
+	UDR = udr
 
-	logger.AppLog.Infoln(c.App.Name)
-	logger.AppLog.Infoln("UDR version: ", version.GetVersion())
-
-	UDR.Start()
+	udr.Start(tlsKeyLogPath)
 
 	return nil
 }
 
-func initLogFile(logNfPath, log5gcPath string) error {
-	UDR.KeyLogPath = util.UdrDefaultKeyLogPath
+func initLogFile(logNfPath []string) (string, error) {
+	logTlsKeyPath := ""
 
-	if err := logger.LogFileHook(logNfPath, log5gcPath); err != nil {
-		return err
-	}
+	for _, path := range logNfPath {
+		if err := logger_util.LogFileHook(logger.Log, path); err != nil {
+			return "", err
+		}
+		if logTlsKeyPath != "" {
+			continue
+		}
 
-	if logNfPath != "" {
-		nfDir, _ := filepath.Split(logNfPath)
+		nfDir, _ := filepath.Split(path)
 		tmpDir := filepath.Join(nfDir, "key")
 		if err := os.MkdirAll(tmpDir, 0o775); err != nil {
 			logger.InitLog.Errorf("Make directory %s failed: %+v", tmpDir, err)
-			return err
+			return "", err
 		}
-		_, name := filepath.Split(util.UdrDefaultKeyLogPath)
-		UDR.KeyLogPath = filepath.Join(tmpDir, name)
+		_, name := filepath.Split(factory.UdrDefaultTLSKeyLogPath)
+		logTlsKeyPath = filepath.Join(tmpDir, name)
 	}
 
-	return nil
+	return logTlsKeyPath, nil
 }
