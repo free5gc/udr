@@ -15,6 +15,10 @@ import (
 )
 
 func TestUDR_GetSubs2Notify_GetBeforeCreateingOne(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
+
 	server := setupHttpServer()
 	reqUri := factory.UdrDrResUriPrefix + "/application-data/influenceData/subs-to-notify?dnn=internet"
 
@@ -30,6 +34,10 @@ func TestUDR_GetSubs2Notify_GetBeforeCreateingOne(t *testing.T) {
 }
 
 func TestUDR_GetSubs2Notify_CreateThenGet(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
+
 	server := setupHttpServer()
 	baseUri := factory.UdrDrResUriPrefix + "/application-data/influenceData/subs-to-notify"
 	reqUri := baseUri

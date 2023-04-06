@@ -94,6 +94,10 @@ func delUri(t *testing.T, baseUri, extUri string) *httptest.ResponseRecorder {
 }
 
 func TestUDR_InfluData_GetBeforeCreateing(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
+
 	server := setupHttpServer()
 	reqUri := factory.UdrDrResUriPrefix + "/application-data/influenceData"
 
@@ -110,6 +114,10 @@ func TestUDR_InfluData_GetBeforeCreateing(t *testing.T) {
 }
 
 func TestUDR_InfluData_CreateThenGet(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
+
 	// PUT, PATCH, DELETE
 	setupMongoDB(t)
 	server := setupHttpServer()
