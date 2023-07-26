@@ -627,6 +627,8 @@ func ApplicationDataInfluenceDataInfluenceIdPatchProcedure(
 		return nil, http.StatusNotFound
 	}
 
+	request.Snssai.Sd = strings.ToLower(request.Snssai.Sd)
+
 	patchTrafficInfluData := models.TrafficInfluData{
 		UpPathChgNotifCorreId: request.UpPathChgNotifCorreId,
 		AppReloInd:            request.AppReloInd,
@@ -703,6 +705,7 @@ func ApplicationDataInfluenceDataInfluenceIdPutProcedure(
 	collName, influenceId string, request *models.TrafficInfluData) (
 	*models.TrafficInfluData, *models.ProblemDetails, int,
 ) {
+	request.Snssai.Sd = strings.ToLower(request.Snssai.Sd)
 	putData := util.ToBsonM(*request)
 	putData["influenceId"] = influenceId
 	filter := bson.M{"influenceId": influenceId}
@@ -1418,6 +1421,7 @@ func HandlePolicyDataUesUeIdSmDataGet(request *httpwrapper.Request) *httpwrapper
 	if err != nil {
 		logger.DataRepoLog.Warnln(err)
 	}
+	sNssai.Sd = strings.ToLower(sNssai.Sd)
 	dnn := request.Query.Get("dnn")
 
 	response, problemDetails := PolicyDataUesUeIdSmDataGetProcedure(collName, ueId, sNssai, dnn)
@@ -1435,7 +1439,7 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 	dnn string,
 ) (*models.SmPolicyData, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId}
-
+	snssai.Sd = strings.ToLower(snssai.Sd)
 	if !reflect.DeepEqual(snssai, models.Snssai{}) {
 		filter["smPolicySnssaiData."+util.SnssaiModelsToHex(snssai)] = bson.M{"$exists": true}
 	}
@@ -1455,14 +1459,17 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 		logger.DataRepoLog.Warnln(err)
 	}
 	tmpSmPolicySnssaiData := make(map[string]models.SmPolicySnssaiData)
-	for snssai, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
+	for sstSd, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
+		sstSd = strings.ToLower(sstSd)
+		snssaiData.Snssai.Sd = strings.ToLower(snssaiData.Snssai.Sd)
+
 		tmpSmPolicyDnnData := make(map[string]models.SmPolicyDnnData)
 		for escapedDnn, dnnData := range snssaiData.SmPolicyDnnData {
 			dnn := util.UnescapeDnn(escapedDnn)
 			tmpSmPolicyDnnData[dnn] = dnnData
 		}
 		snssaiData.SmPolicyDnnData = tmpSmPolicyDnnData
-		tmpSmPolicySnssaiData[snssai] = snssaiData
+		tmpSmPolicySnssaiData[sstSd] = snssaiData
 	}
 	smPolicyDataResp.SmPolicySnssaiData = tmpSmPolicySnssaiData
 	filter = bson.M{"ueId": ueId}
@@ -1481,6 +1488,7 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 			smPolicyDataResp.UmData[element.LimitId] = element
 		}
 	}
+
 	return &smPolicyDataResp, nil
 }
 
@@ -1508,6 +1516,9 @@ func PolicyDataUesUeIdSmDataPatchProcedure(collName string, ueId string,
 	for k, usageMonData := range UsageMonData {
 		limitId := k
 		filterTmp := bson.M{"ueId": ueId, "limitId": limitId}
+		for i := range usageMonData.Scopes {
+			usageMonData.Scopes[i].Snssai.Sd = strings.ToLower(usageMonData.Scopes[i].Snssai.Sd)
+		}
 		if err := mongoapi.RestfulAPIMergePatch(collName, filterTmp, util.ToBsonM(usageMonData)); err != nil {
 			successAll = false
 		} else {
@@ -1520,6 +1531,11 @@ func PolicyDataUesUeIdSmDataPatchProcedure(collName string, ueId string,
 			if err := json.Unmarshal(util.MapToByte(usageMonDataBsonM), &usageMonData); err != nil {
 				logger.DataRepoLog.Warnln(err)
 			}
+
+			for i, scope := range usageMonData.Scopes {
+				usageMonData.Scopes[i].Snssai.Sd = strings.ToLower(scope.Snssai.Sd)
+			}
+
 			PreHandlePolicyDataChangeNotification(ueId, limitId, usageMonData)
 		}
 	}
@@ -1534,6 +1550,15 @@ func PolicyDataUesUeIdSmDataPatchProcedure(collName string, ueId string,
 		if err := json.Unmarshal(util.MapToByte(smPolicyDataBsonM), &smPolicyData); err != nil {
 			logger.DataRepoLog.Warnln(err)
 		}
+
+		newSmPolicySnssaiData := make(map[string]models.SmPolicySnssaiData)
+		for sstSd, snssaiData := range smPolicyData.SmPolicySnssaiData {
+			sstSd = strings.ToLower(sstSd)
+			snssaiData.Snssai.Sd = strings.ToLower(snssaiData.Snssai.Sd)
+			newSmPolicySnssaiData[sstSd] = snssaiData
+		}
+
+		smPolicyData.SmPolicySnssaiData = newSmPolicySnssaiData
 
 		collName := "policyData.ues.smData.usageMonData"
 		filter := bson.M{"ueId": ueId}
@@ -1552,6 +1577,7 @@ func PolicyDataUesUeIdSmDataPatchProcedure(collName string, ueId string,
 				smPolicyData.UmData[element.LimitId] = element
 			}
 		}
+
 		PreHandlePolicyDataChangeNotification(ueId, "", smPolicyData)
 		return nil
 	}
@@ -1608,6 +1634,9 @@ func HandlePolicyDataUesUeIdSmDataUsageMonIdPut(request *httpwrapper.Request) *h
 	ueId := request.Params["ueId"]
 	usageMonId := request.Params["usageMonId"]
 	usageMonData := request.Body.(models.UsageMonData)
+	for i, scope := range usageMonData.Scopes {
+		usageMonData.Scopes[i].Snssai.Sd = strings.ToLower(scope.Snssai.Sd)
+	}
 	collName := "policyData.ues.smData.usageMonData"
 
 	response := PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(collName, ueId, usageMonId, usageMonData)
@@ -1618,6 +1647,10 @@ func HandlePolicyDataUesUeIdSmDataUsageMonIdPut(request *httpwrapper.Request) *h
 func PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(collName string, ueId string, usageMonId string,
 	usageMonData models.UsageMonData,
 ) *bson.M {
+	for i, scope := range usageMonData.Scopes {
+		usageMonData.Scopes[i].Snssai.Sd = strings.ToLower(scope.Snssai.Sd)
+	}
+
 	putData := util.ToBsonM(usageMonData)
 	putData["ueId"] = ueId
 	putData["usageMonId"] = usageMonId
@@ -2415,6 +2448,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 			return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 		}
 		for _, smData := range tmp {
+			smData.SingleNssai.Sd = strings.ToLower(smData.SingleNssai.Sd)
 			dnnConfigurations := smData.DnnConfigurations
 			tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
 			for escapedDnn, dnnConf := range dnnConfigurations {
@@ -2751,6 +2785,8 @@ func HandleQuerySmData(request *httpwrapper.Request) *httpwrapper.Response {
 		logger.DataRepoLog.Warnln(err)
 	}
 
+	singleNssai.Sd = strings.ToLower(singleNssai.Sd)
+
 	dnn := request.Query.Get("dnn")
 	response := QuerySmDataProcedure(collName, ueId, servingPlmnId, singleNssai, dnn)
 
@@ -2760,6 +2796,7 @@ func HandleQuerySmData(request *httpwrapper.Request) *httpwrapper.Response {
 func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
 	singleNssai models.Snssai, dnn string,
 ) *[]map[string]interface{} {
+	singleNssai.Sd = strings.ToLower(singleNssai.Sd)
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 
 	if !reflect.DeepEqual(singleNssai, models.Snssai{}) {
@@ -2788,6 +2825,7 @@ func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
 			logger.DataRepoLog.Debug("SmData Unmarshal error")
 			continue
 		}
+		tmpSmData.SingleNssai.Sd = strings.ToLower(tmpSmData.SingleNssai.Sd)
 		dnnConfigurations := tmpSmData.DnnConfigurations
 		tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
 		for escapedDnn, dnnConf := range dnnConfigurations {
@@ -2825,6 +2863,7 @@ func HandleCreateSmfContextNon3gpp(request *httpwrapper.Request) *httpwrapper.Re
 func CreateSmfContextNon3gppProcedure(SmfRegistration models.SmfRegistration,
 	collName string, ueId string, pduSessionIdInt int64,
 ) (bson.M, int) {
+	SmfRegistration.SingleNssai.Sd = strings.ToLower(SmfRegistration.SingleNssai.Sd)
 	putData := util.ToBsonM(SmfRegistration)
 	putData["ueId"] = ueId
 	putData["pduSessionId"] = int32(pduSessionIdInt)
