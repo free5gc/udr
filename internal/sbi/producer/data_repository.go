@@ -41,6 +41,21 @@ func getDataFromDB(collName string, filter bson.M) (map[string]interface{}, *mod
 	return data, nil
 }
 
+func getDataFromDBWithArg(collName string, filter bson.M, strength int) (
+	map[string]interface{}, *models.ProblemDetails,
+) {
+	data, err := mongoapi.RestfulAPIGetOneWithArg(collName, filter, strength)
+	if err != nil {
+		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
+	}
+	if data == nil {
+		logger.ConsumerLog.Errorln("filter: ", filter)
+		return nil, util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+	}
+
+	return data, nil
+}
+
 func deleteDataFromDB(collName string, filter bson.M) {
 	if err := mongoapi.RestfulAPIDeleteOne(collName, filter); err != nil {
 		logger.DataRepoLog.Errorf("deleteDataFromDB: %+v", err)
@@ -1436,17 +1451,26 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 ) (*models.SmPolicyData, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId}
 
-	if !reflect.DeepEqual(snssai, models.Snssai{}) {
-		filter["smPolicySnssaiData."+util.SnssaiModelsToHex(snssai)] = bson.M{"$exists": true}
-	}
-	if !reflect.DeepEqual(snssai, models.Snssai{}) && dnn != "" {
-		dnnKey := util.EscapeDnn(dnn)
-		filter["smPolicySnssaiData."+util.SnssaiModelsToHex(snssai)+".smPolicyDnnData."+dnnKey] = bson.M{"$exists": true}
-	}
-
-	smPolicyData, pd := getDataFromDB(collName, filter)
+	smPolicyData, pd := getDataFromDBWithArg(collName, filter, 2)
 	if pd != nil {
 		return nil, pd
+	}
+
+	hex_snssai := util.SnssaiModelsToHex(snssai)
+	found := false
+	for snssai_str, val := range smPolicyData["smPolicySnssaiData"].(map[string]interface{}) {
+		if strings.EqualFold(snssai_str, hex_snssai) {
+			for _, dnn_map := range val.(map[string]interface{})["smPolicyDnnData"].(map[string]interface{}) {
+				for _, dnn_string := range dnn_map.(map[string]interface{}) {
+					if strings.Compare(dnn_string.(string), util.EscapeDnn(dnn)) == 0 {
+						found = true
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		return nil, util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 	}
 
 	var smPolicyDataResp models.SmPolicyData
@@ -2402,7 +2426,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 
 	collName = "subscriptionData.provisionedData.smData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetMany(collName, filter)
+	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, 2)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get sessionManagementSubscriptionDatas err: %+v", err)
 		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
@@ -2776,7 +2800,7 @@ func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
 		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
 	}
 
-	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetMany(collName, filter)
+	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, 2)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmDataProcedure err: %+v", err)
 		return nil
@@ -2913,7 +2937,7 @@ func HandleQuerySmfRegList(request *httpwrapper.Request) *httpwrapper.Response {
 
 func QuerySmfRegListProcedure(collName string, ueId string) *[]map[string]interface{} {
 	filter := bson.M{"ueId": ueId}
-	smfRegList, err := mongoapi.RestfulAPIGetMany(collName, filter)
+	smfRegList, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, 2)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmfRegListProcedure err: %+v", err)
 		return nil
