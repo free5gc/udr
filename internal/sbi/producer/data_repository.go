@@ -2441,7 +2441,8 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 
 	collName = "subscriptionData.provisionedData.smData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+	sessionManagementSubscriptionDatas, err := mongoapi.
+		RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get sessionManagementSubscriptionDatas err: %+v", err)
 		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
@@ -2815,7 +2816,8 @@ func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
 		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
 	}
 
-	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+	sessionManagementSubscriptionDatas, err := mongoapi.
+		RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmDataProcedure err: %+v", err)
 		return nil
