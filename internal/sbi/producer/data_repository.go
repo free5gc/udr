@@ -1451,22 +1451,37 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 ) (*models.SmPolicyData, *models.ProblemDetails) {
 	filter := bson.M{"ueId": ueId}
 
-	smPolicyData, pd := getDataFromDBWithArg(collName, filter, 2)
+	smPolicyData, pd := getDataFromDBWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if pd != nil {
 		return nil, pd
 	}
 
 	hex_snssai := util.SnssaiModelsToHex(snssai)
 	found := false
-	for snssai_str, val := range smPolicyData["smPolicySnssaiData"].(map[string]interface{}) {
-		if strings.EqualFold(snssai_str, hex_snssai) {
-			for _, dnn_map := range val.(map[string]interface{})["smPolicyDnnData"].(map[string]interface{}) {
-				for _, dnn_string := range dnn_map.(map[string]interface{}) {
-					if strings.Compare(dnn_string.(string), util.EscapeDnn(dnn)) == 0 {
-						found = true
-					}
-				}
+	smPolicySnssaiDatas, ok := smPolicyData["smPolicySnssaiData"].(map[string]interface{})
+	if !ok {
+		return nil, util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+	}
+	for snssai, v := range smPolicySnssaiDatas {
+		if !strings.EqualFold(snssai, hex_snssai) {
+			continue
+		}
+		smPolicySnssaiData, ok := v.(map[string]interface{})
+		if !ok {
+			break
+		}
+		smPolicyDnnDatas, ok := smPolicySnssaiData["smPolicyDnnData"].(map[string]interface{})
+		if !ok {
+			break
+		}
+		for dnn := range smPolicyDnnDatas {
+			if strings.EqualFold(dnn, util.EscapeDnn(dnn)) {
+				found = true
+				break
 			}
+		}
+		if found {
+			break
 		}
 	}
 	if !found {
@@ -2426,7 +2441,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 
 	collName = "subscriptionData.provisionedData.smData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, 2)
+	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get sessionManagementSubscriptionDatas err: %+v", err)
 		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
@@ -2800,7 +2815,7 @@ func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
 		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
 	}
 
-	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, 2)
+	sessionManagementSubscriptionDatas, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmDataProcedure err: %+v", err)
 		return nil
@@ -2937,7 +2952,7 @@ func HandleQuerySmfRegList(request *httpwrapper.Request) *httpwrapper.Response {
 
 func QuerySmfRegListProcedure(collName string, ueId string) *[]map[string]interface{} {
 	filter := bson.M{"ueId": ueId}
-	smfRegList, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, 2)
+	smfRegList, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmfRegListProcedure err: %+v", err)
 		return nil
