@@ -1462,8 +1462,8 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 	if !ok {
 		return nil, util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 	}
-	for snssai, v := range smPolicySnssaiDatas {
-		if !strings.EqualFold(snssai, hex_snssai) {
+	for cmpSnssai, v := range smPolicySnssaiDatas {
+		if !strings.EqualFold(cmpSnssai, hex_snssai) {
 			continue
 		}
 		smPolicySnssaiData, ok := v.(map[string]interface{})
@@ -1474,12 +1474,14 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 		if !ok {
 			break
 		}
-		for dnn := range smPolicyDnnDatas {
-			if strings.EqualFold(dnn, util.EscapeDnn(dnn)) {
+
+		for cmpDnn := range smPolicyDnnDatas {
+			if strings.EqualFold(cmpDnn, util.EscapeDnn(dnn)) {
 				found = true
 				break
 			}
 		}
+
 		if found {
 			break
 		}
@@ -1520,6 +1522,7 @@ func PolicyDataUesUeIdSmDataGetProcedure(collName string, ueId string, snssai mo
 			smPolicyDataResp.UmData[element.LimitId] = element
 		}
 	}
+
 	return &smPolicyDataResp, nil
 }
 
