@@ -82,6 +82,13 @@ type Sbi struct {
 	BindingIPv4 string `yaml:"bindingIPv4,omitempty" valid:"host,optional"` // IP used to run the server in the node.
 	Port        int    `yaml:"port" valid:"port,required"`
 	Tls         *Tls   `yaml:"tls,omitempty" valid:"optional"`
+	OAuth       bool   `yaml:"oauth,omitempty" valid:"optional"`
+}
+
+func (c *Config) GetOAuth() bool {
+	c.RLock()
+	defer c.RUnlock()
+	return c.Configuration.Sbi.OAuth
 }
 
 type Tls struct {

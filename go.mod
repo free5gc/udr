@@ -3,6 +3,7 @@ module github.com/free5gc/udr
 go 1.17
 
 require (
+	github.com/antihax/optional v1.0.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/evanphx/json-patch v0.5.2
 	github.com/free5gc/openapi v1.0.7-0.20231112094355-a96c3450377e
@@ -14,11 +15,11 @@ require (
 	github.com/stretchr/testify v1.8.3
 	github.com/urfave/cli v1.22.5
 	go.mongodb.org/mongo-driver v1.8.4
+	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	github.com/antihax/optional v1.0.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
