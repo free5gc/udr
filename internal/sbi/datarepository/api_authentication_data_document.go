@@ -23,6 +23,11 @@ import (
 
 // HTTPModifyAuthentication - modify the authentication subscription data of a UE
 func HTTPModifyAuthentication(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	var patchItemArray []models.PatchItem
 
 	requestBody, err := c.GetRawData()
@@ -72,6 +77,11 @@ func HTTPModifyAuthentication(c *gin.Context) {
 
 // HTTPQueryAuthSubsData - Retrieves the authentication subscription data of a UE
 func HTTPQueryAuthSubsData(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 

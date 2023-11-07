@@ -23,6 +23,11 @@ import (
 
 // HTTPCreateSdmSubscriptions - Create individual sdm subscription
 func HTTPCreateSdmSubscriptions(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	var sdmSubscription models.SdmSubscription
 
 	requestBody, err := c.GetRawData()
@@ -75,6 +80,11 @@ func HTTPCreateSdmSubscriptions(c *gin.Context) {
 
 // HTTPQuerysdmsubscriptions - Retrieves the sdm subscriptions of a UE
 func HTTPQuerysdmsubscriptions(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 

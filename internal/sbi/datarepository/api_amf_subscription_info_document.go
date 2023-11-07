@@ -23,6 +23,11 @@ import (
 
 // HTTPModifyAmfSubscriptionInfo - modify the AMF Subscription Info
 func HTTPModifyAmfSubscriptionInfo(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	var patchItemArray []models.PatchItem
 
 	requestBody, err := c.GetRawData()

@@ -23,6 +23,11 @@ import (
 
 // HTTPApplicationDataInfluenceDataGet -
 func HTTPApplicationDataInfluenceDataGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Query["influence-Ids"] = c.QueryArray("influence-Ids")
 	req.Query["dnns"] = c.QueryArray("dnns")

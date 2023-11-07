@@ -9,7 +9,6 @@ import (
 	"sync"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/pkg/errors"
 
 	"github.com/free5gc/udr/internal/logger"
 )
@@ -111,9 +110,9 @@ func (c *Config) VerifyServiceAllowType(nfTypeName string, serviceName string) e
 		}
 	}
 	if serviceFound {
-		return errors.Errorf("Not allow NF Type: %+v", nfTypeName)
+		return fmt.Errorf("Not allow NF Type: %+v", nfTypeName)
 	}
-	return errors.Errorf("ServiceName not found: %+v", serviceName)
+	return fmt.Errorf("ServiceName not found: %+v", serviceName)
 }
 
 func (c *Config) GetNrfCertPemPath() string {

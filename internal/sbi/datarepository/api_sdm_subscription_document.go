@@ -23,6 +23,11 @@ import (
 
 // HTTPRemovesdmSubscriptions - Deletes a sdmsubscriptions
 func HTTPRemovesdmSubscriptions(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["subsId"] = c.Params.ByName("subsId")
@@ -45,6 +50,11 @@ func HTTPRemovesdmSubscriptions(c *gin.Context) {
 
 // HTTPUpdatesdmsubscriptions - Stores an individual sdm subscriptions of a UE
 func HTTPUpdatesdmsubscriptions(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	var sdmSubscription models.SdmSubscription
 
 	requestBody, err := c.GetRawData()
