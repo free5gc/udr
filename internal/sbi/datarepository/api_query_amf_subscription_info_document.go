@@ -23,6 +23,11 @@ import (
 
 // HTTPGetAmfSubscriptionInfo - Retrieve AMF subscription Info
 func HTTPGetAmfSubscriptionInfo(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["subsId"] = c.Params.ByName("subsId")

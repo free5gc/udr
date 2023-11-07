@@ -23,6 +23,11 @@ import (
 
 // HTTPQueryAmData - Retrieves the access and mobility subscription data of a UE
 func HTTPQueryAmData(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["servingPlmnId"] = c.Params.ByName("servingPlmnId")

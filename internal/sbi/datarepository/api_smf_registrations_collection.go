@@ -23,6 +23,11 @@ import (
 
 // HTTPQuerySmfRegList - Retrieves the SMF registration list of a UE
 func HTTPQuerySmfRegList(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 

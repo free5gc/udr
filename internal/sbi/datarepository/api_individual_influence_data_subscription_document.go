@@ -23,6 +23,11 @@ import (
 
 // HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
 func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	// New HTTP request
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["subscriptionId"] = c.Params.ByName("subscriptionId")
@@ -51,6 +56,11 @@ func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Con
 
 // HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet -
 func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	// New HTTP request
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["subscriptionId"] = c.Params.ByName("subscriptionId")
@@ -75,6 +85,11 @@ func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Contex
 
 // HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut -
 func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	// Get HTTP request body
 	requestBody, err := c.GetRawData()
 	if err != nil {

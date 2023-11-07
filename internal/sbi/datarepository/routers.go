@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/util"
 	"github.com/free5gc/udr/pkg/factory"
 	logger_util "github.com/free5gc/util/logger"
 )
@@ -43,6 +44,11 @@ func NewRouter() *gin.Engine {
 }
 
 func subMsgShortDispatchHandlerFunc(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	op := c.Param("ueId")
 	for _, route := range subShortRoutes {
 		if strings.Contains(route.Pattern, op) && route.Method == c.Request.Method {
@@ -54,6 +60,11 @@ func subMsgShortDispatchHandlerFunc(c *gin.Context) {
 }
 
 func subMsgDispatchHandlerFunc(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	op := c.Param("servingPlmnId")
 	subsToNotify := c.Param("ueId")
 	for _, route := range subRoutes {
@@ -74,6 +85,11 @@ func subMsgDispatchHandlerFunc(c *gin.Context) {
 }
 
 func eeMsgShortDispatchHandlerFunc(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	groupData := c.Param("ueId")
 	contextData := c.Param("servingPlmnId")
 	for _, route := range eeShortRoutes {
@@ -91,6 +107,11 @@ func eeMsgShortDispatchHandlerFunc(c *gin.Context) {
 }
 
 func eeMsgDispatchHandlerFunc(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	groupData := c.Param("ueId")
 	contextData := c.Param("servingPlmnId")
 	for _, route := range eeRoutes {
@@ -108,6 +129,11 @@ func eeMsgDispatchHandlerFunc(c *gin.Context) {
 }
 
 func appMsgDispatchHandlerFunc(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	subsToNotify := c.Param("influenceId")
 	for _, route := range appRoutes {
 		if subsToNotify == "subs-to-notify" &&
@@ -127,6 +153,11 @@ func appMsgDispatchHandlerFunc(c *gin.Context) {
 }
 
 func expoMsgDispatchHandlerFunc(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	subsToNotify := c.Param("ueId")
 	op := c.Param("subId")
 	for _, route := range expoRoutes {
@@ -199,6 +230,11 @@ func Index(c *gin.Context) {
 
 // HandleAppDataInfluDataSubsToNotifyConflictDelete filters invalid requested resource on subs-to-notify DELETE
 func HandleAppDataInfluDataSubsToNotifyConflictDelete(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	influenceId := c.Param("influenceId")
 	if influenceId == "subs-to-notify" {
 		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c)
@@ -209,6 +245,11 @@ func HandleAppDataInfluDataSubsToNotifyConflictDelete(c *gin.Context) {
 
 // HandleAppDataInfluDataSubsToNotifyConflictGet filters invalid requested resource on subs-to-notify GET
 func HandleAppDataInfluDataSubsToNotifyConflictGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	influenceId := c.Param("influenceId")
 	if influenceId == "subs-to-notify" {
 		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c)
@@ -219,12 +260,21 @@ func HandleAppDataInfluDataSubsToNotifyConflictGet(c *gin.Context) {
 
 // HandleAppDataInfluDataSubsToNotifyConflictPut filters invalid requested resource on subs-to-notify PUT
 func HandleAppDataInfluDataSubsToNotifyConflictPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	influenceId := c.Param("influenceId")
 	if influenceId == "subs-to-notify" {
 		HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c)
 		return
 	}
 	c.String(http.StatusNotFound, "404 page not found")
+}
+
+func authorizationCheck(c *gin.Context) error {
+	return util.AuthorizationCheck(c, "nudr-dr")
 }
 
 var routes = Routes{

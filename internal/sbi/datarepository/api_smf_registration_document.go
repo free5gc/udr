@@ -23,6 +23,11 @@ import (
 
 // HTTPCreateSmfContextNon3gpp - To create an individual SMF context data of a UE in the UDR
 func HTTPCreateSmfContextNon3gpp(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	var smfRegistration models.SmfRegistration
 
 	requestBody, err := c.GetRawData()
@@ -72,6 +77,11 @@ func HTTPCreateSmfContextNon3gpp(c *gin.Context) {
 
 // HTTPDeleteSmfContext - To remove an individual SMF context data of a UE the UDR
 func HTTPDeleteSmfContext(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["pduSessionId"] = c.Params.ByName("pduSessionId")
@@ -94,6 +104,11 @@ func HTTPDeleteSmfContext(c *gin.Context) {
 
 // HTTPQuerySmfRegistration - Retrieves the individual SMF registration of a UE
 func HTTPQuerySmfRegistration(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["pduSessionId"] = c.Params.ByName("pduSessionId")

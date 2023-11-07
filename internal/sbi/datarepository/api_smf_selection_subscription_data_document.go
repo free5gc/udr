@@ -23,6 +23,11 @@ import (
 
 // HTTPQuerySmfSelectData - Retrieves the SMF selection subscription data of a UE
 func HTTPQuerySmfSelectData(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["servingPlmnId"] = c.Params.ByName("servingPlmnId")

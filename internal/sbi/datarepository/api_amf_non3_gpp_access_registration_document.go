@@ -23,6 +23,11 @@ import (
 
 // HTTPAmfContextNon3gpp - To modify the AMF context data of a UE using non 3gpp access in the UDR
 func HTTPAmfContextNon3gpp(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	var patchItemArray []models.PatchItem
 
 	requestBody, err := c.GetRawData()
@@ -72,6 +77,11 @@ func HTTPAmfContextNon3gpp(c *gin.Context) {
 
 // HTTPCreateAmfContextNon3gpp - To store the AMF context data of a UE using non-3gpp access in the UDR
 func HTTPCreateAmfContextNon3gpp(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	var amfNon3GppAccessRegistration models.AmfNon3GppAccessRegistration
 
 	requestBody, err := c.GetRawData()
@@ -121,6 +131,11 @@ func HTTPCreateAmfContextNon3gpp(c *gin.Context) {
 
 // HTTPQueryAmfContextNon3gpp - Retrieves the AMF context data of a UE using non-3gpp access
 func HTTPQueryAmfContextNon3gpp(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
