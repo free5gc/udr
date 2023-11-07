@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/pkg/errors"
 
 	"github.com/free5gc/udr/internal/logger"
 )
@@ -54,6 +55,11 @@ const (
 	UDR_DEFAULT_PORT_INT = 8000
 )
 
+type ServiceList struct {
+	ServiceName    string   `yaml:"serviceName" valid:"required"`
+	AllowedNfTypes []string `yaml:"allowedNfTypes,omitempty" valid:"required"`
+}
+
 type Configuration struct {
 	Sbi        *Sbi     `yaml:"sbi" valid:"required"`
 	Mongodb    *Mongodb `yaml:"mongodb" valid:"required"`
@@ -83,6 +89,37 @@ type Sbi struct {
 	Port        int    `yaml:"port" valid:"port,required"`
 	Tls         *Tls   `yaml:"tls,omitempty" valid:"optional"`
 	OAuth       bool   `yaml:"oauth,omitempty" valid:"optional"`
+}
+
+func (c *Config) VerifyServiceAllowType(nfTypeName string, serviceName string) error {
+	c.RLock()
+	defer c.RUnlock()
+
+	serviceFound := false
+	for _, service := range c.Configuration.ServiceList {
+		if service.ServiceName == serviceName {
+			serviceFound = true
+			for _, allowNf := range service.AllowedNfTypes {
+				if nfTypeName == "All" {
+					return nil
+				}
+				if nfTypeName == allowNf {
+					return nil
+				}
+			}
+			break
+		}
+	}
+	if serviceFound {
+		return errors.Errorf("Not allow NF Type: %+v", nfTypeName)
+	}
+	return errors.Errorf("ServiceName not found: %+v", serviceName)
+}
+
+func (c *Config) GetNrfCertPemPath() string {
+	c.RLock()
+	defer c.RUnlock()
+	return c.Configuration.NrfCertPemPath
 }
 
 func (c *Config) GetOAuth() bool {
