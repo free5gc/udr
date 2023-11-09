@@ -60,6 +60,17 @@ func BuildNFInstance(context *udr_context.UDRContext) models.NfProfile {
 		},
 	}
 
+	for _, service := range config.Configuration.ServiceList {
+		if service.ServiceName == string(models.ServiceName_NUDR_DR) {
+			if len(service.AllowedNfTypes) != 0 {
+				allowedNfTypes := make([]models.NfType, len(service.AllowedNfTypes))
+				for idx, name := range service.AllowedNfTypes {
+					allowedNfTypes[idx] = models.NfType(name)
+				}
+				(*profile.NfServices)[0].AllowedNfTypes = allowedNfTypes
+			}
+		}
+	}
 	// TODO: finish the Udr Info
 	return profile
 }
