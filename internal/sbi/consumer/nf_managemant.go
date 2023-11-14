@@ -73,7 +73,7 @@ func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfil
 	var retrieveNfInstanceId string
 
 	for {
-		_, res, err := client.NFInstanceIDDocumentApi.RegisterNFInstance(context.TODO(), nfInstanceId, profile)
+		nf, res, err := client.NFInstanceIDDocumentApi.RegisterNFInstance(context.TODO(), nfInstanceId, profile)
 		if err != nil || res == nil {
 			// TODO : add log
 			fmt.Println(fmt.Errorf("UDR register to NRF Error[%s]", err.Error()))
@@ -95,6 +95,7 @@ func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfil
 			resourceUri := res.Header.Get("Location")
 			resouceNrfUri = resourceUri[:strings.Index(resourceUri, "/nnrf-nfm/")]
 			retrieveNfInstanceId = resourceUri[strings.LastIndex(resourceUri, "/")+1:]
+			udr_context.GetSelf().OAuth2Required = nf.CustomInfo["oauth2"].(bool)
 			return resouceNrfUri, retrieveNfInstanceId, err
 		} else {
 			fmt.Println("handler returned wrong status code", status)
@@ -106,6 +107,11 @@ func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfil
 func SendDeregisterNFInstance() (problemDetails *models.ProblemDetails, err error) {
 	logger.ConsumerLog.Infof("Send Deregister NFInstance")
 
+	ctx, pd, err := GetTokenCtx("nnrf-nfm", "NRF")
+	if err != nil {
+		return pd, err
+	}
+
 	udrSelf := udr_context.GetSelf()
 	// Set client and set url
 	configuration := Nnrf_NFManagement.NewConfiguration()
@@ -114,7 +120,7 @@ func SendDeregisterNFInstance() (problemDetails *models.ProblemDetails, err erro
 
 	var res *http.Response
 
-	res, err = client.NFInstanceIDDocumentApi.DeregisterNFInstance(context.Background(), udrSelf.NfId)
+	res, err = client.NFInstanceIDDocumentApi.DeregisterNFInstance(ctx, udrSelf.NfId)
 	if err == nil {
 		return
 	} else if res != nil {

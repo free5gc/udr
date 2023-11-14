@@ -56,6 +56,7 @@ type UDRContext struct {
 	InfluenceDataSubscriptions              sync.Map
 	appDataInfluDataSubscriptionIdGenerator uint64
 	mtx                                     sync.RWMutex
+	OAuth2Required                          bool
 }
 
 type UESubsData struct {
