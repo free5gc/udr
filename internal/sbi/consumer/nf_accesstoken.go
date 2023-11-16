@@ -12,7 +12,7 @@ import (
 
 func GetTokenCtx(scope, targetNF string) (context.Context, *models.ProblemDetails, error) {
 	if udr_context.GetSelf().OAuth2Required {
-		logger.ConsumerLog.Infof("GetToekenCtx")
+		logger.ConsumerLog.Debugln("GetToekenCtx")
 		udrSelf := udr_context.GetSelf()
 		tok, pd, err := oauth.SendAccTokenReq(udrSelf.NfId, models.NfType_UDR, scope, targetNF, udrSelf.NrfUri)
 		if err != nil {
