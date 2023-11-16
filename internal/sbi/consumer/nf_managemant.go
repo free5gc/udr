@@ -95,7 +95,12 @@ func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfil
 			resourceUri := res.Header.Get("Location")
 			resouceNrfUri = resourceUri[:strings.Index(resourceUri, "/nnrf-nfm/")]
 			retrieveNfInstanceId = resourceUri[strings.LastIndex(resourceUri, "/")+1:]
-			udr_context.GetSelf().OAuth2Required = nf.CustomInfo["oauth2"].(bool)
+			oauth2 := nf.CustomInfo["oauth2"].(bool)
+			udr_context.GetSelf().OAuth2Required = oauth2
+			logger.MainLog.Infoln("OAuth2 setting receive from NRF:", oauth2)
+			if oauth2 && udr_context.GetSelf().NrfCerPem == "" {
+				logger.CfgLog.Error("OAuth2 enable but no nrfCerPem provided in config.")
+			}
 			return resouceNrfUri, retrieveNfInstanceId, err
 		} else {
 			fmt.Println("handler returned wrong status code", status)
@@ -122,7 +127,7 @@ func SendDeregisterNFInstance() (problemDetails *models.ProblemDetails, err erro
 
 	res, err = client.NFInstanceIDDocumentApi.DeregisterNFInstance(ctx, udrSelf.NfId)
 	if err == nil {
-		return
+		return nil, err
 	} else if res != nil {
 		defer func() {
 			if rspCloseErr := res.Body.Close(); rspCloseErr != nil {
@@ -131,12 +136,12 @@ func SendDeregisterNFInstance() (problemDetails *models.ProblemDetails, err erro
 		}()
 
 		if res.Status != err.Error() {
-			return
+			return nil, err
 		}
 		problem := err.(openapi.GenericOpenAPIError).Model().(models.ProblemDetails)
 		problemDetails = &problem
 	} else {
 		err = openapi.ReportError("server no response")
 	}
-	return
+	return problemDetails, err
 }

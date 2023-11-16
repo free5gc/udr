@@ -55,9 +55,10 @@ const (
 )
 
 type Configuration struct {
-	Sbi     *Sbi     `yaml:"sbi" valid:"required"`
-	Mongodb *Mongodb `yaml:"mongodb" valid:"required"`
-	NrfUri  string   `yaml:"nrfUri" valid:"url,required"`
+	Sbi       *Sbi     `yaml:"sbi" valid:"required"`
+	Mongodb   *Mongodb `yaml:"mongodb" valid:"required"`
+	NrfUri    string   `yaml:"nrfUri" valid:"url,required"`
+	NrfCerPem string   `yaml:"nrfCerPem,omitempty" valid:"type(string),minstringlength(1),optional"`
 }
 
 type Logger struct {
