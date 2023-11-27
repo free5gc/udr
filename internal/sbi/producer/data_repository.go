@@ -44,7 +44,7 @@ func getDataFromDB(collName string, filter bson.M) (map[string]interface{}, *mod
 func getDataFromDBWithArg(collName string, filter bson.M, strength int) (
 	map[string]interface{}, *models.ProblemDetails,
 ) {
-	data, err := mongoapi.RestfulAPIGetOneWithArg(collName, filter, strength)
+	data, err := mongoapi.RestfulAPIGetOne(collName, filter, strength)
 	if err != nil {
 		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
 	}
@@ -2445,7 +2445,7 @@ func QueryProvisionedDataProcedure(ueId string, servingPlmnId string,
 	collName = "subscriptionData.provisionedData.smData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 	sessionManagementSubscriptionDatas, err := mongoapi.
-		RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+		RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get sessionManagementSubscriptionDatas err: %+v", err)
 		return nil, openapi.ProblemDetailsSystemFailure(err.Error())
@@ -2820,7 +2820,7 @@ func QuerySmDataProcedure(collName string, ueId string, servingPlmnId string,
 	}
 
 	sessionManagementSubscriptionDatas, err := mongoapi.
-		RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+		RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmDataProcedure err: %+v", err)
 		return nil
@@ -2957,7 +2957,7 @@ func HandleQuerySmfRegList(request *httpwrapper.Request) *httpwrapper.Response {
 
 func QuerySmfRegListProcedure(collName string, ueId string) *[]map[string]interface{} {
 	filter := bson.M{"ueId": ueId}
-	smfRegList, err := mongoapi.RestfulAPIGetManyWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+	smfRegList, err := mongoapi.RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmfRegListProcedure err: %+v", err)
 		return nil
