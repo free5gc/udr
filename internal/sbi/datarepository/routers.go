@@ -15,8 +15,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi/oauth"
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/util"
 	"github.com/free5gc/udr/pkg/factory"
 	logger_util "github.com/free5gc/util/logger"
 )
@@ -274,15 +274,7 @@ func HandleAppDataInfluDataSubsToNotifyConflictPut(c *gin.Context) {
 }
 
 func authorizationCheck(c *gin.Context) error {
-	if factory.UdrConfig.GetOAuth() {
-		oauth_err := oauth.VerifyOAuth(c.Request.Header.Get("Authorization"), "nudr-dr",
-			factory.UdrConfig.GetNrfCerPem())
-		if oauth_err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": oauth_err.Error()})
-			return oauth_err
-		}
-	}
-	return nil
+	return util.AuthorizationCheck(c, "nudr-dr")
 }
 
 var routes = Routes{
