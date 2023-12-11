@@ -44,7 +44,7 @@ type UDRContext struct {
 	HttpIPv6Address                         string
 	NfId                                    string
 	NrfUri                                  string
-	NrfCerPem                               string
+	NrfCertPem                              string
 	EeSubscriptionIDGenerator               int
 	SdmSubscriptionIDGenerator              int
 	SubscriptionDataSubscriptionIDGenerator int
@@ -136,8 +136,8 @@ func InitUdrContext(context *UDRContext) {
 		logger.UtilLog.Warn("NRF Uri is empty! Using localhost as NRF IPv4 address.")
 		context.NrfUri = fmt.Sprintf("%s://%s:%d", context.UriScheme, "127.0.0.1", 29510)
 	}
-	if configuration.NrfCerPem != "" {
-		context.NrfCerPem = configuration.NrfCerPem
+	if configuration.NrfCertPem != "" {
+		context.NrfCertPem = configuration.NrfCertPem
 	}
 }
 
