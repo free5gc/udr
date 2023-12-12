@@ -54,11 +54,6 @@ const (
 	UDR_DEFAULT_PORT_INT = 8000
 )
 
-type ServiceList struct {
-	ServiceName    string   `yaml:"serviceName" valid:"required"`
-	AllowedNfTypes []string `yaml:"allowedNfTypes,omitempty" valid:"optional"`
-}
-
 type Configuration struct {
 	Sbi        *Sbi     `yaml:"sbi" valid:"required"`
 	Mongodb    *Mongodb `yaml:"mongodb" valid:"required"`
