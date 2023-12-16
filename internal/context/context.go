@@ -1,6 +1,7 @@
 package context
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/free5gc/openapi/models"
+	"github.com/free5gc/openapi/oauth"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/pkg/factory"
 )
@@ -175,4 +177,14 @@ func NewInfluenceDataSubscriptionId() string {
 		GetSelf().InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	}
 	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
+}
+
+func (c *UDRContext) GetTokenCtx(scope, targetNF string) (
+	context.Context, *models.ProblemDetails, error,
+) {
+	if !c.OAuth2Required {
+		return context.TODO(), nil, nil
+	}
+	return oauth.GetTokenCtx(models.NfType_UDR,
+		c.NfId, c.NrfUri, scope, targetNF)
 }
