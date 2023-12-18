@@ -138,9 +138,7 @@ func InitUdrContext(context *UDRContext) {
 		logger.UtilLog.Warn("NRF Uri is empty! Using localhost as NRF IPv4 address.")
 		context.NrfUri = fmt.Sprintf("%s://%s:%d", context.UriScheme, "127.0.0.1", 29510)
 	}
-	if configuration.NrfCertPem != "" {
-		context.NrfCertPem = configuration.NrfCertPem
-	}
+	context.NrfCertPem = configuration.NrfCertPem
 }
 
 func (context *UDRContext) GetIPv4Uri() string {
