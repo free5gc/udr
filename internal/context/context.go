@@ -1,6 +1,7 @@
 package context
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/free5gc/openapi/models"
+	"github.com/free5gc/openapi/oauth"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/pkg/factory"
 )
@@ -44,6 +46,7 @@ type UDRContext struct {
 	HttpIPv6Address                         string
 	NfId                                    string
 	NrfUri                                  string
+	NrfCertPem                              string
 	EeSubscriptionIDGenerator               int
 	SdmSubscriptionIDGenerator              int
 	SubscriptionDataSubscriptionIDGenerator int
@@ -56,6 +59,7 @@ type UDRContext struct {
 	InfluenceDataSubscriptions              sync.Map
 	appDataInfluDataSubscriptionIdGenerator uint64
 	mtx                                     sync.RWMutex
+	OAuth2Required                          bool
 }
 
 type UESubsData struct {
@@ -134,6 +138,7 @@ func InitUdrContext(context *UDRContext) {
 		logger.UtilLog.Warn("NRF Uri is empty! Using localhost as NRF IPv4 address.")
 		context.NrfUri = fmt.Sprintf("%s://%s:%d", context.UriScheme, "127.0.0.1", 29510)
 	}
+	context.NrfCertPem = configuration.NrfCertPem
 }
 
 func (context *UDRContext) GetIPv4Uri() string {
@@ -170,4 +175,14 @@ func NewInfluenceDataSubscriptionId() string {
 		GetSelf().InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	}
 	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
+}
+
+func (c *UDRContext) GetTokenCtx(scope, targetNF string) (
+	context.Context, *models.ProblemDetails, error,
+) {
+	if !c.OAuth2Required {
+		return context.TODO(), nil, nil
+	}
+	return oauth.GetTokenCtx(models.NfType_UDR,
+		c.NfId, c.NrfUri, scope, targetNF)
 }

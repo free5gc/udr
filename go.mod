@@ -5,8 +5,8 @@ go 1.17
 require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/evanphx/json-patch v0.5.2
-	github.com/free5gc/openapi v1.0.7-0.20230802173229-2b3ded4db293
-	github.com/free5gc/util v1.0.5-0.20231012123940-85f4557167be
+	github.com/free5gc/openapi v1.0.7-0.20231216094313-e15a4ff046f6
+	github.com/free5gc/util v1.0.5-0.20231205080047-308f623d6808
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.3.0
 	github.com/mitchellh/mapstructure v1.4.3
@@ -57,7 +57,7 @@ require (
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
