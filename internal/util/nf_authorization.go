@@ -3,9 +3,9 @@ package util
 import (
 	"net/http"
 
-	"github.com/free5gc/openapi/oauth"
 	"github.com/gin-gonic/gin"
 
+	"github.com/free5gc/openapi/oauth"
 	udr_context "github.com/free5gc/udr/internal/context"
 )
 
