@@ -15,8 +15,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/udr/internal/util"
 	"github.com/free5gc/udr/pkg/factory"
 	logger_util "github.com/free5gc/util/logger"
 )
@@ -283,7 +283,8 @@ func HandleAppDataInfluDataSubsToNotifyConflictPut(c *gin.Context) {
 }
 
 func authorizationCheck(c *gin.Context) error {
-	return util.AuthorizationCheck(c, "nudr-dr")
+	token := c.Request.Header.Get("Authorization")
+	return udr_context.GetSelf().AuthorizationCheck(token, "nudr-dr")
 }
 
 var routes = Routes{

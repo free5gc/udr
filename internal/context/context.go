@@ -186,3 +186,14 @@ func (c *UDRContext) GetTokenCtx(scope, targetNF string) (
 	return oauth.GetTokenCtx(models.NfType_UDR,
 		c.NfId, c.NrfUri, scope, targetNF)
 }
+
+func (context *UDRContext) AuthorizationCheck(authHdr string, serviceName string) error {
+	if !context.OAuth2Required {
+		return nil
+	}
+	err := oauth.VerifyOAuth(authHdr, serviceName, context.NrfCertPem)
+	if err != nil {
+		return err
+	}
+	return nil
+}
