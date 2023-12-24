@@ -25,6 +25,7 @@ import (
 func HTTPAmfContext3gpp(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -79,6 +80,7 @@ func HTTPAmfContext3gpp(c *gin.Context) {
 func HTTPCreateAmfContext3gpp(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -133,6 +135,7 @@ func HTTPCreateAmfContext3gpp(c *gin.Context) {
 func HTTPQueryAmfContext3gpp(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 

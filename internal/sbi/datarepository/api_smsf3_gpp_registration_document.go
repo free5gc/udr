@@ -25,6 +25,7 @@ import (
 func HTTPCreateSmsfContext3gpp(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -79,6 +80,7 @@ func HTTPCreateSmsfContext3gpp(c *gin.Context) {
 func HTTPDeleteSmsfContext3gpp(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -105,6 +107,7 @@ func HTTPDeleteSmsfContext3gpp(c *gin.Context) {
 func HTTPQuerySmsfContext3gpp(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 

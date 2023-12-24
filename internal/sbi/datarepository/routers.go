@@ -46,6 +46,7 @@ func NewRouter() *gin.Engine {
 func subMsgShortDispatchHandlerFunc(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -62,6 +63,7 @@ func subMsgShortDispatchHandlerFunc(c *gin.Context) {
 func subMsgDispatchHandlerFunc(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -87,6 +89,7 @@ func subMsgDispatchHandlerFunc(c *gin.Context) {
 func eeMsgShortDispatchHandlerFunc(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -109,6 +112,7 @@ func eeMsgShortDispatchHandlerFunc(c *gin.Context) {
 func eeMsgDispatchHandlerFunc(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -131,6 +135,7 @@ func eeMsgDispatchHandlerFunc(c *gin.Context) {
 func appMsgDispatchHandlerFunc(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -155,6 +160,7 @@ func appMsgDispatchHandlerFunc(c *gin.Context) {
 func expoMsgDispatchHandlerFunc(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -232,6 +238,7 @@ func Index(c *gin.Context) {
 func HandleAppDataInfluDataSubsToNotifyConflictDelete(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -247,6 +254,7 @@ func HandleAppDataInfluDataSubsToNotifyConflictDelete(c *gin.Context) {
 func HandleAppDataInfluDataSubsToNotifyConflictGet(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -262,6 +270,7 @@ func HandleAppDataInfluDataSubsToNotifyConflictGet(c *gin.Context) {
 func HandleAppDataInfluDataSubsToNotifyConflictPut(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 

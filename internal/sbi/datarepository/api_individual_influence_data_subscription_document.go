@@ -25,6 +25,7 @@ import (
 func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -58,6 +59,7 @@ func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Con
 func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -87,6 +89,7 @@ func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Contex
 func HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 

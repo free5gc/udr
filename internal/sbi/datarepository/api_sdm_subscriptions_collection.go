@@ -25,6 +25,7 @@ import (
 func HTTPCreateSdmSubscriptions(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
@@ -82,6 +83,7 @@ func HTTPCreateSdmSubscriptions(c *gin.Context) {
 func HTTPQuerysdmsubscriptions(c *gin.Context) {
 	auth_err := authorizationCheck(c)
 	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
 		return
 	}
 
