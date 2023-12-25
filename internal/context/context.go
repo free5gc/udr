@@ -187,11 +187,11 @@ func (c *UDRContext) GetTokenCtx(scope, targetNF string) (
 		c.NfId, c.NrfUri, scope, targetNF)
 }
 
-func (context *UDRContext) AuthorizationCheck(authHdr string, serviceName string) error {
+func (context *UDRContext) AuthorizationCheck(token, serviceName string) error {
 	if !context.OAuth2Required {
 		return nil
 	}
-	err := oauth.VerifyOAuth(authHdr, serviceName, context.NrfCertPem)
+	err := oauth.VerifyOAuth(token, serviceName, context.NrfCertPem)
 	if err != nil {
 		return err
 	}
