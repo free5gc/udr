@@ -2540,9 +2540,15 @@ func HandleGetIdentityData(request *httpwrapper.Request) *httpwrapper.Response {
 	collName := "subscriptionData.identityData"
 
 	response, problemDetails := GetIdentityDataProcedure(collName, ueId)
-
 	if response != nil {
-		return httpwrapper.NewResponse(http.StatusOK, nil, response)
+		res := models.IdentityData{}
+		if (*response)["gpsi"] != nil {
+			res.GpsiList = append(res.GpsiList, (*response)["gpsi"].(string))
+		}
+		if (*response)["ueId"] != nil {
+			res.SupiList = append(res.SupiList, (*response)["ueId"].(string))
+		}
+		return httpwrapper.NewResponse(http.StatusOK, nil, res)
 	} else if problemDetails != nil {
 		return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
 	}
@@ -2552,7 +2558,12 @@ func HandleGetIdentityData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func GetIdentityDataProcedure(collName string, ueId string) (*map[string]interface{}, *models.ProblemDetails) {
-	filter := bson.M{"ueId": ueId}
+	filter := bson.M{
+		"$or": []bson.M{
+			bson.M{"gpsi": ueId},
+			bson.M{"ueId": ueId},
+		},
+	}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("GetIdentityDataProcedure err: %s", pd.Detail)
