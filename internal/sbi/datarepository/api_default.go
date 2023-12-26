@@ -58,18 +58,36 @@ func getDataFromRequestBody(c *gin.Context, data interface{}) error {
 
 // HTTPApplicationDataPfdsAppIdDelete -
 func HTTPApplicationDataPfdsAppIdDelete(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	rsp := producer.HandleApplicationDataPfdsAppIdDelete(c.Params.ByName("appId"))
 	sendResponse(c, rsp)
 }
 
 // HTTPApplicationDataPfdsAppIdGet -
 func HTTPApplicationDataPfdsAppIdGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	rsp := producer.HandleApplicationDataPfdsAppIdGet(c.Params.ByName("appId"))
 	sendResponse(c, rsp)
 }
 
 // HTTPApplicationDataPfdsAppIdPut -
 func HTTPApplicationDataPfdsAppIdPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var pfdDataforApp models.PfdDataForApp
 
 	if err := getDataFromRequestBody(c, &pfdDataforApp); err != nil {
@@ -83,6 +101,12 @@ func HTTPApplicationDataPfdsAppIdPut(c *gin.Context) {
 
 // HTTPApplicationDataPfdsGet -
 func HTTPApplicationDataPfdsGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	query := c.Request.URL.Query()
 	rsp := producer.HandleApplicationDataPfdsGet(query["appId"])
 	sendResponse(c, rsp)
@@ -105,6 +129,12 @@ func HTTPExposureDataSubsToNotifySubIdPut(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataBdtReferenceIdDelete -
 func HTTPPolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["bdtReferenceId"] = c.Params.ByName("bdtReferenceId")
 
@@ -115,6 +145,12 @@ func HTTPPolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataBdtReferenceIdGet -
 func HTTPPolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["bdtReferenceId"] = c.Params.ByName("bdtReferenceId")
 
@@ -125,6 +161,12 @@ func HTTPPolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataBdtReferenceIdPut -
 func HTTPPolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var bdtData models.BdtData
 
 	if err := getDataFromRequestBody(c, &bdtData); err != nil {
@@ -141,6 +183,12 @@ func HTTPPolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataGet -
 func HTTPPolicyDataBdtDataGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 
 	rsp := producer.HandlePolicyDataBdtDataGet(req)
@@ -150,6 +198,12 @@ func HTTPPolicyDataBdtDataGet(c *gin.Context) {
 
 // HTTPPolicyDataPlmnsPlmnIdUePolicySetGet -
 func HTTPPolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["plmnId"] = c.Params.ByName("plmnId")
 
@@ -160,6 +214,12 @@ func HTTPPolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
 
 // HTTPPolicyDataSponsorConnectivityDataSponsorIdGet -
 func HTTPPolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["sponsorId"] = c.Params.ByName("sponsorId")
 
@@ -170,6 +230,12 @@ func HTTPPolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Context) {
 
 // HTTPPolicyDataSubsToNotifyPost -
 func HTTPPolicyDataSubsToNotifyPost(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var policyDataSubscription models.PolicyDataSubscription
 
 	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
@@ -190,6 +256,12 @@ func HTTPPolicyDataSubsToNotifyPost(c *gin.Context) {
 
 // HTTPPolicyDataSubsToNotifySubsIdDelete -
 func HTTPPolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["subsId"] = c.Params.ByName("subsId")
 
@@ -200,6 +272,12 @@ func HTTPPolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
 
 // HTTPPolicyDataSubsToNotifySubsIdPut -
 func HTTPPolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var policyDataSubscription models.PolicyDataSubscription
 
 	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
@@ -216,6 +294,12 @@ func HTTPPolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdAmDataGet -
 func HTTPPolicyDataUesUeIdAmDataGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
@@ -226,6 +310,12 @@ func HTTPPolicyDataUesUeIdAmDataGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdOperatorSpecificDataGet -
 func HTTPPolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
@@ -236,6 +326,12 @@ func HTTPPolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdOperatorSpecificDataPatch - Need to be fixed
 func HTTPPolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var patchItemArray []models.PatchItem
 
 	if err := getDataFromRequestBody(c, &patchItemArray); err != nil {
@@ -252,6 +348,12 @@ func HTTPPolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdOperatorSpecificDataPut -
 func HTTPPolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var operatorSpecificDataContainerMap map[string]models.OperatorSpecificDataContainer
 
 	if err := getDataFromRequestBody(c, &operatorSpecificDataContainerMap); err != nil {
@@ -268,6 +370,12 @@ func HTTPPolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdSmDataGet -
 func HTTPPolicyDataUesUeIdSmDataGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
@@ -278,6 +386,12 @@ func HTTPPolicyDataUesUeIdSmDataGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdSmDataPatch - Need to be fixed
 func HTTPPolicyDataUesUeIdSmDataPatch(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var usageMonDataMap map[string]models.UsageMonData
 
 	if err := getDataFromRequestBody(c, &usageMonDataMap); err != nil {
@@ -294,6 +408,12 @@ func HTTPPolicyDataUesUeIdSmDataPatch(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete -
 func HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["usageMonId"] = c.Params.ByName("usageMonId")
@@ -305,6 +425,12 @@ func HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdSmDataUsageMonIdGet -
 func HTTPPolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["usageMonId"] = c.Params.ByName("usageMonId")
@@ -316,6 +442,12 @@ func HTTPPolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdSmDataUsageMonIdPut -
 func HTTPPolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var usageMonData models.UsageMonData
 
 	if err := getDataFromRequestBody(c, &usageMonData); err != nil {
@@ -333,6 +465,12 @@ func HTTPPolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdUePolicySetGet -
 func HTTPPolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
@@ -343,6 +481,12 @@ func HTTPPolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdUePolicySetPatch -
 func HTTPPolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var uePolicySet models.UePolicySet
 
 	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {
@@ -359,6 +503,12 @@ func HTTPPolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdUePolicySetPut -
 func HTTPPolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var uePolicySet models.UePolicySet
 
 	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {

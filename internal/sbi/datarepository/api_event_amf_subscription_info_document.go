@@ -23,6 +23,12 @@ import (
 
 // HTTPCreateAMFSubscriptions - Creates AMF Subscription Info for an eeSubscription
 func HTTPCreateAMFSubscriptions(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var amfSubscriptionInfoArray []models.AmfSubscriptionInfo
 
 	requestBody, err := c.GetRawData()
@@ -73,6 +79,12 @@ func HTTPCreateAMFSubscriptions(c *gin.Context) {
 
 // HTTPRemoveAmfSubscriptionsInfo - Deletes AMF Subscription Info for an eeSubscription
 func HTTPRemoveAmfSubscriptionsInfo(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 	req.Params["subsId"] = c.Params.ByName("subsId")

@@ -23,6 +23,12 @@ import (
 
 // HTTPCreateAuthenticationStatus - To store the Authentication Status data of a UE
 func HTTPCreateAuthenticationStatus(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var authEvent models.AuthEvent
 
 	requestBody, err := c.GetRawData()
@@ -72,6 +78,12 @@ func HTTPCreateAuthenticationStatus(c *gin.Context) {
 
 // HTTPQueryAuthenticationStatus - Retrieves the Authentication Status of a UE
 func HTTPQueryAuthenticationStatus(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 

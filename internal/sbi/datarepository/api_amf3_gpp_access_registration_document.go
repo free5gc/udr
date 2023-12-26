@@ -23,6 +23,12 @@ import (
 
 // HTTPAmfContext3gpp - To modify the AMF context data of a UE using 3gpp access in the UDR
 func HTTPAmfContext3gpp(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var patchItemArray []models.PatchItem
 
 	requestBody, err := c.GetRawData()
@@ -72,6 +78,12 @@ func HTTPAmfContext3gpp(c *gin.Context) {
 
 // HTTPCreateAmfContext3gpp - To store the AMF context data of a UE using 3gpp access in the UDR
 func HTTPCreateAmfContext3gpp(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	var amf3GppAccessRegistration models.Amf3GppAccessRegistration
 
 	requestBody, err := c.GetRawData()
@@ -121,6 +133,12 @@ func HTTPCreateAmfContext3gpp(c *gin.Context) {
 
 // HTTPQueryAmfContext3gpp - Retrieves the AMF context data of a UE using 3gpp access
 func HTTPQueryAmfContext3gpp(c *gin.Context) {
+	auth_err := authorizationCheck(c)
+	if auth_err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
+		return
+	}
+
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
