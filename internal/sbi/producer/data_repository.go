@@ -2560,6 +2560,7 @@ func HandleGetIdentityData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func GetIdentityDataProcedure(collName string, ueId string) (*map[string]interface{}, *models.ProblemDetails) {
+	logger.DataRepoLog.Debugf("Handle GetIdentityDataProcedure: %+v", ueId)
 	filter := bson.M{
 		"$or": []bson.M{
 			{"gpsi": ueId},
@@ -2568,7 +2569,7 @@ func GetIdentityDataProcedure(collName string, ueId string) (*map[string]interfa
 	}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
-		logger.DataRepoLog.Errorf("GetIdentityDataProcedure err: %s", pd.Detail)
+		logger.DataRepoLog.Errorf("GetIdentityDataProcedure err: %+v", pd)
 		return nil, pd
 	}
 	return &data, nil
