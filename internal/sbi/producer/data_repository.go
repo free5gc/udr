@@ -2540,9 +2540,17 @@ func HandleGetIdentityData(request *httpwrapper.Request) *httpwrapper.Response {
 	collName := "subscriptionData.identityData"
 
 	response, problemDetails := GetIdentityDataProcedure(collName, ueId)
-
 	if response != nil {
-		return httpwrapper.NewResponse(http.StatusOK, nil, response)
+		res := models.IdentityData{}
+		gpsi, ok := (*response)["gpsi"]
+		if ok {
+			res.GpsiList = append(res.GpsiList, gpsi.(string))
+		}
+		ueId, ok := (*response)["ueId"]
+		if ok {
+			res.SupiList = append(res.SupiList, ueId.(string))
+		}
+		return httpwrapper.NewResponse(http.StatusOK, nil, res)
 	} else if problemDetails != nil {
 		return httpwrapper.NewResponse(int(problemDetails.Status), nil, problemDetails)
 	}
@@ -2552,10 +2560,16 @@ func HandleGetIdentityData(request *httpwrapper.Request) *httpwrapper.Response {
 }
 
 func GetIdentityDataProcedure(collName string, ueId string) (*map[string]interface{}, *models.ProblemDetails) {
-	filter := bson.M{"ueId": ueId}
+	logger.DataRepoLog.Debugf("Handle GetIdentityDataProcedure: %+v", ueId)
+	filter := bson.M{
+		"$or": []bson.M{
+			{"gpsi": ueId},
+			{"ueId": ueId},
+		},
+	}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
-		logger.DataRepoLog.Errorf("GetIdentityDataProcedure err: %s", pd.Detail)
+		logger.DataRepoLog.Errorf("GetIdentityDataProcedure err: %+v", pd)
 		return nil, pd
 	}
 	return &data, nil
