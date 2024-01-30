@@ -15,11 +15,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/util"
 	"github.com/free5gc/udr/pkg/factory"
 	logger_util "github.com/free5gc/util/logger"
 )
+
+const serviceName string = string(models.ServiceName_NUDR_DR)
 
 // Route is the information for every URI.
 type Route struct {
@@ -183,6 +187,11 @@ func expoMsgDispatchHandlerFunc(c *gin.Context) {
 
 func AddService(engine *gin.Engine) *gin.RouterGroup {
 	group := engine.Group(factory.UdrDrResUriPrefix)
+
+	routerAuthorizationCheck := util.NewRouterAuthorizationCheck(serviceName)
+	group.Use(func(c *gin.Context) {
+		routerAuthorizationCheck.Check(c, udr_context.GetSelf())
+	})
 
 	for _, route := range routes {
 		switch route.Method {
