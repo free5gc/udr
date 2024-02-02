@@ -194,7 +194,7 @@ func (c *UDRContext) GetTokenCtx(scope string, targetNF models.NfType) (
 }
 
 func (c *UDRContext) AuthorizationCheck(token, serviceName string) error {
-	if !context.OAuth2Required {
+	if !c.OAuth2Required {
 		logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: OAuth2 not required\n")
 		return nil
 	}
