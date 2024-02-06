@@ -77,7 +77,7 @@ type EeSubscriptionCollection struct {
 }
 
 type NFContext interface {
-	AuthorizationCheck(token, serviceName string) error
+	AuthorizationCheck(token string, serviceName models.ServiceName) error
 }
 
 var _ NFContext = &UDRContext{}
@@ -183,22 +183,22 @@ func NewInfluenceDataSubscriptionId() string {
 	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
 }
 
-func (c *UDRContext) GetTokenCtx(scope string, targetNF models.NfType) (
+func (c *UDRContext) GetTokenCtx(serviceName models.ServiceName, targetNF models.NfType) (
 	context.Context, *models.ProblemDetails, error,
 ) {
 	if !c.OAuth2Required {
 		return context.TODO(), nil, nil
 	}
 	return oauth.GetTokenCtx(models.NfType_UDR, targetNF,
-		c.NfId, c.NrfUri, scope)
+		c.NfId, c.NrfUri, string(serviceName))
 }
 
-func (c *UDRContext) AuthorizationCheck(token, serviceName string) error {
+func (c *UDRContext) AuthorizationCheck(token string, serviceName models.ServiceName) error {
 	if !c.OAuth2Required {
 		logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: OAuth2 not required\n")
 		return nil
 	}
 
 	logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: token[%s] serviceName[%s]\n", token, serviceName)
-	return oauth.VerifyOAuth(token, serviceName, c.NrfCertPem)
+	return oauth.VerifyOAuth(token, string(serviceName), c.NrfCertPem)
 }

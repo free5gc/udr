@@ -23,8 +23,6 @@ import (
 	logger_util "github.com/free5gc/util/logger"
 )
 
-const serviceName string = string(models.ServiceName_NUDR_DR)
-
 // Route is the information for every URI.
 type Route struct {
 	// Name is the name of this Route.
@@ -152,7 +150,7 @@ func expoMsgDispatchHandlerFunc(c *gin.Context) {
 func AddService(engine *gin.Engine) *gin.RouterGroup {
 	group := engine.Group(factory.UdrDrResUriPrefix)
 
-	routerAuthorizationCheck := util.NewRouterAuthorizationCheck(serviceName)
+	routerAuthorizationCheck := util.NewRouterAuthorizationCheck(models.ServiceName_NUDR_DR)
 	group.Use(func(c *gin.Context) {
 		routerAuthorizationCheck.Check(c, udr_context.GetSelf())
 	})
