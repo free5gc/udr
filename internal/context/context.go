@@ -76,6 +76,12 @@ type EeSubscriptionCollection struct {
 	AmfSubscriptionInfos []models.AmfSubscriptionInfo
 }
 
+type NFContext interface {
+	AuthorizationCheck(token string, serviceName models.ServiceName) error
+}
+
+var _ NFContext = &UDRContext{}
+
 // Reset UDR Context
 func (context *UDRContext) Reset() {
 	context.UESubsCollection.Range(func(key, value interface{}) bool {
@@ -177,23 +183,22 @@ func NewInfluenceDataSubscriptionId() string {
 	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
 }
 
-func (c *UDRContext) GetTokenCtx(scope, targetNF string) (
+func (c *UDRContext) GetTokenCtx(serviceName models.ServiceName, targetNF models.NfType) (
 	context.Context, *models.ProblemDetails, error,
 ) {
 	if !c.OAuth2Required {
 		return context.TODO(), nil, nil
 	}
-	return oauth.GetTokenCtx(models.NfType_UDR,
-		c.NfId, c.NrfUri, scope, targetNF)
+	return oauth.GetTokenCtx(models.NfType_UDR, targetNF,
+		c.NfId, c.NrfUri, string(serviceName))
 }
 
-func (context *UDRContext) AuthorizationCheck(token, serviceName string) error {
-	if !context.OAuth2Required {
+func (c *UDRContext) AuthorizationCheck(token string, serviceName models.ServiceName) error {
+	if !c.OAuth2Required {
+		logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: OAuth2 not required\n")
 		return nil
 	}
-	err := oauth.VerifyOAuth(token, serviceName, context.NrfCertPem)
-	if err != nil {
-		return err
-	}
-	return nil
+
+	logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: token[%s] serviceName[%s]\n", token, serviceName)
+	return oauth.VerifyOAuth(token, string(serviceName), c.NrfCertPem)
 }

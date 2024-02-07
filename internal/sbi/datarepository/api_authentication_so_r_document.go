@@ -23,12 +23,6 @@ import (
 
 // HTTPCreateAuthenticationSoR - To store the SoR acknowledgement information of a UE
 func HTTPCreateAuthenticationSoR(c *gin.Context) {
-	auth_err := authorizationCheck(c)
-	if auth_err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
-		return
-	}
-
 	var sorData models.SorData
 
 	requestBody, err := c.GetRawData()
@@ -78,12 +72,6 @@ func HTTPCreateAuthenticationSoR(c *gin.Context) {
 
 // HTTPQueryAuthSoR - Retrieves the SoR acknowledgement information of a UE
 func HTTPQueryAuthSoR(c *gin.Context) {
-	auth_err := authorizationCheck(c)
-	if auth_err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
-		return
-	}
-
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 

@@ -23,12 +23,6 @@ import (
 
 // HTTPCreateSmsfContextNon3gpp - Create the SMSF context data of a UE via non-3GPP access
 func HTTPCreateSmsfContextNon3gpp(c *gin.Context) {
-	auth_err := authorizationCheck(c)
-	if auth_err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
-		return
-	}
-
 	var smsfRegistration models.SmsfRegistration
 
 	requestBody, err := c.GetRawData()
@@ -78,12 +72,6 @@ func HTTPCreateSmsfContextNon3gpp(c *gin.Context) {
 
 // HTTPDeleteSmsfContextNon3gpp - To remove the SMSF context data of a UE via non-3GPP access
 func HTTPDeleteSmsfContextNon3gpp(c *gin.Context) {
-	auth_err := authorizationCheck(c)
-	if auth_err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
-		return
-	}
-
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
@@ -105,12 +93,6 @@ func HTTPDeleteSmsfContextNon3gpp(c *gin.Context) {
 
 // HTTPQuerySmsfContextNon3gpp - Retrieves the SMSF context data of a UE using non-3gpp access
 func HTTPQuerySmsfContextNon3gpp(c *gin.Context) {
-	auth_err := authorizationCheck(c)
-	if auth_err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": auth_err.Error()})
-		return
-	}
-
 	req := httpwrapper.NewRequest(c.Request, nil)
 	req.Params["ueId"] = c.Params.ByName("ueId")
 
