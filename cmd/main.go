@@ -55,7 +55,7 @@ func action(cliCtx *cli.Context) error {
 		return err
 	}
 	factory.UdrConfig = cfg
-	udr, err := service.NewApp(cfg)
+	udr, err := service.NewApp(cfg, tlsKeyLogPath)
 	if err != nil {
 		return err
 	}

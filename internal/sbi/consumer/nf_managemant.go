@@ -14,7 +14,7 @@ import (
 	"github.com/free5gc/udr/pkg/factory"
 )
 
-func BuildNFInstance(context *udr_context.UDRContext) models.NfProfile {
+func BuildNFInstance(context *udr_context.UDRContext) (models.NfProfile, error) {
 	config := factory.UdrConfig
 
 	profile := models.NfProfile{
@@ -60,7 +60,7 @@ func BuildNFInstance(context *udr_context.UDRContext) models.NfProfile {
 	}
 
 	// TODO: finish the Udr Info
-	return profile
+	return profile, nil
 }
 
 func SendRegisterNFInstance(nrfUri, nfInstanceId string, profile models.NfProfile) (string, string, error) {
