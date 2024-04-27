@@ -19,6 +19,11 @@ import (
 	"github.com/free5gc/util/mongoapi"
 )
 
+type App interface {
+	Config() *factory.Config
+	Context() *udr_context.UDRContext
+}
+
 type UdrApp struct {
 	cfg    *factory.Config
 	udrCtx *udr_context.UDRContext
@@ -26,6 +31,8 @@ type UdrApp struct {
 	sbiServer *sbi.Server
 	wg 	  sync.WaitGroup
 }
+
+var _ App = &UdrApp{}
 
 func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr := &UdrApp{

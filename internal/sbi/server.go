@@ -9,7 +9,7 @@ import (
 
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/udr/internal/sbi/processor"
 	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/util/httpwrapper"
 	logger_util "github.com/free5gc/util/logger"
@@ -26,22 +26,29 @@ type Server struct {
 
 	httpServer *http.Server
 	router     *gin.Engine
+	processor *processor.Processor
 }
 
 func NewServer(udr Udr, tlsKeyLogPath string) *Server {
-	router := newRouter()
-	server, err := bindRouter(udr, router, tlsKeyLogPath)
+	s := &Server{
+		Udr: udr,
+		processor: processor.NewProcessor(udr),
+	}
+
+	s.router = newRouter(s)
+	server, err := bindRouter(udr, s.router, tlsKeyLogPath)
+	s.httpServer = server
 
 	if err != nil {
 		logger.SBILog.Errorf("bind Router Error: %+v", err)
 		panic("Server initialization failed")
 	}
 
-	return &Server{
-		Udr:       udr,
-		httpServer: server,
-		router:     router,
-	}
+	return s
+}
+
+func (s* Server) Processor() *processor.Processor {
+	return s.processor
 }
 
 func (s *Server) Run(wg *sync.WaitGroup) {
@@ -85,9 +92,12 @@ func bindRouter(udr Udr, router *gin.Engine, tlsKeyLogPath string) (*http.Server
 	return httpwrapper.NewHttp2Server(bindAddr, tlsKeyLogPath, router)
 }
 
-func newRouter() *gin.Engine {
+func newRouter(s *Server) *gin.Engine {
 	router := logger_util.NewGinWithLogrus(logger.GinLog)
-	datarepository.AddService(router)
+	
+	dataRepositoryGroup := router.Group(factory.UdrDrResUriPrefix)
+	dataRepositoryRoutes := s.getDataRepositoryRoutes()
+	AddService(dataRepositoryGroup, dataRepositoryRoutes)
 	return router
 }
 
