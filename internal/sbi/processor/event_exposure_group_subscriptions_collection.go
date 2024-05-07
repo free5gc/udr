@@ -19,6 +19,7 @@ import (
 	"github.com/free5gc/udr/internal/logger"
 	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 	"github.com/free5gc/udr/internal/util"
+	"regexp"
 )
 
 // HTTPCreateEeGroupSubscriptions - Create individual EE subscription for a group of UEs or any UE
@@ -51,8 +52,20 @@ func (p *Processor) HandleCreateEeGroupSubscriptions(c *gin.Context) {
 	}
 	logger.DataRepoLog.Infof("Handle CreateEeGroupSubscriptions")
 
+	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
 	ueGroupId := c.Params.ByName("ueGroupId")
-
+	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueGroupId",
+			Cause:  "INVALID_PARAMETER",	
+		}
+		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
+	
 	locationHeader := datarepository.CreateEeGroupSubscriptionsProcedure(ueGroupId, eeSubscription)
 
 	c.Writer.Header().Set("Location", locationHeader)
@@ -65,7 +78,19 @@ func (p *Processor) HandleQueryEeGroupSubscriptions(c *gin.Context) {
 
 	logger.DataRepoLog.Infof("Handle QueryEeGroupSubscriptions")
 
+	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
 	ueGroupId := c.Params.ByName("ueGroupId")
+	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueGroupId",
+			Cause:  "INVALID_PARAMETER",	
+		}
+		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
 	eeSubscriptionSlice, problemDetails := datarepository.QueryEeGroupSubscriptionsProcedure(ueGroupId)
 
 	if eeSubscriptionSlice == nil && problemDetails == nil {

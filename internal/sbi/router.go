@@ -39,31 +39,5 @@ func AddService(group *gin.RouterGroup, routes []Route) {
 			group.DELETE(route.Pattern, route.HandlerFunc)
 		}
 	}
-
-	subPatternShort := "/subscription-data/:ueId"
-	group.Any(subPatternShort, subMsgShortDispatchHandlerFunc)
-
-	subPattern := "/subscription-data/:ueId/:servingPlmnId"
-	group.Any(subPattern, subMsgDispatchHandlerFunc)
-
-	eePatternShort := "/subscription-data/:ueId/:servingPlmnId/ee-subscriptions"
-	group.Any(eePatternShort, eeMsgShortDispatchHandlerFunc)
-
-	eePattern := "/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId"
-	group.Any(eePattern, eeMsgDispatchHandlerFunc)
-
-	/*
-	 * GIN wildcard issue:
-	 * '/application-data/influenceData/:influenceId' and
-	 * '/application-data/influenceData/subs-to-notify' patterns will be conflicted.
-	 * Only can use '/application-data/influenceData/:influenceId' pattern and
-	 * use a dispatch handler to distinguish "subs-to-notify" from ":influenceId".
-	 */
-	appPattern := "/application-data/influenceData/:influenceId"
-	group.Any(appPattern, appMsgDispatchHandlerFunc)
-	expoPatternShort := "/exposure-data/:ueId/:subId"
-	group.Any(expoPatternShort, expoMsgDispatchHandlerFunc)
-
-	expoPattern := "/exposure-data/:ueId/:subId/:pduSessionId"
-	group.Any(expoPattern, expoMsgDispatchHandlerFunc)
+	
 }

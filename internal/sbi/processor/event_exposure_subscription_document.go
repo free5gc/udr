@@ -25,6 +25,7 @@ func (p *Processor) HandleRemoveeeSubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Infof("Handle RemoveeeSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
+
 	subsId := c.Params.ByName("subsId")
 
 	problemDetails := datarepository.RemoveeeSubscriptionsProcedure(ueId, subsId)

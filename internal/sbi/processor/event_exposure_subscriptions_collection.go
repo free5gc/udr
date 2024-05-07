@@ -11,6 +11,7 @@ package processor
 
 import (
 	"net/http"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 
@@ -53,7 +54,19 @@ func (p *Processor) HandleCreateEeSubscriptions(c *gin.Context) {
 
 	logger.DataRepoLog.Infof("Handle CreateEeSubscriptions")
 
-	ueId := c.Params.ByName("ueGroupId")
+	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
+	ueId := c.Params.ByName("ueId")
+	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueId",
+			Cause:  "INVALID_PARAMETER",
+		}
+		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
 
 	locationHeader := datarepository.CreateEeSubscriptionsProcedure(ueId, eeSubscription)
 	c.Header("Location", locationHeader)
@@ -64,8 +77,22 @@ func (p *Processor) HandleCreateEeSubscriptions(c *gin.Context) {
 // HTTPQueryeesubscriptions - Retrieves the ee subscriptions of a UE
 func (p *Processor) HandleQueryeesubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Infof("Handle Queryeesubscriptions")
-	ueID := c.Params.ByName("ueGroupId")
-	eeSubscriptionSlice, problemDetails := datarepository.QueryeesubscriptionsProcedure(ueID)
+	
+	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
+	ueId := c.Params.ByName("ueId")
+	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueId",
+			Cause:  "INVALID_PARAMETER",
+		}
+		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
+
+	eeSubscriptionSlice, problemDetails := datarepository.QueryeesubscriptionsProcedure(ueId)
 
 	if eeSubscriptionSlice == nil && problemDetails == nil {
 		pd := util.ProblemDetailsUpspecified("")

@@ -19,7 +19,7 @@ import (
 	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPGetSharedData - retrieve shared data
+// HandleGetSharedData - retrieve shared data
 func (p *Processor) HandleGetSharedData(c *gin.Context) {
 	sharedDataIdArray := c.QueryArray("shared-data-ids")
 	logger.DataRepoLog.Infof("Handle GetSharedData")

@@ -21,7 +21,7 @@ import (
 	"github.com/free5gc/util/httpwrapper"
 )
 
-// HTTPPostSubscriptionDataSubscriptions - Subscription data subscriptions
+// HandlePostSubscriptionDataSubscriptions - Subscription data subscriptions
 func (p *Processor) HandlePostSubscriptionDataSubscriptions(c *gin.Context) {
 	var subscriptionDataSubscriptions models.SubscriptionDataSubscriptions
 
