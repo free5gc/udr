@@ -16,37 +16,45 @@ import (
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/sbi"
 	"github.com/free5gc/udr/internal/sbi/consumer"
+	"github.com/free5gc/udr/internal/sbi/processor"
+	"github.com/free5gc/udr/pkg/app"
 	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/util/mongoapi"
 )
 
-type App interface {
-	Config() *factory.Config
-	Context() *udr_context.UDRContext
-}
 
 type UdrApp struct {
 	cfg    *factory.Config
 	udrCtx *udr_context.UDRContext
 
-	sbiServer *sbi.Server
 	wg 	  sync.WaitGroup
+	sbiServer *sbi.Server
+	processor *processor.Processor
+
+	// TODO: consumer 
 }
 
-var _ App = &UdrApp{}
+var _ app.UdrApp = &UdrApp{}
 
 func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
+	udr_context.Init()
+	udr_context.InitUdrContext()
 	udr := &UdrApp{
 		cfg: cfg,
+		udrCtx: udr_context.GetSelf(),
 		wg: sync.WaitGroup{},
 	}
 	udr.SetLogEnable(cfg.GetLogEnable())
 	udr.SetLogLevel(cfg.GetLogLevel())
 	udr.SetReportCaller(cfg.GetLogReportCaller())
 
+	processor := processor.NewProcessor(udr)
+	udr.processor = processor
+
+	//TODO: consumer
+
 	udr.sbiServer = sbi.NewServer(udr, tlsKeyLogPath)
-	udr_context.Init()
-	udr.udrCtx = udr_context.GetSelf()
+	
 	return udr, nil
 }
 
@@ -124,7 +132,7 @@ func (u *UdrApp) deregisterFromNrf() {
 	}
 } 
 
-func (a *UdrApp) Start(tlsKeyLogPath string) {
+func (a *UdrApp) Start() {
 	ctx, cancel := context.WithCancel(context.Background())
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)

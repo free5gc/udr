@@ -61,7 +61,7 @@ func action(cliCtx *cli.Context) error {
 	}
 	UDR = udr
 
-	udr.Start(tlsKeyLogPath)
+	udr.Start()
 	udr.Wait()
 
 	return nil

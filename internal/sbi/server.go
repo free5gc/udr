@@ -12,6 +12,7 @@ import (
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/sbi/processor"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/udr/pkg/app"
 	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/util/httpwrapper"
 	logger_util "github.com/free5gc/util/logger"
@@ -24,16 +25,16 @@ type Udr interface {
 }
 
 type Server struct {
-	Udr
+	app.UdrApp
 
 	httpServer *http.Server
 	router     *gin.Engine
 	processor *processor.Processor
 }
 
-func NewServer(udr Udr, tlsKeyLogPath string) *Server {
+func NewServer(udr app.UdrApp, tlsKeyLogPath string) *Server {
 	s := &Server{
-		Udr: udr,
+		UdrApp: udr,
 		processor: processor.NewProcessor(udr),
 	}
 
@@ -87,7 +88,7 @@ func (s *Server) shutdownHttpServer() {
 	}
 }
 
-func bindRouter(udr Udr, router *gin.Engine, tlsKeyLogPath string) (*http.Server, error) {
+func bindRouter(udr app.UdrApp, router *gin.Engine, tlsKeyLogPath string) (*http.Server, error) {
 	sbiConfig := udr.Config().Configuration.Sbi
 	bindAddr := fmt.Sprintf("%s:%d", sbiConfig.BindingIPv4, sbiConfig.Port)
 
@@ -111,7 +112,7 @@ func (s *Server) unsecureServe() error {
 }
 
 func (s *Server) secureServe() error {
-	sbiConfig := s.Udr.Config().Configuration.Sbi
+	sbiConfig := s.UdrApp.Config().Configuration.Sbi
 
 	pemPath := sbiConfig.Tls.Pem
 	if pemPath == "" {
@@ -127,7 +128,7 @@ func (s *Server) secureServe() error {
 }
 
 func (s *Server) serve() error {
-	sbiConfig := s.Udr.Config().Configuration.Sbi
+	sbiConfig := s.UdrApp.Config().Configuration.Sbi
 
 	switch sbiConfig.Scheme {
 	case "http":
