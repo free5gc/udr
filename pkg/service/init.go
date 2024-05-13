@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -95,13 +96,15 @@ func (a *UdrApp) SetReportCaller(reportCaller bool) {
 	logger.Log.SetReportCaller(reportCaller)
 }
 
-func (u *UdrApp) registerToNrf() error {
+func (u *UdrApp) registerToNrf(ctx context.Context) error {
 	udrContext := u.udrCtx
+	
 	profile, err := consumer.BuildNFInstance(udrContext)
 	if err != nil {
 		return fmt.Errorf("Build NF Instance Error[%s]", err.Error())
 	}
 
+	// TODO: refactor the comsumer.SendRegisterNFInstance with argument "ctx"
 	udrContext.NrfUri, udrContext.NfId, err = consumer.SendRegisterNFInstance(udrContext.NrfUri, profile.NfInstanceId, profile)
 	if err != nil {
 		return fmt.Errorf("Send Register NFInstance Error[%s]", err.Error())
@@ -119,26 +122,25 @@ func (u *UdrApp) deregisterFromNrf() {
 	} else {
 		logger.InitLog.Infof("Deregister from NRF successfully")
 	}
-}
-
-func (a *UdrApp) addSigTermHandler() {
-	signalChannel := make(chan os.Signal, 1)
-	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		defer func() {
-			if p := recover(); p != nil {
-				// Print stack for panic to log. Fatalf() will let program exit.
-				logger.InitLog.Fatalf("panic: %v\n%s", p, string(debug.Stack()))
-			}
-		}()
-
-		<-signalChannel
-		a.Terminate()
-		os.Exit(0)
-	}()
 } 
 
 func (a *UdrApp) Start(tlsKeyLogPath string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<- sigCh // Wait for interrupt signal to gracefully shutdown
+		cancel() // Notify each goroutine and wait them stopped
+	}()
+
+	err := a.registerToNrf(ctx)
+	if err != nil {
+		logger.InitLog.Errorf("register to NRF failed: %v", err)
+	} else {
+		logger.InitLog.Infof("register to NRF successfully")
+	}
+
 	// get config file info
 	logger.InitLog.Infoln("Server started")
 	config := factory.UdrConfig
@@ -152,10 +154,6 @@ func (a *UdrApp) Start(tlsKeyLogPath string) {
 		return
 	}
 
-	err := a.registerToNrf()
-	if err != nil {
-		logger.InitLog.Errorf("Register to NRF failed: %+v", err)
-	}
 	// Graceful deregister when panic
 	defer func() {
 		if p := recover(); p != nil {
@@ -165,7 +163,12 @@ func (a *UdrApp) Start(tlsKeyLogPath string) {
 	}()
 
 	a.sbiServer.Run(&a.wg)
-	a.addSigTermHandler()
+	go a.listenShutdown(ctx)
+}
+
+func (a *UdrApp) listenShutdown(ctx context.Context) {
+	<-ctx.Done()
+	a.Terminate()
 }
 
 func (a *UdrApp) Terminate() {
@@ -174,4 +177,9 @@ func (a *UdrApp) Terminate() {
 	a.deregisterFromNrf()
 	a.sbiServer.Shutdown()
 	logger.InitLog.Infof("UDR terminated")
+}
+
+func (a *UdrApp) Wait() {
+	a.wg.Wait()
+	logger.MainLog.Infof("UDR terminated")
 }
