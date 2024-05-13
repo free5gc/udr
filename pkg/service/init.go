@@ -30,8 +30,7 @@ type UdrApp struct {
 	wg 	  sync.WaitGroup
 	sbiServer *sbi.Server
 	processor *processor.Processor
-
-	// TODO: consumer 
+	consumer *consumer.Consumer
 }
 
 var _ app.UdrApp = &UdrApp{}
@@ -51,7 +50,8 @@ func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	processor := processor.NewProcessor(udr)
 	udr.processor = processor
 
-	//TODO: consumer
+	consumer := consumer.NewConsumer(udr)
+	udr.consumer = consumer
 
 	udr.sbiServer = sbi.NewServer(udr, tlsKeyLogPath)
 	
@@ -107,22 +107,19 @@ func (a *UdrApp) SetReportCaller(reportCaller bool) {
 func (u *UdrApp) registerToNrf(ctx context.Context) error {
 	udrContext := u.udrCtx
 	
-	profile, err := consumer.BuildNFInstance(udrContext)
+	nrfUri, nfId, err := u.consumer.SendRegisterNFInstance(ctx, udrContext.NrfUri)
 	if err != nil {
-		return fmt.Errorf("Build NF Instance Error[%s]", err.Error())
+		return fmt.Errorf("send register NFInstance error[%s]", err.Error())
 	}
-
-	// TODO: refactor the comsumer.SendRegisterNFInstance with argument "ctx"
-	udrContext.NrfUri, udrContext.NfId, err = consumer.SendRegisterNFInstance(udrContext.NrfUri, profile.NfInstanceId, profile)
-	if err != nil {
-		return fmt.Errorf("Send Register NFInstance Error[%s]", err.Error())
-	}
+	udrContext.NrfUri = nrfUri
+	udrContext.NfId = nfId
+	
 	return nil
 }
 
 
 func (u *UdrApp) deregisterFromNrf() {
-	problemDetails, err := consumer.SendDeregisterNFInstance()
+	problemDetails, err := u.consumer.SendDeregisterNFInstance()
 	if problemDetails != nil {
 		logger.InitLog.Errorf("Deregister NF instance Failed Problem[%+v]", problemDetails)
 	} else if err != nil {

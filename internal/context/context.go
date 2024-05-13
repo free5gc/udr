@@ -7,6 +7,8 @@ import (
 	"os"
 	"sync"
 	"time"
+	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -35,6 +37,13 @@ func Init() {
 	GetSelf().SubscriptionDataSubscriptions = make(map[subsId]*models.SubscriptionDataSubscriptions)
 	GetSelf().PolicyDataSubscriptions = make(map[subsId]*models.PolicyDataSubscription)
 	GetSelf().InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+
+	serviceName := []models.ServiceName{
+		models.ServiceName_NUDR_DR,
+	}
+	GetSelf().NfService = initNfService(serviceName, "1.0.0")
+	GetSelf().NrfUri = fmt.Sprintf("%s://%s:%d", models.UriScheme_HTTPS, udrContext.RegisterIPv4, 29510)
+
 }
 
 type UDRContext struct {
@@ -42,6 +51,7 @@ type UDRContext struct {
 	UriScheme                               models.UriScheme
 	BindingIPv4                             string
 	SBIPort                                 int
+	NfService                         		map[models.ServiceName]models.NfService		
 	RegisterIPv4                            string // IP register to NRF
 	HttpIPv6Address                         string
 	NfId                                    string
@@ -147,8 +157,37 @@ func InitUdrContext() {
 	udrContext.NrfCertPem = configuration.NrfCertPem
 }
 
-func (context *UDRContext) GetIPv4Uri() string {
-	return fmt.Sprintf("%s://%s:%d", context.UriScheme, context.RegisterIPv4, context.SBIPort)
+func initNfService(serviceName []models.ServiceName, version string) (nfService map[models.ServiceName]models.NfService){
+	versionUri := "v" + strings.Split(version, ".")[0]
+	nfService = make(map[models.ServiceName]models.NfService)
+	for idx, name := range serviceName {
+		nfService[name] = models.NfService{
+			ServiceInstanceId: strconv.Itoa(idx),
+			ServiceName:       name,
+			Versions: &[]models.NfServiceVersion{
+				{
+					ApiFullVersion:  version,
+					ApiVersionInUri: versionUri,
+				},
+			},
+			Scheme:          udrContext.UriScheme,
+			NfServiceStatus: models.NfServiceStatus_REGISTERED,
+			ApiPrefix:       GetIPv4Uri(),
+			IpEndPoints: &[]models.IpEndPoint{
+				{
+					Ipv4Address: udrContext.RegisterIPv4,
+					Transport:   models.TransportProtocol_TCP,
+					Port:        int32(udrContext.SBIPort),
+				},
+			},
+		}
+	}
+
+	return
+}
+
+func GetIPv4Uri() string {
+	return fmt.Sprintf("%s://%s:%d", udrContext.UriScheme, udrContext.RegisterIPv4, udrContext.SBIPort)
 }
 
 func (context *UDRContext) GetIPv4GroupUri(udrServiceType UDRServiceType) string {
