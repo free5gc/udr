@@ -192,3 +192,15 @@ func (c *Config) GetLogReportCaller() bool {
 	}
 	return c.Logger.ReportCaller
 }
+
+func (c *Config) GetCertPemPath() string {
+	c.RLock()
+	defer c.RUnlock()
+	return c.Configuration.Sbi.Tls.Pem
+}
+
+func (c *Config) GetCertKeyPath() string {
+	c.RLock()
+	defer c.RUnlock()
+	return c.Configuration.Sbi.Tls.Key
+}
