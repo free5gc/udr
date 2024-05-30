@@ -13,26 +13,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPQueryTraceData - Retrieves the trace configuration data of a UE
-func (p *Processor) HandleQueryTraceData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryTraceData")
-
-	collName := "subscriptionData.provisionedData.traceData"
-	ueId := c.Params.ByName("ueId")
-	servingPlmnId := c.Params.ByName("servingPlmnId")
-
-	response, problemDetails := datarepository.QueryTraceDataProcedure(collName, ueId, servingPlmnId)
-
-	if response == nil && problemDetails != nil {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(http.StatusInternalServerError, pd)
-		return
+func (p *Processor) QueryTraceDataProcedure(c *gin.Context, collName string, ueId string,
+	servingPlmnId string,
+) {
+	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QueryTraceDataProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return 
 	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, data)
 }

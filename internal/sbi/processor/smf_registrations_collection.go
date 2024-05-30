@@ -13,18 +13,19 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/util/mongoapi"
 )
 
-// HTTPQuerySmfRegList - Retrieves the SMF registration list of a UE
-func (p *Processor) HandleQuerySmfRegList(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmfRegList")
-
-	collName := "subscriptionData.contextData.smfRegistrations"
-	ueId := c.Params.ByName("ueId")
-	data := datarepository.QuerySmfRegListProcedure(collName, ueId)
-
-	c.JSON(http.StatusOK, data)
-
+func (p *Processor) QuerySmfRegListProcedure(c *gin.Context, collName string, ueId string)  {
+	filter := bson.M{"ueId": ueId}
+	smfRegList, err := mongoapi.RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+	if err != nil {
+		logger.DataRepoLog.Errorf("QuerySmfRegListProcedure err: %+v", err)
+		c.JSON(http.StatusOK, nil)
+		return
+	}
+	c.JSON(http.StatusOK, smfRegList)
 }

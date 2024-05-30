@@ -10,69 +10,57 @@
 package processor
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
+	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"github.com/free5gc/openapi/models"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/util/mongoapi"
+
 )
 
-// HTTPApplicationDataInfluenceDataGet -
-func (p *Processor) HandleApplicationDataInfluenceDataGet(c *gin.Context) {
-
-	var filter []bson.M
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataGet")
-	collName := "applicationData.influenceData"
-	
-	influenceIdsParam := c.QueryArray("influence-Ids")
-	dnnsParam := c.QueryArray("dnns")
-	internalGroupIdsParam := c.QueryArray("internal-Group-Id")
-	supisParam := c.QueryArray("supis")
-	snssaisParam := c.QueryArray("snssais")
-	if len(influenceIdsParam) != 0 {
-		influenceIds := strings.Split(influenceIdsParam[0], ",")
-		filter = append(filter, bson.M{"influenceId": bson.M{"$in": influenceIds}})
-	}
-	if len(dnnsParam) != 0 {
-		dnns := strings.Split(dnnsParam[0], ",")
-		filter = append(filter, bson.M{"dnn": bson.M{"$in": dnns}})
-	}
-	if len(internalGroupIdsParam) != 0 {
-		internalGroupIds := strings.Split(internalGroupIdsParam[0], ",")
-		withAnyUeIndFilter := []bson.M{
-			{
-				"interGroupId": bson.M{"$in": internalGroupIds},
-			},
-			{
-				"interGroupId": "AnyUE",
-			},
+func (p *Processor) ApplicationDataInfluenceDataGetProcedure(c *gin.Context, collName string, filter []bson.M) (
+	response *[]map[string]interface{},
+) {
+	influenceDataArray := make([]map[string]interface{}, 0)
+	if len(filter) != 0 {
+		var err error
+		influenceDataArray, err = mongoapi.RestfulAPIGetMany(collName, bson.M{"$and": filter})
+		if err != nil {
+			logger.DataRepoLog.Errorf("ApplicationDataInfluenceDataGetProcedure err: %+v", err)
+			return nil
 		}
-		filter = append(filter, bson.M{"$or": withAnyUeIndFilter})
-	} else if len(supisParam) != 0 {
-		supis := strings.Split(supisParam[0], ",")
-		withAnyUeIndFilter := []bson.M{
-			{
-				"supi": bson.M{"$in": supis},
-			},
-			{
-				"interGroupId": "AnyUE",
-			},
-		}
-		filter = append(filter, bson.M{"$or": withAnyUeIndFilter})
 	}
-	if len(snssaisParam) != 0 {
-		snssais := datarepository.ParseSnssaisFromQueryParam(snssaisParam[0])
-		// NOTE: The following code would have bugs with several tries that return null value from Mongo DB, while most of
-		//       tries would be correct. The errors seem to occur only when the receiving filters on Mongo DB have reverse
-		//       orders of snssai fields, i.e. first sd then sst, even though bson.M{} is used
-		// matchList := buildSnssaiMatchList(snssais)
-		// filter = append(filter, bson.M{"snssai": bson.M{"$in": matchList}})
-		matchList := datarepository.BuildSnssaiMatchList(snssais)
-		filter = append(filter, bson.M{"$or": matchList})
+	for _, influenceData := range influenceDataArray {
+		groupUri := udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR)
+		influenceData["resUri"] = fmt.Sprintf("%s/application-data/influenceData/%s",
+			groupUri, influenceData["influenceId"].(string))
+		delete(influenceData, "_id")
+		delete(influenceData, "influenceId")
 	}
-	influenceDataArray := datarepository.ApplicationDataInfluenceDataGetProcedure(collName, filter)
 	c.JSON(http.StatusOK, influenceDataArray)
+	return
 }
+
+func (p *Processor) ParseSnssaisFromQueryParam(snssaiStr string) []models.Snssai {
+	var snssais []models.Snssai
+	err := json.Unmarshal([]byte("["+snssaiStr+"]"), &snssais)
+	if err != nil {
+		logger.DataRepoLog.Warnln("Unmarshal Error in snssaiStruct", err)
+	}
+	return snssais
+}
+
+func (p *Processor) BuildSnssaiMatchList(snssais []models.Snssai) (matchList []bson.M) {
+	for _, v := range snssais {
+		matchList = append(matchList, bson.M{"snssai.sst": v.Sst, "snssai.sd": v.Sd})
+	}
+	return
+}
+
+

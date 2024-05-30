@@ -10,71 +10,68 @@
 package processor
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPCreateSdmSubscriptions - Create individual sdm subscription
-func (p *Processor) HandleCreateSdmSubscriptions(c *gin.Context) {
-	var sdmSubscription models.SdmSubscription
+func (p *Processor) CreateSdmSubscriptionsProcedure(c *gin.Context, SdmSubscription models.SdmSubscription,
+	collName string, ueId string,
+) {
+	udrSelf := udr_context.GetSelf()
 
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		udrSelf.UESubsCollection.Store(ueId, new(udr_context.UESubsData))
+		value, _ = udrSelf.UESubsCollection.Load(ueId)
+	}
+	UESubsData := value.(*udr_context.UESubsData)
+	if UESubsData.SdmSubscriptions == nil {
+		UESubsData.SdmSubscriptions = make(map[string]*models.SdmSubscription)
 	}
 
-	err = openapi.Deserialize(&sdmSubscription, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
+	newSubscriptionID := strconv.Itoa(udrSelf.SdmSubscriptionIDGenerator)
+	SdmSubscription.SubscriptionId = newSubscriptionID
+	UESubsData.SdmSubscriptions[newSubscriptionID] = &SdmSubscription
+	udrSelf.SdmSubscriptionIDGenerator++
 
-	logger.DataRepoLog.Infof("Handle CreateSdmSubscriptions")
-
-	collName := "subscriptionData.contextData.amfNon3gppAccess"
-	ueId := c.Params.ByName("ueId")
-
-	locationHeader, SdmSubscription := datarepository.CreateSdmSubscriptionsProcedure(sdmSubscription, collName, ueId)
+	/* Contains the URI of the newly created resource, according
+	   to the structure: {apiRoot}/subscription-data/{ueId}/context-data/sdm-subscriptions/{subsId}' */
+	locationHeader := fmt.Sprintf("%s/subscription-data/%s/context-data/sdm-subscriptions/%s",
+		udrSelf.GetIPv4GroupUri(udr_context.NUDR_DR), ueId, newSubscriptionID)
 
 	c.Header("Location", locationHeader)
 	c.JSON(http.StatusCreated, SdmSubscription)
 }
 
-// HTTPQuerysdmsubscriptions - Retrieves the sdm subscriptions of a UE
-func (p *Processor) HandleQuerysdmsubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle Querysdmsubscriptions")
+func (p *Processor) QuerysdmsubscriptionsProcedure(c *gin.Context, ueId string)  {
+	udrSelf := udr_context.GetSelf()
 
-	ueId := c.Params.ByName("ueId")
-
-	response, problemDetails := datarepository.QuerysdmsubscriptionsProcedure(ueId)
-
-	if response == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return 
 	}
-	c.JSON(http.StatusOK, response)
+
+	UESubsData := value.(*udr_context.UESubsData)
+	var sdmSubscriptionSlice []models.SdmSubscription
+
+	for _, v := range UESubsData.SdmSubscriptions {
+		sdmSubscriptionSlice = append(sdmSubscriptionSlice, *v)
+	}
+
+	if len(sdmSubscriptionSlice) == 0 {
+		pd := util.ProblemDetailsNotFound("SDMSUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+
+	c.JSON(http.StatusOK, sdmSubscriptionSlice)
 }

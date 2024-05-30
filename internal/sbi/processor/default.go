@@ -10,166 +10,433 @@
 package processor
 
 import (
+	"fmt"
 	"net/http"
 	"encoding/json"
+	"strconv"
+	"strings"
+	"reflect"
+
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 	"github.com/free5gc/udr/internal/util"
-	"github.com/free5gc/util/httpwrapper"
+	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/util/mongoapi"
 )
 
-func sendResponse(c *gin.Context, rsp *httpwrapper.Response) {
-	for k, v := range rsp.Header {
-		// TODO: concatenate all values
-		c.Header(k, v[0])
-	}
-	serializedBody, err := openapi.Serialize(rsp.Body, "application/json")
-	if err != nil {
-		logger.DataRepoLog.Errorf("Serialize Response Body error: %+v", err)
-		pd := openapi.ProblemDetailsSystemFailure(err.Error())
-		c.JSON(http.StatusInternalServerError, pd)
-	} else {
-		c.Data(rsp.Status, "application/json", serializedBody)
-	}
-}
 
-func getDataFromRequestBody(c *gin.Context, data interface{}) error {
-	reqBody, err := c.GetRawData()
-	if err != nil {
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		pd := openapi.ProblemDetailsSystemFailure(err.Error())
-		c.JSON(http.StatusInternalServerError, pd)
-		return err
-	}
-
-	err = openapi.Deserialize(data, reqBody, "application/json")
-	if err != nil {
-		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
-		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
-		c.JSON(http.StatusBadRequest, pd)
-		return err
-	}
-	return err
-}
-
-// HTTPApplicationDataPfdsAppIdDelete -
-func (p *Processor) HandleApplicationDataPfdsAppIdDelete(c *gin.Context) {
-	appID := c.Params.ByName("appId")
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdDelete: appID=%q", appID)
-
-	datarepository.DeleteApplicationDataIndividualPfdFromDB(appID)
-
+func (p *Processor) DeleteApplicationDataIndividualPfdFromDBProcedure(c *gin.Context, appID string) {
+	filter := bson.M{"applicationId": appID}
+	deleteDataFromDB(APPDATA_PFD_DB_COLLECTION_NAME, filter)
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPApplicationDataPfdsAppIdGet -
-func (p *Processor) HandleApplicationDataPfdsAppIdGet(c *gin.Context) {
-	appID := c.Params.ByName("appId")
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdGet: appID=%q", appID)
-
-	data, problemDetails := datarepository.GetApplicationDataIndividualPfdFromDB(appID)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
+func (p *Processor) GetApplicationDataIndividualPfdFromDBProcedure(c *gin.Context, appID string) {
+	filter := bson.M{"applicationId": appID}
+	data, pd := getDataFromDB(APPDATA_PFD_DB_COLLECTION_NAME, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("getApplicationDataIndividualPfdFromDB err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 	}
 	c.JSON(http.StatusOK, data)
 }
 
-// HTTPApplicationDataPfdsAppIdPut -
-func(p *Processor) HandleApplicationDataPfdsAppIdPut(c *gin.Context) {
-	var pfdDataforApp models.PfdDataForApp
+func (p *Processor) PutApplicationDataIndividualPfdToDBProcedure(c *gin.Context, appID string, pfdDataForApp *models.PfdDataForApp) {
+	filter := bson.M{"applicationId": appID}
+	data := util.ToBsonM(*pfdDataForApp)
 
-	if err := getDataFromRequestBody(c, &pfdDataforApp); err != nil {
+	existed, err := mongoapi.RestfulAPIPutOne(APPDATA_PFD_DB_COLLECTION_NAME, filter, data)
+	if err != nil {
+		logger.DataRepoLog.Errorf("putApplicationDataIndividualPfdToDB err: %+v", err)
+		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
-	appID := c.Params.ByName("appId")
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdPut: appID=%q", appID)
-
-	data, status := datarepository.PutApplicationDataIndividualPfdToDB(appID, &pfdDataforApp)
-
-	c.JSON(status, data)
+	if existed {
+		c.JSON(http.StatusOK, data)
+	}
+	c.JSON(http.StatusCreated, data)
 }
 
-// HTTPApplicationDataPfdsGet -
-func (p *Processor) HandleApplicationDataPfdsGet(c *gin.Context) {
-	query := c.Request.URL.Query()
-	pfdsAppIDs := query["appId"]
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsGet: pfdsAppIDs=%#v", pfdsAppIDs)
+func (p *Processor) GetApplicationDataPfdsFromDBProcedure(c *gin.Context, pfdsAppIDs []string) {
+	filter := bson.M{}
 
-	// TODO: Parse appID with separator ','
-	// Ex: "app1,app2,..."
-	matchedPfds := datarepository.GetApplicationDataPfdsFromDB(pfdsAppIDs)
-
+	var matchedPfds []map[string]interface{}
+	if len(pfdsAppIDs) == 0 {
+		var err error
+		matchedPfds, err = mongoapi.RestfulAPIGetMany(APPDATA_PFD_DB_COLLECTION_NAME, filter)
+		if err != nil {
+			logger.DataRepoLog.Errorf("getApplicationDataPfdsFromDB err: %+v", err)
+			c.JSON(http.StatusOK, nil)
+			return
+		}
+	} else {
+		for _, v := range pfdsAppIDs {
+			filter := bson.M{"applicationId": v}
+			data, pd := getDataFromDB(APPDATA_PFD_DB_COLLECTION_NAME, filter)
+			if pd == nil {
+				matchedPfds = append(matchedPfds, data)
+			}
+		}
+	}
 	c.JSON(http.StatusOK, matchedPfds)
 }
 
-// HTTPExposureDataSubsToNotifyPost -
-func (p *Processor) HandleExposureDataSubsToNotifyPost(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-// HTTPExposureDataSubsToNotifySubIdDelete - Deletes a subcription for notifications
-func (p *Processor) HandleExposureDataSubsToNotifySubIdDelete(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-// HTTPExposureDataSubsToNotifySubIdPut - updates a subcription for notifications
-func (p *Processor) HandleExposureDataSubsToNotifySubIdPut(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-// HTTPPolicyDataBdtDataBdtReferenceIdDelete -
-func (p *Processor) HandlePolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdDelete")
-
-	collName := "policyData.bdtData"
-	bdtReferenceId := c.Params.ByName("bdtReferenceId")
-
-	datarepository.PolicyDataBdtDataBdtReferenceIdDeleteProcedure(collName, bdtReferenceId)
+func (p *Processor) PolicyDataBdtDataBdtReferenceIdDeleteProcedure(c *gin.Context, collName string, bdtReferenceId string) {
+	filter := bson.M{"bdtReferenceId": bdtReferenceId}
+	deleteDataFromDB(collName, filter)
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPPolicyDataBdtDataBdtReferenceIdGet -
-func (p *Processor) HandlePolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdGet")
-
-	collName := "policyData.bdtData"
-	bdtReferenceId := c.Params.ByName("bdtReferenceId")
-
-	data, problemDetails := datarepository.PolicyDataBdtDataBdtReferenceIdGetProcedure(collName, bdtReferenceId)
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+func (p *Processor) PolicyDataBdtDataBdtReferenceIdGetProcedure(c *gin.Context, collName string, bdtReferenceId string) {
+	filter := bson.M{"bdtReferenceId": bdtReferenceId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataBdtDataBdtReferenceIdGetProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return 
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+func (p *Processor) PolicyDataBdtDataBdtReferenceIdPutProcedure(c *gin.Context, collName string, bdtReferenceId string, bdtData models.BdtData) {
+	putData := util.ToBsonM(bdtData)
+	putData["bdtReferenceId"] = bdtReferenceId
+	filter := bson.M{"bdtReferenceId": bdtReferenceId}
+
+	existed, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
+	if err != nil {
+		logger.DataRepoLog.Errorf("putApplicationDataIndividualPfdToDB err: %+v", err)
+		pd := util.ProblemDetailsUpspecified(err.Error())
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+
+	if existed {
+		PreHandlePolicyDataChangeNotification("", bdtReferenceId, bdtData)
+	}
+	c.JSON(http.StatusOK, putData)
+}
+
+func (p *Processor) PolicyDataBdtDataGetProcedure(c *gin.Context, collName string) {
+	filter := bson.M{}
+	bdtDataArray, err := mongoapi.RestfulAPIGetMany(collName, filter)
+	if err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataBdtDataGetProcedure err: %+v", err)
+		c.JSON(http.StatusOK, nil)
+	}
+	c.JSON(http.StatusOK, bdtDataArray)
+}
+
+func (p *Processor) PolicyDataPlmnsPlmnIdUePolicySetGetProcedure(c *gin.Context, collName string, plmnId string) {
+	filter := bson.M{"plmnId": plmnId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataPlmnsPlmnIdUePolicySetGetProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+func (p *Processor) PolicyDataSponsorConnectivityDataSponsorIdGetProcedure(c *gin.Context, collName string,
+	sponsorId string,
+) {
+	filter := bson.M{"sponsorId": sponsorId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataSponsorConnectivityDataSponsorIdGetProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 	c.JSON(http.StatusOK, data)
 }
 
-// HTTPPolicyDataBdtDataBdtReferenceIdPut -
-func (p *Processor) HandlePolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
-	var bdtData models.BdtData
+func (p *Processor) PolicyDataSubsToNotifyPostProcedure(c *gin.Context, PolicyDataSubscription models.PolicyDataSubscription) {
+	udrSelf := udr_context.GetSelf()
 
-	if err := getDataFromRequestBody(c, &bdtData); err != nil {
+	newSubscriptionID := strconv.Itoa(udrSelf.PolicyDataSubscriptionIDGenerator)
+	udrSelf.PolicyDataSubscriptions[newSubscriptionID] = &PolicyDataSubscription
+	udrSelf.PolicyDataSubscriptionIDGenerator++
+
+	/* Contains the URI of the newly created resource, according
+	   to the structure: {apiRoot}/subscription-data/subs-to-notify/{subsId} */
+	locationHeader := fmt.Sprintf("%s/policy-data/subs-to-notify/%s", udrSelf.GetIPv4GroupUri(udr_context.NUDR_DR),
+		newSubscriptionID)
+
+	c.Header("Location", locationHeader)
+	c.JSON(http.StatusCreated, PolicyDataSubscription)
+}
+
+func (p *Processor) PolicyDataSubsToNotifySubsIdDeleteProcedure(c *gin.Context, subsId string) {
+	udrSelf := udr_context.GetSelf()
+	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+	}
+	delete(udrSelf.PolicyDataSubscriptions, subsId)
+	c.Status(http.StatusNoContent)
+}
+
+func (p *Processor) PolicyDataSubsToNotifySubsIdPutProcedure(c *gin.Context, subsId string,
+	policyDataSubscription models.PolicyDataSubscription,
+) {
+	udrSelf := udr_context.GetSelf()
+	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+	}
+
+	udrSelf.PolicyDataSubscriptions[subsId] = &policyDataSubscription
+	c.JSON(http.StatusOK, policyDataSubscription)
+}
+
+func (p *Processor) PolicyDataUesUeIdAmDataGetProcedure(c *gin.Context, collName string,
+	ueId string,
+) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdAmDataGetProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataGetProcedure(c *gin.Context, collName string,
+	ueId string,
+){
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataGetProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+	}
+	operatorSpecificDataContainerMap := data["operatorSpecificDataContainerMap"]
+	c.JSON(http.StatusOK, operatorSpecificDataContainerMap)
+}
+
+func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c *gin.Context, collName string, ueId string,
+	patchItem []models.PatchItem,
+) {
+	filter := bson.M{"ueId": ueId}
+
+	patchJSON, err := json.Marshal(patchItem)
+	if err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataPatchProcedure err: %+v", err)
+		pd := util.ProblemDetailsModifyNotAllowed("")
+		c.JSON(int(pd.Status), pd)
+	}
+
+	if err := mongoapi.RestfulAPIJSONPatchExtend(collName, filter, patchJSON,
+		"operatorSpecificDataContainerMap"); err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataPatchProcedure err: %+v", err)
+		pd := util.ProblemDetailsModifyNotAllowed("")
+		c.JSON(int(pd.Status), pd)
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPutProcedure(c *gin.Context, collName string, ueId string,
+	OperatorSpecificDataContainer map[string]models.OperatorSpecificDataContainer,
+) {
+	filter := bson.M{"ueId": ueId}
+
+	putData := map[string]interface{}{"operatorSpecificDataContainerMap": OperatorSpecificDataContainer}
+	putData["ueId"] = ueId
+
+	_, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
+	if err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataPutProcedure err: %+v", err)
+	}
+	c.Status(http.StatusOK)
+}
+
+func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(c *gin.Context, collName string, ueId string, snssai models.Snssai,
+	dnn string,
+) {
+	filter := bson.M{"ueId": ueId}
+
+	smPolicyData, pd := getDataFromDBWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+	if pd != nil {
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+
+	hex_snssai := util.SnssaiModelsToHex(snssai)
+	found := false
+	smPolicySnssaiDatas, ok := smPolicyData["smPolicySnssaiData"].(map[string]interface{})
+	if !ok {
+		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdPut")
+	for cmpSnssai, v := range smPolicySnssaiDatas {
+		if !strings.EqualFold(cmpSnssai, hex_snssai) {
+			continue
+		}
+		smPolicySnssaiData, ok := v.(map[string]interface{})
+		if !ok {
+			break
+		}
+		smPolicyDnnDatas, ok := smPolicySnssaiData["smPolicyDnnData"].(map[string]interface{})
+		if !ok {
+			break
+		}
 
-	collName := "policyData.bdtData"
-	bdtReferenceId := c.Params.ByName("bdtReferenceId")
+		for cmpDnn := range smPolicyDnnDatas {
+			if strings.EqualFold(cmpDnn, util.EscapeDnn(dnn)) {
+				found = true
+				break
+			}
+		}
 
-	putData := datarepository.PolicyDataBdtDataBdtReferenceIdPutProcedure(collName, bdtReferenceId, bdtData)
-	
-	if putData == nil {
+		if found {
+			break
+		}
+	}
+	if !found {
+		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+
+	var smPolicyDataResp models.SmPolicyData
+	err := json.Unmarshal(util.MapToByte(smPolicyData), &smPolicyDataResp)
+	if err != nil {
+		logger.DataRepoLog.Warnln(err)
+	}
+	tmpSmPolicySnssaiData := make(map[string]models.SmPolicySnssaiData)
+	for snssai, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
+		tmpSmPolicyDnnData := make(map[string]models.SmPolicyDnnData)
+		for escapedDnn, dnnData := range snssaiData.SmPolicyDnnData {
+			dnn := util.UnescapeDnn(escapedDnn)
+			tmpSmPolicyDnnData[dnn] = dnnData
+		}
+		snssaiData.SmPolicyDnnData = tmpSmPolicyDnnData
+		tmpSmPolicySnssaiData[snssai] = snssaiData
+	}
+	smPolicyDataResp.SmPolicySnssaiData = tmpSmPolicySnssaiData
+	filter = bson.M{"ueId": ueId}
+	usageMonDataMapArray, err := mongoapi.RestfulAPIGetMany("policyData.ues.smData.usageMonData", filter)
+	if err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataGetProcedure err: %+v", err)
+	}
+
+	if !reflect.DeepEqual(usageMonDataMapArray, []map[string]interface{}{}) {
+		var usageMonDataArray []models.UsageMonData
+		if err := json.Unmarshal(util.MapArrayToByte(usageMonDataMapArray), &usageMonDataArray); err != nil {
+			logger.DataRepoLog.Warnln(err)
+		}
+		smPolicyDataResp.UmData = make(map[string]models.UsageMonData)
+		for _, element := range usageMonDataArray {
+			smPolicyDataResp.UmData[element.LimitId] = element
+		}
+	}
+
+	c.JSON(http.StatusOK, smPolicyDataResp)
+}
+
+func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collName string, ueId string,
+	UsageMonData map[string]models.UsageMonData,
+) {
+	filter := bson.M{"ueId": ueId}
+
+	successAll := true
+	for k, usageMonData := range UsageMonData {
+		limitId := k
+		filterTmp := bson.M{"ueId": ueId, "limitId": limitId}
+		if err := mongoapi.RestfulAPIMergePatch(collName, filterTmp, util.ToBsonM(usageMonData)); err != nil {
+			successAll = false
+		} else {
+			var usageMonData models.UsageMonData
+			usageMonDataBsonM, pd := getDataFromDB(collName, filter)
+			if pd != nil && pd.Status == http.StatusInternalServerError {
+				logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataPatchProcedure err: %s", pd.Detail)
+				c.JSON(int(pd.Status), pd)
+				return
+			}
+			if err := json.Unmarshal(util.MapToByte(usageMonDataBsonM), &usageMonData); err != nil {
+				logger.DataRepoLog.Warnln(err)
+			}
+			PreHandlePolicyDataChangeNotification(ueId, limitId, usageMonData)
+		}
+	}
+
+	if successAll {
+		smPolicyDataBsonM, pd := getDataFromDB(collName, filter)
+		if pd != nil {
+			logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataPatchProcedure err: %s", pd.Detail)
+			c.JSON(int(pd.Status), pd)
+			return
+		}
+		var smPolicyData models.SmPolicyData
+		if err := json.Unmarshal(util.MapToByte(smPolicyDataBsonM), &smPolicyData); err != nil {
+			logger.DataRepoLog.Warnln(err)
+		}
+
+		collName := "policyData.ues.smData.usageMonData"
+		filter := bson.M{"ueId": ueId}
+		usageMonDataMapArray, err := mongoapi.RestfulAPIGetMany(collName, filter)
+		if err != nil {
+			logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataPatchProcedure err: %+v", err)
+		}
+
+		if !reflect.DeepEqual(usageMonDataMapArray, []map[string]interface{}{}) {
+			var usageMonDataArray []models.UsageMonData
+			if err := json.Unmarshal(util.MapArrayToByte(usageMonDataMapArray), &usageMonDataArray); err != nil {
+				logger.DataRepoLog.Warnln(err)
+			}
+			smPolicyData.UmData = make(map[string]models.UsageMonData)
+			for _, element := range usageMonDataArray {
+				smPolicyData.UmData[element.LimitId] = element
+			}
+		}
+		PreHandlePolicyDataChangeNotification(ueId, "", smPolicyData)
+		c.Status(http.StatusNoContent)
+	}
+	pd := util.ProblemDetailsModifyNotAllowed("")
+	c.JSON(int(pd.Status), pd)
+}
+
+func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdDeleteProcedure(c *gin.Context, collName string, ueId string, usageMonId string) {
+	filter := bson.M{"ueId": ueId, "usageMonId": usageMonId}
+	deleteDataFromDB(collName, filter)
+	c.Status(http.StatusNoContent)
+}
+
+func (p *Processor)  PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c *gin.Context, collName string, usageMonId string,
+	ueId string,
+) {
+	filter := bson.M{"ueId": ueId, "usageMonId": usageMonId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataUsageMonIdGetProcedure err: %s", pd.Detail)
+		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
+func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(c *gin.Context, collName string, ueId string, usageMonId string,
+	usageMonData models.UsageMonData,
+) {
+	putData := util.ToBsonM(usageMonData)
+	putData["ueId"] = ueId
+	putData["usageMonId"] = usageMonId
+	filter := bson.M{"ueId": ueId, "usageMonId": usageMonId}
+
+	_, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
+	if err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataUsageMonIdPutProcedure err: %+v", err)
 		pd := util.ProblemDetailsUpspecified("")
 		c.JSON(int(pd.Status), pd)
 		return
@@ -177,332 +444,63 @@ func (p *Processor) HandlePolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
 	c.JSON(http.StatusOK, putData)
 }
 
-// HTTPPolicyDataBdtDataGet -
-func (p *Processor) HandlePolicyDataBdtDataGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataGet")
-
-	collName := "policyData.bdtData"
-
-	bdtDataArray := datarepository.PolicyDataBdtDataGetProcedure(collName)
-	c.JSON(http.StatusOK, bdtDataArray)
-}
-
-// HTTPPolicyDataPlmnsPlmnIdUePolicySetGet -
-func (p *Processor) HandlePolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataPlmnsPlmnIdUePolicySetGet")
-
-	collName := "policyData.plmns.uePolicySet"
-	plmnId := c.Params.ByName("plmnId")
-
-	data, problemDetails := datarepository.PolicyDataPlmnsPlmnIdUePolicySetGetProcedure(collName, plmnId)
-
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+func (p *Processor) PolicyDataUesUeIdUePolicySetGetProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetGetProcedure err: %s", pd.Detail)
+		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
 		return
 	}
 	c.JSON(http.StatusOK, data)
 }
 
-// HTTPPolicyDataSponsorConnectivityDataSponsorIdGet -
-func (p *Processor) HandlePolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataSponsorConnectivityDataSponsorIdGet")
+func (p *Processor) PolicyDataUesUeIdUePolicySetPatchProcedure(c *gin.Context, collName string, ueId string,
+	UePolicySet models.UePolicySet,
+)  {
+	patchData := util.ToBsonM(UePolicySet)
+	patchData["ueId"] = ueId
+	filter := bson.M{"ueId": ueId}
 
-	collName := "policyData.sponsorConnectivityData"
-	sponsorId := c.Params.ByName("sponsorId")
-
-	data, status := datarepository.PolicyDataSponsorConnectivityDataSponsorIdGetProcedure(collName, sponsorId)
-
-	if data == nil {
-		pd := util.ProblemDetailsUpspecified("")
+	if err := mongoapi.RestfulAPIMergePatch(collName, filter, patchData); err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %+v", err)
+		pd := util.ProblemDetailsModifyNotAllowed("")
 		c.JSON(int(pd.Status), pd)
 		return
-	} else if status == http.StatusOK {
-		c.JSON(http.StatusOK, data)
-		return
-	} else if status == http.StatusNoContent {
-		c.JSON(http.StatusNoContent, nil)
-		return
-	} 
-}
-
-// HTTPPolicyDataSubsToNotifyPost -
-func (p *Processor) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
-	var policyDataSubscription models.PolicyDataSubscription
-
-	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
-		return
 	}
 
-	logger.DataRepoLog.Infof("Handle PolicyDataSubsToNotifyPost")
-
-	locationHeader := datarepository.PolicyDataSubsToNotifyPostProcedure(policyDataSubscription)
-	c.Header("Location", locationHeader)
-	c.JSON(http.StatusCreated, policyDataSubscription)
-}
-
-// HTTPPolicyDataSubsToNotifySubsIdDelete -
-func (p *Processor) HandlePolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
-	subsId :=  c.Params.ByName("subsId")
-
-	problemDetails := datarepository.PolicyDataSubsToNotifySubsIdDeleteProcedure(subsId)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+	var uePolicySet models.UePolicySet
+	uePolicySetBsonM, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
+	if err := json.Unmarshal(util.MapToByte(uePolicySetBsonM), &uePolicySet); err != nil {
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %+v", err)
+		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	PreHandlePolicyDataChangeNotification(ueId, "", uePolicySet)
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPPolicyDataSubsToNotifySubsIdPut -
-func (p *Processor) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
-	var policyDataSubscription models.PolicyDataSubscription
+func (p *Processor) PolicyDataUesUeIdUePolicySetPutProcedure(c *gin.Context, collName string, ueId string,
+	UePolicySet models.UePolicySet,
+) {
+	putData := util.ToBsonM(UePolicySet)
+	putData["ueId"] = ueId
+	filter := bson.M{"ueId": ueId}
 
-	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
-		return
-	}
-
-	logger.DataRepoLog.Infof("Handle PolicyDataSubsToNotifySubsIdPut")
-
-	subsId := c.Params.ByName("subsId")
-
-	data, problemDetails := datarepository.PolicyDataSubsToNotifySubsIdPutProcedure(subsId, policyDataSubscription)
-
-	if problemDetails == nil && data == nil {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.JSON(http.StatusOK, policyDataSubscription)
-}
-
-// HTTPPolicyDataUesUeIdAmDataGet -
-func (p *Processor) HandlePolicyDataUesUeIdAmDataGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdAmDataGet")
-
-	collName := "policyData.ues.amData"
-	ueId := c.Params.ByName("ueId")
-	data, problemDetails := datarepository.PolicyDataUesUeIdAmDataGetProcedure(collName, ueId)
-
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.JSON(http.StatusOK, data)
-}
-
-// HTTPPolicyDataUesUeIdOperatorSpecificDataGet -
-func (p *Processor) HandlePolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
-
-	collName := "policyData.ues.operatorSpecificData"
-	ueId := c.Params.ByName("ueId")
-	operatorSpecificDataContainerMap, problemDetails := datarepository.PolicyDataUesUeIdOperatorSpecificDataGetProcedure(collName, ueId)
-
-	if operatorSpecificDataContainerMap == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.JSON(http.StatusOK, operatorSpecificDataContainerMap)
-
-}
-
-// HTTPPolicyDataUesUeIdOperatorSpecificDataPatch - Need to be fixed
-func (p *Processor) HandlePolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context) {
-	var patchItemArray []models.PatchItem
-
-	if err := getDataFromRequestBody(c, &patchItemArray); err != nil {
-		return
-	}
-
-	collName := "policyData.ues.operatorSpecificData"
-	ueId := c.Params.ByName("ueId")
-
-	problemDetails := datarepository.PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(collName, ueId, patchItemArray)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.Status(http.StatusNoContent)
-}
-
-// HTTPPolicyDataUesUeIdOperatorSpecificDataPut -
-func (p *Processor) HandlePolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) {
-	var operatorSpecificDataContainerMap map[string]models.OperatorSpecificDataContainer
-
-	if err := getDataFromRequestBody(c, &operatorSpecificDataContainerMap); err != nil {
-		return
-	}
-
-	collName := "policyData.ues.operatorSpecificData"
-	ueId :=  c.Params.ByName("ueId")
-
-	datarepository.PolicyDataUesUeIdOperatorSpecificDataPutProcedure(collName, ueId,  operatorSpecificDataContainerMap)
-
-	c.Status(http.StatusOK)
-}
-
-// HTTPPolicyDataUesUeIdSmDataGet -
-func (p *Processor) HandlePolicyDataUesUeIdSmDataGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdSmDataGet")
-
-	collName := "policyData.ues.smData"
-	ueId := c.Params.ByName("ueId")
-	sNssai := models.Snssai{}
-	sNssaiQuery := c.Request.URL.Query().Get("snssai")
-	dnn := c.Request.URL.Query().Get("dnn")
-
-	err := json.Unmarshal([]byte(sNssaiQuery), &sNssai)
+	existed, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
 	if err != nil {
-		logger.DataRepoLog.Warnln(err)
+		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPutProcedure err: %+v", err)
+		c.Status(http.StatusInternalServerError)
 	}
-	smPolicyDataResp, problemDetails := datarepository.PolicyDataUesUeIdSmDataGetProcedure(collName, ueId, sNssai, dnn)
-	
-	if smPolicyDataResp == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.JSON(http.StatusOK, smPolicyDataResp)
-}
-
-// HTTPPolicyDataUesUeIdSmDataPatch - Need to be fixed
-func (p *Processor) HandlePolicyDataUesUeIdSmDataPatch(c *gin.Context) {
-	var usageMonDataMap map[string]models.UsageMonData
-
-	if err := getDataFromRequestBody(c, &usageMonDataMap); err != nil {
-		return
-	}
-	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdSmDataPatch")
-
-	collName := "policyData.ues.smData.usageMonData"
-	ueId := c.Params.ByName("ueId")
-
-	problemDetails := datarepository.PolicyDataUesUeIdSmDataPatchProcedure(collName, ueId, usageMonDataMap)
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.Status(http.StatusNoContent)
-}
-
-// HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete -
-func (p *Processor) HandlePolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
-	ueId := c.Params.ByName("ueId")
-	usageMonId := c.Params.ByName("usageMonId")
-	collName := "policyData.ues.smData.usageMonData"
-	datarepository.PolicyDataUesUeIdSmDataUsageMonIdDeleteProcedure(collName, ueId, usageMonId)
-
-	c.Status(http.StatusNoContent)
-}
-
-// HTTPPolicyDataUesUeIdSmDataUsageMonIdGet -
-func (p *Processor) HandlePolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
-	collName := "policyData.ues.smData.usageMonData"
-	ueId := c.Params.ByName("ueId")
-	usageMonId := c.Params.ByName("usageMonId")
-
-	data := datarepository.PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(collName, usageMonId, ueId)
-
-	if data == nil {
+	if existed {
 		c.Status(http.StatusNoContent)
-		return
 	}
-	c.JSON(http.StatusOK, data)
-}
-
-// HTTPPolicyDataUesUeIdSmDataUsageMonIdPut -
-func (p *Processor) HandlePolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
-	var usageMonData models.UsageMonData
-
-	if err := getDataFromRequestBody(c, &usageMonData); err != nil {
-		return
-	}
-	ueId := c.Params.ByName("ueId")
-	usageMonId := c.Params.ByName("usageMonId")
-	collName := "policyData.ues.smData.usageMonData"
-
-	putData := datarepository.PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(collName, ueId, usageMonId, usageMonData)
-
 	c.JSON(http.StatusCreated, putData)
-}
-
-// HTTPPolicyDataUesUeIdUePolicySetGet -
-func (p *Processor) HandlePolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
-
-	ueId := c.Params.ByName("ueId")
-	collName := "policyData.ues.uePolicySet"
-
-	data, problemDetails := datarepository.PolicyDataUesUeIdUePolicySetGetProcedure(collName, ueId)
-
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.JSON(http.StatusOK, data)
-}
-
-// HTTPPolicyDataUesUeIdUePolicySetPatch -
-func (p *Processor) HandlePolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
-	var uePolicySet models.UePolicySet
-
-	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {
-		return
-	}
-
-	collName := "policyData.ues.uePolicySet"
-	ueId := c.Params.ByName("ueId")
-	problemDetails := datarepository.PolicyDataUesUeIdUePolicySetPatchProcedure(collName, ueId, uePolicySet)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.Status(http.StatusNoContent)
-}
-
-// HTTPPolicyDataUesUeIdUePolicySetPut -
-func (p *Processor) HandlePolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
-	var uePolicySet models.UePolicySet
-
-	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {
-		return
-	}
-
-	collName := "policyData.ues.uePolicySet"
-	ueId := c.Params.ByName("ueId")
-	putData, status := datarepository.PolicyDataUesUeIdUePolicySetPutProcedure(collName, ueId, uePolicySet)
-
-	if status == http.StatusNoContent {
-		c.Status(http.StatusNoContent)
-		return
-	} else if status == http.StatusCreated {
-		c.JSON(http.StatusCreated, putData)
-		return
-	} else if putData == nil {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
-		return
-	}
 }

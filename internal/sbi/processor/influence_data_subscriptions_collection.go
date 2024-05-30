@@ -10,110 +10,126 @@
 package processor
 
 import (
-	"net/http"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"reflect"
+
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/udr/internal/util"
 	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/util/mongoapi"
 )
 
-// HTTPApplicationDataInfluenceDataSubsToNotifyGet -
-func (p *Processor) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyGet")
+func (p *Processor)ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
+	c *gin.Context, dnn string, snssai *models.Snssai, internalGroupId, supi string) {
+	var response []models.TrafficInfluSub
 
-	dnn := c.Query("dnn")
-	internalGroupId := c.Query("internal-Group-Id")
-	supi := c.Query("supi")
-
-	var snssai *models.Snssai
-	if c.Query("snssai") != "" {
-		snssai = new(models.Snssai)
-		err := openapi.Deserialize(snssai, []byte(c.Query("snssai")), "application/json")
-		if err != nil {
-			problemDetails := models.ProblemDetails{
-				Status: http.StatusBadRequest,
-				Detail: err.Error(),
-			}
-			c.JSON(http.StatusBadRequest, problemDetails)
+	udrSelf := udr_context.GetSelf()
+	udrSelf.InfluenceDataSubscriptions.Range(func(key, value interface{}) bool {
+		subs, ok := value.(*models.TrafficInfluSub)
+		if !ok {
+			logger.DataRepoLog.Errorf("Failed to load influence Data subscription ID [%+v]", key)
+			return true
+		} else if dnn != "" && !util.Contain(dnn, subs.Dnns) {
+			return true
+		} else if snssai != nil && !util.Contain(*snssai, subs.Snssais) {
+			return true
+		} else if internalGroupId != "" && !util.Contain(internalGroupId, subs.InternalGroupIds) {
+			return true
+		} else if supi != "" && !util.Contain(supi, subs.Supis) {
+			return true
+		} else {
+			response = append(response, *subs)
 		}
-	}
+		return true
+	})
 
-	if dnn == "" && snssai == nil && internalGroupId == "" && supi == "" {
-		problemDetails := models.ProblemDetails{
+	c.JSON(http.StatusOK, response)
+}
+
+func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostProcedure( c *gin.Context, subscriptionId string, request *models.TrafficInfluSub) {
+	if len(request.Dnns) == 0 &&
+		len(request.Snssais) == 0 &&
+		len(request.InternalGroupIds) == 0 &&
+		len(request.Supis) == 0 {
+
+		pd := models.ProblemDetails{
 			Status: http.StatusBadRequest,
 			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
 		}
-		c.JSON(http.StatusBadRequest, problemDetails)
-	}
-
-	rspData, problemDetails := datarepository.ApplicationDataInfluenceDataSubsToNotifyGetProcedure(dnn, snssai, internalGroupId, supi)
-
-	if rspData == nil && problemDetails != nil {
-		c.JSON(http.StatusInternalServerError, problemDetails)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-	c.JSON(http.StatusOK, rspData)
+
+	if request.NotificationUri == "" {
+		pd := models.ProblemDetails{
+			Status: http.StatusBadRequest,
+			Detail: "Notification URI shall be provided",
+		}
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+
+	udrSelf := udr_context.GetSelf()
+	if subs, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok && reflect.DeepEqual(*request, subs) {
+		pd := &models.ProblemDetails{
+			Status: http.StatusForbidden,
+			Cause:  "UNSPECIFIED",
+		}
+		c.JSON(int(pd.Status), pd)
+	} else {
+		udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, request)
+
+		locationHeader := fmt.Sprintf("%s/application-data/influenceData/subs-to-notify/%s", udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), subscriptionId)
+		c.Header("Location", locationHeader)
+		c.JSON(http.StatusCreated, request)
+	}
 }
 
-// HTTPApplicationDataInfluenceDataSubsToNotifyPost -
-func (p *Processor) HandleApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Context) {
-	// Get HTTP request body
-	requestBody, err := c.GetRawData()
+func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure( c *gin.Context, collName, influenceId string) {
+	filter := bson.M{"influenceId": influenceId}
+
+	mapData, err := mongoapi.RestfulAPIGetOne(collName, filter)
 	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
+		logger.DataRepoLog.Errorf("ApplicationDataInfluenceDataInfluenceIdDeleteProcedure err: %+v", err)
+		pd := util.ProblemDetailsUpspecified("")
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	var original *models.TrafficInfluData
+	if len(mapData) != 0 {
+		original = new(models.TrafficInfluData)
+		byteData, err := json.Marshal(mapData)
+		if err != nil {
+			logger.DataRepoLog.Errorf(err.Error())
+			pd := util.ProblemDetailsUpspecified(err.Error())
+			c.JSON(int(pd.Status), pd)
+			return
 		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
+		err = json.Unmarshal(byteData, &original)
+		if err != nil {
+			logger.DataRepoLog.Errorf(err.Error())
+			pd := util.ProblemDetailsUpspecified(err.Error())
+			c.JSON(int(pd.Status), pd)
+			return
+		}
+	}
+
+	if err := mongoapi.RestfulAPIDeleteOne(collName, filter); err != nil {
+		logger.DataRepoLog.Errorf("InfluIdDelProcedure: %+v", err)
+		pd := util.ProblemDetailsUpspecified(err.Error())
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 
-	// Deserialize request body
-	var trafficInfluSub models.TrafficInfluSub
-	err = openapi.Deserialize(&trafficInfluSub, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyPost")
-	subscriptionId := udr_context.NewInfluenceDataSubscriptionId()
+	// Notify the change of influence data
+	PreHandleInfluenceDataUpdateNotification(influenceId, original, nil)
 
-	rspData, problemDetails := datarepository.ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure(subscriptionId, &trafficInfluSub)
-
-	if rspData != nil {
-		header := http.Header{
-			"Location": {
-				fmt.Sprintf("%s/application-data/influenceData/subs-to-notify/%s",
-					udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), subscriptionId),
-			},
-		}
-		c.Header("Location", header.Get("Location"))
-		c.JSON(http.StatusCreated, rspData)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-	}
-
-	problemDetails = &models.ProblemDetails{
-		Status: http.StatusForbidden,
-		Cause:  "UNSPECIFIED",
-	}
-	c.JSON(http.StatusForbidden, problemDetails)
+	c.Status(http.StatusNoContent)
 }

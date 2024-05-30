@@ -9,23 +9,6 @@
 
 package processor
 
-import (
-	"net/http"
 
-	"github.com/gin-gonic/gin"
-)
 
-// CreateAccessAndMobilityData - Creates and updates the access and mobility exposure data for a UE
-func (p *Processor) HandleCreateAccessAndMobilityData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
 
-// DeleteAccessAndMobilityData - Deletes the access and mobility exposure data for a UE
-func (p *Processor) HandleDeleteAccessAndMobilityData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-// QueryAccessAndMobilityData - Retrieves the access and mobility exposure data for a UE
-func (p *Processor) HandleQueryAccessAndMobilityData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}

@@ -13,26 +13,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPQuerySmsMngData - Retrieves the SMS management subscription data of a UE
-func (p *Processor) HandleQuerySmsMngData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmsMngData")
-
-	collName := "subscriptionData.provisionedData.smsMngData"
-	ueId := c.Params.ByName("ueId")
-	servingPlmnId := c.Params.ByName("servingPlmnId")
-	response, problemDetails := datarepository.QuerySmsMngDataProcedure(collName, ueId, servingPlmnId)
-
-	if response == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+func (p *Processor) QuerySmsMngDataProcedure(c *gin.Context, collName string, ueId string,
+	servingPlmnId string,
+) {
+	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QuerySmsMngDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return
 	}
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, data)
 }

@@ -13,82 +13,40 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/free5gc/util/mongoapi"
+	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPCreateSmsfContext3gpp - Create the SMSF context data of a UE via 3GPP access
-func (p *Processor) HandleCreateSmsfContext3gpp(c *gin.Context) {
-	var smsfRegistration models.SmsfRegistration
+func (p *Processor) CreateSmsfContext3gppProcedure(c *gin.Context, collName string, ueId string, SmsfRegistration models.SmsfRegistration) {
+	putData := util.ToBsonM(SmsfRegistration)
+	putData["ueId"] = ueId
+	filter := bson.M{"ueId": ueId}
 
-	requestBody, err := c.GetRawData()
+	_, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
 	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
+		logger.DataRepoLog.Errorf("CreateSmsfContext3gppProcedure err: %+v", err)
 	}
-
-	err = openapi.Deserialize(&smsfRegistration, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-
-	logger.DataRepoLog.Infof("Handle CreateSmsfContext3gpp")
-
-	collName := "subscriptionData.contextData.smsf3gppAccess"
-	ueId := c.Params.ByName("ueId")
-
-	datarepository.CreateSmsfContext3gppProcedure(collName, ueId, smsfRegistration)
 
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPDeleteSmsfContext3gpp - To remove the SMSF context data of a UE via 3GPP access
-func (p *Processor) HandleDeleteSmsfContext3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle DeleteSmsfContext3gpp")
-
-	collName := "subscriptionData.contextData.smsf3gppAccess"
-	ueId := c.Params.ByName("ueId")
-
-	datarepository.DeleteSmsfContext3gppProcedure(collName, ueId)
+func (p *Processor) DeleteSmsfContext3gppProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	deleteDataFromDB(collName, filter)
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPQuerySmsfContext3gpp - Retrieves the SMSF context data of a UE using 3gpp access
-func (p *Processor) HandleQuerySmsfContext3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmsfContext3gpp")
-
-	collName := "subscriptionData.contextData.smsf3gppAccess"
-	ueId := c.Params.ByName("ueId")
-
-	response, problemDetails := datarepository.QuerySmsfContext3gppProcedure(collName, ueId)
-
-	if response == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+func(p *Processor)QuerySmsfContext3gppProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QuerySmsfContext3gppProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
+		return 
 	}
-	c.JSON(http.StatusOK, response)
-	
+	c.JSON(http.StatusOK, data)
 }

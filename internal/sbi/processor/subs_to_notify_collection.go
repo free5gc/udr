@@ -10,62 +10,30 @@
 package processor
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/util/httpwrapper"
+	udr_context "github.com/free5gc/udr/internal/context"
 )
 
-// HandlePostSubscriptionDataSubscriptions - Subscription data subscriptions
-func (p *Processor) HandlePostSubscriptionDataSubscriptions(c *gin.Context) {
-	var subscriptionDataSubscriptions models.SubscriptionDataSubscriptions
+func (p *Processor) PostSubscriptionDataSubscriptionsProcedure(
+	c *gin.Context, SubscriptionDataSubscriptions models.SubscriptionDataSubscriptions,
+) {
+	udrSelf := udr_context.GetSelf()
 
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
-	}
+	newSubscriptionID := strconv.Itoa(udrSelf.SubscriptionDataSubscriptionIDGenerator)
+	udrSelf.SubscriptionDataSubscriptions[newSubscriptionID] = &SubscriptionDataSubscriptions
+	udrSelf.SubscriptionDataSubscriptionIDGenerator++
 
-	err = openapi.Deserialize(&subscriptionDataSubscriptions, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
+	/* Contains the URI of the newly created resource, according
+	   to the structure: {apiRoot}/subscription-data/subs-to-notify/{subsId} */
+	locationHeader := fmt.Sprintf("%s/subscription-data/subs-to-notify/%s",
+		udrSelf.GetIPv4GroupUri(udr_context.NUDR_DR), newSubscriptionID)
 
-	req := httpwrapper.NewRequest(c.Request, subscriptionDataSubscriptions)
-	req.Params["ueId"] = c.Params.ByName("ueId")
-
-	rsp := datarepository.HandlePostSubscriptionDataSubscriptions(req)
-
-	responseBody, err := openapi.Serialize(rsp.Body, "application/json")
-	if err != nil {
-		logger.DataRepoLog.Errorln(err)
-		problemDetails := models.ProblemDetails{
-			Status: http.StatusInternalServerError,
-			Cause:  "SYSTEM_FAILURE",
-			Detail: err.Error(),
-		}
-		c.JSON(http.StatusInternalServerError, problemDetails)
-	} else {
-		c.Data(rsp.Status, "application/json", responseBody)
-	}
+	c.Header("Location", locationHeader)
+	c.JSON(http.StatusCreated, SubscriptionDataSubscriptions)
 }

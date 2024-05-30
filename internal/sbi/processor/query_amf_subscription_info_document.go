@@ -13,37 +13,37 @@ import (
 	"net/http"
 	"github.com/gin-gonic/gin"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/util"
 
 )
 
-// HTTPGetAmfSubscriptionInfo - Retrieve AMF subscription Info
-func (p *Processor) HandleGetAmfSubscriptionInfo(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle GetAmfSubscriptionInfo")
+func (p *Processor)GetAmfSubscriptionInfoProcedure(c *gin.Context, subsId string, ueId string) {
+	udrSelf := udr_context.GetSelf()
 
-	ueId := c.Params.ByName("ueId")
-	subsId := c.Params.ByName("subsId")
-
-	data, problemDetails := datarepository.GetAmfSubscriptionInfoProcedure(subsId, ueId)
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		logger.DataRepoLog.Errorf("GetAmfSubscriptionInfoProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return
 	}
-	c.JSON(http.StatusOK, data)
 
-	// req := httpwrapper.NewRequest(c.Request, nil)
-	// req.Params["ueId"] = c.Params.ByName("ueId")
-	// req.Params["subsId"] = c.Params.ByName("subsId")
+	UESubsData := value.(*udr_context.UESubsData)
+	_, ok = UESubsData.EeSubscriptionCollection[subsId]
 
-	// handlerMsg := message.NewHandlerMessage(message.EventGetAmfSubscriptionInfo, req)
-	// message.SendMessage(handlerMsg)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		logger.DataRepoLog.Errorf("GetAmfSubscriptionInfoProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return
+	}
 
-	// rsp := <-handlerMsg.ResponseChan
-
-	// HTTPResponse := rsp.HTTPResponse
-
-	// c.JSON(HTTPResponse.Status, HTTPResponse.Body)
+	if UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos == nil {
+		pd := util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
+		logger.DataRepoLog.Errorf("GetAmfSubscriptionInfoProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	c.JSON(http.StatusOK, UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos)
 }

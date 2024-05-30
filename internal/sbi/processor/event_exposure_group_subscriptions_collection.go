@@ -10,94 +10,67 @@
 package processor
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/udr/internal/util"
-	"regexp"
 )
 
-// HTTPCreateEeGroupSubscriptions - Create individual EE subscription for a group of UEs or any UE
-func (p *Processor) HandleCreateEeGroupSubscriptions(c *gin.Context) {
-	var eeSubscription models.EeSubscription
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
+
+
+func (p *Processor) CreateEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupId string, EeSubscription models.EeSubscription) {
+	udrSelf := udr_context.GetSelf()
+
+	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
+	if !ok {
+		udrSelf.UEGroupCollection.Store(ueGroupId, new(udr_context.UEGroupSubsData))
+		value, _ = udrSelf.UEGroupCollection.Load(ueGroupId)
+	}
+	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
+	if UEGroupSubsData.EeSubscriptions == nil {
+		UEGroupSubsData.EeSubscriptions = make(map[string]*models.EeSubscription)
 	}
 
-	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-	logger.DataRepoLog.Infof("Handle CreateEeGroupSubscriptions")
+	newSubscriptionID := strconv.Itoa(udrSelf.EeSubscriptionIDGenerator)
+	UEGroupSubsData.EeSubscriptions[newSubscriptionID] = &EeSubscription
+	udrSelf.EeSubscriptionIDGenerator++
 
-	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
-	ueGroupId := c.Params.ByName("ueGroupId")
-	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
-		problemDetail := models.ProblemDetails{
-			Title:  "Invalid parameter",
-			Status: http.StatusBadRequest,
-			Detail: "Invalid ueGroupId",
-			Cause:  "INVALID_PARAMETER",	
-		}
-		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
-		c.JSON(http.StatusBadRequest, problemDetail)
-		return
-	}
+	/* Contains the URI of the newly created resource, according
+	   to the structure: {apiRoot}/nudr-dr/v1/subscription-data/group-data/{ueGroupId}/ee-subscriptions */
+	locationHeader := fmt.Sprintf("%s"+factory.UdrDrResUriPrefix+"/subscription-data/group-data/%s/ee-subscriptions/%s",
+		udrSelf.GetIPv4GroupUri(udr_context.NUDR_DR), ueGroupId, newSubscriptionID)
 	
-	locationHeader := datarepository.CreateEeGroupSubscriptionsProcedure(ueGroupId, eeSubscription)
-
-	c.Writer.Header().Set("Location", locationHeader)
-
-	c.JSON(http.StatusCreated, eeSubscription)
+	c.Header("Location", locationHeader)
+	c.JSON(http.StatusCreated, EeSubscription)
 }
 
-// HTTPQueryEeGroupSubscriptions - Retrieves the ee subscriptions of a group of UEs or any UE
-func (p *Processor) HandleQueryEeGroupSubscriptions(c *gin.Context) {
+func (p *Processor) QueryEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupId string) {
+	udrSelf := udr_context.GetSelf()
 
-	logger.DataRepoLog.Infof("Handle QueryEeGroupSubscriptions")
-
-	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
-	ueGroupId := c.Params.ByName("ueGroupId")
-	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
-		problemDetail := models.ProblemDetails{
-			Title:  "Invalid parameter",
-			Status: http.StatusBadRequest,
-			Detail: "Invalid ueGroupId",
-			Cause:  "INVALID_PARAMETER",	
-		}
-		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
-		c.JSON(http.StatusBadRequest, problemDetail)
+	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-	eeSubscriptionSlice, problemDetails := datarepository.QueryEeGroupSubscriptionsProcedure(ueGroupId)
 
-	if eeSubscriptionSlice == nil && problemDetails == nil {
+	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
+	var eeSubscriptionSlice []models.EeSubscription
+
+	for _, v := range UEGroupSubsData.EeSubscriptions {
+		eeSubscriptionSlice = append(eeSubscriptionSlice, *v)
+	}
+
+	if (len(eeSubscriptionSlice) == 0) {
 		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(http.StatusNotFound, pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-	} 
+		c.JSON(int(pd.Status), pd)
+		return
+	}
 	c.JSON(http.StatusOK, eeSubscriptionSlice)
 }

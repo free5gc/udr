@@ -12,8 +12,17 @@ package sbi
 import (
 	"net/http"
 	"strings"
+	"encoding/json"
+	"strconv"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
+	"github.com/free5gc/openapi"
+	"github.com/free5gc/openapi/models"
+	"github.com/free5gc/udr/internal/logger"
+	"go.mongodb.org/mongo-driver/bson"
+	"github.com/free5gc/udr/internal/util"
+	udr_context "github.com/free5gc/udr/internal/context"
 )
 
 func (s *Server) getDataRepositoryRoutes() []Route {
@@ -29,98 +38,98 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"AmfContext3gpp",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
-			s.Processor().HandleAmfContext3gpp,
+			s.HandleAmfContext3gpp,
 		},
 	
 		{
 			"CreateAmfContext3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
-			s.Processor().HandleCreateAmfContext3gpp,
+			s.HandleCreateAmfContext3gpp,
 		},
 	
 		{
 			"QueryAmfContext3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
-			s.Processor().HandleQueryAmfContext3gpp,
+			s.HandleQueryAmfContext3gpp,
 		},
 	
 		{
 			"AmfContextNon3gpp",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
-			s.Processor().HandleAmfContextNon3gpp,
+			s.HandleAmfContextNon3gpp,
 		},
 	
 		{
 			"CreateAmfContextNon3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
-			s.Processor().HandleCreateAmfContextNon3gpp,
+			s.HandleCreateAmfContextNon3gpp,
 		},
 	
 		{
 			"QueryAmfContextNon3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
-			s.Processor().HandleQueryAmfContextNon3gpp,
+			s.HandleQueryAmfContextNon3gpp,
 		},
 	
 		{
 			"QueryAmData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/am-data",
-			s.Processor().HandleQueryAmData,
+			s.HandleQueryAmData,
 		},
 	
 		{
 			"QueryAuthenticationStatus",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
-			s.Processor().HandleQueryAuthenticationStatus,
+			s.HandleQueryAuthenticationStatus,
+		},
+
+		{
+			"CreateAuthenticationStatus",
+			strings.ToUpper("Put"),
+			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
+			s.HandleCreateAuthenticationStatus,
 		},
 	
 		{
 			"ModifyAuthentication",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
-			s.Processor().HandleModifyAuthentication,
+			s.HandleModifyAuthentication,
 		},
 	
 		{
 			"QueryAuthSubsData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
-			s.Processor().HandleQueryAuthSubsData,
+			s.HandleQueryAuthSubsData,
 		},
 	
 		{
 			"CreateAuthenticationSoR",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/sor-data",
-			s.Processor().HandleCreateAuthenticationSoR,
+			s.HandleCreateAuthenticationSoR,
 		},
 	
 		{
 			"QueryAuthSoR",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/sor-data",
-			s.Processor().HandleQueryAuthSoR,
-		},
-	
-		{
-			"CreateAuthenticationStatus",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
-			s.Processor().HandleCreateAuthenticationStatus,
+			s.HandleQueryAuthSoR,
 		},
 	
 		{
 			"ApplicationDataInfluenceDataGet",
 			strings.ToUpper("Get"),
 			"/application-data/influenceData",
-			s.Processor().HandleApplicationDataInfluenceDataGet,
+			s.HandleApplicationDataInfluenceDataGet,
 		},
 	
 		/*
@@ -134,7 +143,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete",
 			strings.ToUpper("Delete"),
 			"/application-data/influenceData/:influenceId/:subscriptionId",
-			s.Processor().HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
+			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
 		},
 	
@@ -142,7 +151,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet",
 			strings.ToUpper("Get"),
 			"/application-data/influenceData/:influenceId/:subscriptionId",
-			s.Processor().HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
+			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
 		},
 	
@@ -150,7 +159,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut",
 			strings.ToUpper("Put"),
 			"/application-data/influenceData/:influenceId/:subscriptionId",
-			s.Processor().HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
+			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
 		},
 	
@@ -158,343 +167,343 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"ApplicationDataPfdsAppIdDelete",
 			strings.ToUpper("Delete"),
 			"/application-data/pfds/:appId",
-			s.Processor().HandleApplicationDataPfdsAppIdDelete,
+			s.HandleApplicationDataPfdsAppIdDelete,
 		},
 	
 		{
 			"ApplicationDataPfdsAppIdGet",
 			strings.ToUpper("Get"),
 			"/application-data/pfds/:appId",
-			s.Processor().HandleApplicationDataPfdsAppIdGet,
+			s.HandleApplicationDataPfdsAppIdGet,
 		},
 	
 		{
 			"ApplicationDataPfdsAppIdPut",
 			strings.ToUpper("Put"),
 			"/application-data/pfds/:appId",
-			s.Processor().HandleApplicationDataPfdsAppIdPut,
+			s.HandleApplicationDataPfdsAppIdPut,
 		},
 	
 		{
 			"ApplicationDataPfdsGet",
 			strings.ToUpper("Get"),
 			"/application-data/pfds",
-			s.Processor().HandleApplicationDataPfdsGet,
+			s.HandleApplicationDataPfdsGet,
 		},
 	
 		{
 			"PolicyDataBdtDataBdtReferenceIdDelete",
 			strings.ToUpper("Delete"),
 			"/policy-data/bdt-data/:bdtReferenceId",
-			s.Processor().HandlePolicyDataBdtDataBdtReferenceIdDelete,
+			s.HandlePolicyDataBdtDataBdtReferenceIdDelete,
 		},
 	
 		{
 			"PolicyDataBdtDataBdtReferenceIdGet",
 			strings.ToUpper("Get"),
 			"/policy-data/bdt-data/:bdtReferenceId",
-			s.Processor().HandlePolicyDataBdtDataBdtReferenceIdGet,
+			s.HandlePolicyDataBdtDataBdtReferenceIdGet,
 		},
 	
 		{
 			"PolicyDataBdtDataBdtReferenceIdPut",
 			strings.ToUpper("Put"),
 			"/policy-data/bdt-data/:bdtReferenceId",
-			s.Processor().HandlePolicyDataBdtDataBdtReferenceIdPut,
+			s.HandlePolicyDataBdtDataBdtReferenceIdPut,
 		},
 	
 		{
 			"PolicyDataBdtDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/bdt-data",
-			s.Processor().HandlePolicyDataBdtDataGet,
+			s.HandlePolicyDataBdtDataGet,
 		},
 	
 		{
 			"PolicyDataPlmnsPlmnIdUePolicySetGet",
 			strings.ToUpper("Get"),
 			"/policy-data/plmns/:plmnId/ue-policy-set",
-			s.Processor().HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
+			s.HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
 		},
 	
 		{
 			"PolicyDataSponsorConnectivityDataSponsorIdGet",
 			strings.ToUpper("Get"),
 			"/policy-data/sponsor-connectivity-data/:sponsorId",
-			s.Processor().HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
+			s.HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
 		},
 	
 		{
 			"PolicyDataSubsToNotifyPost",
 			strings.ToUpper("Post"),
 			"/policy-data/subs-to-notify",
-			s.Processor().HandlePolicyDataSubsToNotifyPost,
+			s.HandlePolicyDataSubsToNotifyPost,
 		},
 	
 		{
 			"PolicyDataSubsToNotifySubsIdDelete",
 			strings.ToUpper("Delete"),
 			"/policy-data/subs-to-notify/:subsId",
-			s.Processor().HandlePolicyDataSubsToNotifySubsIdDelete,
+			s.HandlePolicyDataSubsToNotifySubsIdDelete,
 		},
 	
 		{
 			"PolicyDataSubsToNotifySubsIdPut",
 			strings.ToUpper("Put"),
 			"/policy-data/subs-to-notify/:subsId",
-			s.Processor().HandlePolicyDataSubsToNotifySubsIdPut,
+			s.HandlePolicyDataSubsToNotifySubsIdPut,
 		},
 	
 		{
 			"PolicyDataUesUeIdAmDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/am-data",
-			s.Processor().HandlePolicyDataUesUeIdAmDataGet,
+			s.HandlePolicyDataUesUeIdAmDataGet,
 		},
 	
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/operator-specific-data",
-			s.Processor().HandlePolicyDataUesUeIdOperatorSpecificDataGet,
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataGet,
 		},
 	
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataPatch",
 			strings.ToUpper("Patch"),
 			"/policy-data/ues/:ueId/operator-specific-data",
-			s.Processor().HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
 		},
 	
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataPut",
 			strings.ToUpper("Put"),
 			"/policy-data/ues/:ueId/operator-specific-data",
-			s.Processor().HandlePolicyDataUesUeIdOperatorSpecificDataPut,
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataPut,
 		},
 	
 		{
 			"PolicyDataUesUeIdSmDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/sm-data",
-			s.Processor().HandlePolicyDataUesUeIdSmDataGet,
+			s.HandlePolicyDataUesUeIdSmDataGet,
 		},
 	
 		{
 			"PolicyDataUesUeIdSmDataPatch",
 			strings.ToUpper("Patch"),
 			"/policy-data/ues/:ueId/sm-data",
-			s.Processor().HandlePolicyDataUesUeIdSmDataPatch,
+			s.HandlePolicyDataUesUeIdSmDataPatch,
 		},
 	
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdDelete",
 			strings.ToUpper("Delete"),
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.Processor().HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
 		},
 	
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.Processor().HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
 		},
 	
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdPut",
 			strings.ToUpper("Put"),
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.Processor().HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
 		},
 	
 		{
 			"PolicyDataUesUeIdUePolicySetGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/ue-policy-set",
-			s.Processor().HandlePolicyDataUesUeIdUePolicySetGet,
+			s.HandlePolicyDataUesUeIdUePolicySetGet,
 		},
 	
 		{
 			"PolicyDataUesUeIdUePolicySetPatch",
 			strings.ToUpper("Patch"),
 			"/policy-data/ues/:ueId/ue-policy-set",
-			s.Processor().HandlePolicyDataUesUeIdUePolicySetPatch,
+			s.HandlePolicyDataUesUeIdUePolicySetPatch,
 		},
 	
 		{
 			"PolicyDataUesUeIdUePolicySetPut",
 			strings.ToUpper("Put"),
 			"/policy-data/ues/:ueId/ue-policy-set",
-			s.Processor().HandlePolicyDataUesUeIdUePolicySetPut,
+			s.HandlePolicyDataUesUeIdUePolicySetPut,
 		},
 	
 		{
 			"QueryProvisionedData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data",
-			s.Processor().HandleQueryProvisionedData,
+			s.HandleQueryProvisionedData,
 		},
 	
 		{
 			"RemovesdmSubscriptions",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
-			s.Processor().HandleRemovesdmSubscriptions,
+			s.HandleRemovesdmSubscriptions,
 		},
 	
 		{
 			"Updatesdmsubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
-			s.Processor().HandleUpdatesdmsubscriptions,
+			s.HandleUpdatesdmsubscriptions,
 		},
 	
 		{
 			"CreateSdmSubscriptions",
 			strings.ToUpper("Post"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
-			s.Processor().HandleCreateSdmSubscriptions,
+			s.HandleCreateSdmSubscriptions,
 		},
 	
 		{
 			"Querysdmsubscriptions",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
-			s.Processor().HandleQuerysdmsubscriptions,
+			s.HandleQuerysdmsubscriptions,
 		},
 	
 		{
 			"CreateSmfContextNon3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
-			s.Processor().HandleCreateSmfContextNon3gpp,
+			s.HandleCreateSmfContextNon3gpp,
 		},
 	
 		{
 			"DeleteSmfContext",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
-			s.Processor().HandleDeleteSmfContext,
+			s.HandleDeleteSmfContext,
 		},
 	
 		{
 			"QuerySmfRegistration",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
-			s.Processor().HandleQuerySmfRegistration,
+			s.HandleQuerySmfRegistration,
 		},
 	
 		{
 			"QuerySmfRegList",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations",
-			s.Processor().HandleQuerySmfRegList,
+			s.HandleQuerySmfRegList,
 		},
 	
 		{
 			"QuerySmfSelectData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/smf-selection-subscription-data",
-			s.Processor().HandleQuerySmfSelectData,
+			s.HandleQuerySmfSelectData,
 		},
 	
 		{
 			"CreateSmsfContext3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
-			s.Processor().HandleCreateSmsfContext3gpp,
+			s.HandleCreateSmsfContext3gpp,
 		},
 	
 		{
 			"DeleteSmsfContext3gpp",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
-			s.Processor().HandleDeleteSmsfContext3gpp,
+			s.HandleDeleteSmsfContext3gpp,
 		},
 	
 		{
 			"QuerySmsfContext3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
-			s.Processor().HandleQuerySmsfContext3gpp,
+			s.HandleQuerySmsfContext3gpp,
 		},
 	
 		{
 			"CreateSmsfContextNon3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
-			s.Processor().HandleCreateSmsfContextNon3gpp,
+			s.HandleCreateSmsfContextNon3gpp,
 		},
 	
 		{
 			"DeleteSmsfContextNon3gpp",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
-			s.Processor().HandleDeleteSmsfContextNon3gpp,
+			s.HandleDeleteSmsfContextNon3gpp,
 		},
 	
 		{
 			"QuerySmsfContextNon3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
-			s.Processor().HandleQuerySmsfContextNon3gpp,
+			s.HandleQuerySmsfContextNon3gpp,
 		},
 	
 		{
 			"QuerySmsMngData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-mng-data",
-			s.Processor().HandleQuerySmsMngData,
+			s.HandleQuerySmsMngData,
 		},
 	
 		{
 			"QuerySmsData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-data",
-			s.Processor().HandleQuerySmsData,
+			s.HandleQuerySmsData,
 		},
 	
 		{
 			"QuerySmData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sm-data",
-			s.Processor().HandleQuerySmData,
+			s.HandleQuerySmData,
 		},
 	
 		{
 			"QueryTraceData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/trace-data",
-			s.Processor().HandleQueryTraceData,
+			s.HandleQueryTraceData,
 		},
 	
 		{
 			"CreateAMFSubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.Processor().HandleCreateAMFSubscriptions,
+			s.HandleCreateAMFSubscriptions,
 		},
 	
 		{
 			"ModifyAmfSubscriptionInfo",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.Processor().HandleModifyAmfSubscriptionInfo,
+			s.HandleModifyAmfSubscriptionInfo,
 		},
 	
 		{
 			"RemoveAmfSubscriptionsInfo",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.Processor().HandleRemoveAmfSubscriptionsInfo,
+			s.HandleRemoveAmfSubscriptionsInfo,
 		},
 	
 		{
 			"GetAmfSubscriptionInfo",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.Processor().HandleGetAmfSubscriptionInfo,
+			s.HandleGetAmfSubscriptionInfo,
 		},
 		
 		/* subShortRoutes */
@@ -502,14 +511,14 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"GetSharedData",
 			strings.ToUpper("Get"),
 			"/subscription-data/shared-data",
-			s.Processor().HandleGetSharedData,
+			s.HandleGetSharedData,
 		},
 	
 		{
 			"PostSubscriptionDataSubscriptions",
 			strings.ToUpper("Post"),
 			"/subscription-data/subs-to-notify",
-			s.Processor().HandlePostSubscriptionDataSubscriptions,
+			s.HandlePostSubscriptionDataSubscriptions,
 		},
 
 
@@ -519,56 +528,56 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"RemovesubscriptionDataSubscriptions",
 			strings.ToUpper("Delete"),
 			"/subscription-data/subs-to-notify/:subsId",
-			s.Processor().HandleRemovesubscriptionDataSubscriptions,
+			s.HandleRemovesubscriptionDataSubscriptions,
 		},
 
 		{
 			"QueryEEData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/ee-profile-data",
-			s.Processor().HandleQueryEEData,
+			s.HandleQueryEEData,
 		},
 	
 		{
 			"PatchOperSpecData",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/operator-specific-data",
-			s.Processor().HandlePatchOperSpecData,
+			s.HandlePatchOperSpecData,
 		},
 	
 		{
 			"QueryOperSpecData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/operator-specific-data",
-			s.Processor().HandleQueryOperSpecData,
+			s.HandleQueryOperSpecData,
 		},
 	
 		{
 			"GetppData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/pp-data",
-			s.Processor().HandleGetppData,
+			s.HandleGetppData,
 		},
 	
 		{
 			"ModifyPpData",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/pp-data",
-			s.Processor().HandleModifyPpData,
+			s.HandleModifyPpData,
 		},
 	
 		{
 			"GetIdentityData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/identity-data",
-			s.Processor().HandleGetIdentityData,
+			s.HandleGetIdentityData,
 		},
 	
 		{
 			"GetOdbData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/operator-determined-barring-data",
-			s.Processor().HandleGetOdbData,
+			s.HandleGetOdbData,
 		},
 		
 		/* eeShortRoutes */
@@ -576,28 +585,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"CreateEeGroupSubscriptions",
 			strings.ToUpper("Post"),
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
-			s.Processor().HandleCreateEeGroupSubscriptions,
+			s.HandleCreateEeGroupSubscriptions,
 		},
 	
 		{
 			"QueryEeGroupSubscriptions",
 			strings.ToUpper("Get"),
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
-			s.Processor().HandleQueryEeGroupSubscriptions,
+			s.HandleQueryEeGroupSubscriptions,
 		},
 	
 		{
 			"CreateEeSubscriptions",
 			strings.ToUpper("Post"),
 			"/subscription-data/:ueId/context-data/ee-subscriptions",
-			s.Processor().HandleCreateEeSubscriptions,
+			s.HandleCreateEeSubscriptions,
 		},
 	
 		{
 			"Queryeesubscriptions",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/context-data/ee-subscriptions",
-			s.Processor().HandleQueryeesubscriptions,
+			s.HandleQueryeesubscriptions,
 		},
 
 		/* eeRoutes */
@@ -605,28 +614,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"RemoveeeSubscriptions",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
-			s.Processor().HandleRemoveeeSubscriptions,
+			s.HandleRemoveeeSubscriptions,
 		},
 	
 		{
 			"UpdateEesubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
-			s.Processor().HandleUpdateEesubscriptions,
+			s.HandleUpdateEesubscriptions,
 		},
 	
 		{
 			"UpdateEeGroupSubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
-			s.Processor().HandleUpdateEeGroupSubscriptions,
+			s.HandleUpdateEeGroupSubscriptions,
 		},
 	
 		{
 			"RemoveEeGroupSubscriptions",
 			strings.ToUpper("Delete"),
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
-			s.Processor().HandleRemoveEeGroupSubscriptions,
+			s.HandleRemoveEeGroupSubscriptions,
 		},
 		
 		/* expoRoutes */
@@ -634,63 +643,63 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"CreateSessionManagementData",
 			strings.ToUpper("Put"),
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
-			s.Processor().HandleCreateSessionManagementData,
+			s.HandleCreateSessionManagementData,
 		},
 	
 		{
 			"DeleteSessionManagementData",
 			strings.ToUpper("Delete"),
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
-			s.Processor().HandleDeleteSessionManagementData,
+			s.HandleDeleteSessionManagementData,
 		},
 	
 		{
 			"QuerySessionManagementData",
 			strings.ToUpper("Get"),
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
-			s.Processor().HandleQuerySessionManagementData,
+			s.HandleQuerySessionManagementData,
 		},
 	
 		{
 			"CreateAccessAndMobilityData",
 			strings.ToUpper("Put"),
 			"/exposure-data/:ueId/access-and-mobility-data",
-			s.Processor().HandleCreateAccessAndMobilityData,
+			s.HandleCreateAccessAndMobilityData,
 		},
 	
 		{
 			"DeleteAccessAndMobilityData",
 			strings.ToUpper("Delete"),
 			"/exposure-data/:ueId/access-and-mobility-data",
-			s.Processor().HandleDeleteAccessAndMobilityData,
+			s.HandleDeleteAccessAndMobilityData,
 		},
 	
 		{
 			"QueryAccessAndMobilityData",
 			strings.ToUpper("Get"),
 			"/exposure-data/:ueId/access-and-mobility-data",
-			s.Processor().HandleQueryAccessAndMobilityData,
+			s.HandleQueryAccessAndMobilityData,
 		},
 	
 		{
 			"ExposureDataSubsToNotifyPost",
 			strings.ToUpper("Post"),
 			"/exposure-data/subs-to-notify",
-			s.Processor().HandleExposureDataSubsToNotifyPost,
+			s.HandleExposureDataSubsToNotifyPost,
 		},
 	
 		{
 			"ExposureDataSubsToNotifySubIdDelete",
 			strings.ToUpper("Delete"),
 			"/exposure-data/subs-to-notify/:subId",
-			s.Processor().HandleExposureDataSubsToNotifySubIdDelete,
+			s.HandleExposureDataSubsToNotifySubIdDelete,
 		},
 	
 		{
 			"ExposureDataSubsToNotifySubIdPut",
 			strings.ToUpper("Put"),
 			"/exposure-data/subs-to-notify/:subId",
-			s.Processor().HandleExposureDataSubsToNotifySubIdPut,
+			s.HandleExposureDataSubsToNotifySubIdPut,
 		},
 
 		/* appRoutes */
@@ -698,36 +707,44 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"ApplicationDataInfluenceDataSubsToNotifyGet",
 			strings.ToUpper("Get"),
 			"/application-data/influenceData/subs-to-notify",
-			s.Processor().HandleApplicationDataInfluenceDataSubsToNotifyGet,
+			s.HandleApplicationDataInfluenceDataSubsToNotifyGet,
 		},
 	
 		{
 			"ApplicationDataInfluenceDataSubsToNotifyPost",
 			strings.ToUpper("Post"),
 			"/application-data/influenceData/subs-to-notify",
-			s.Processor().HandleApplicationDataInfluenceDataSubsToNotifyPost,
+			s.HandleApplicationDataInfluenceDataSubsToNotifyPost,
 		},
 	
 		{
 			"ApplicationDataInfluenceDataInfluenceIdDelete",
 			strings.ToUpper("Delete"),
 			"/application-data/influenceData/:influenceId",
-			s.Processor().HandleApplicationDataInfluenceDataInfluenceIdDelete,
+			s.HandleApplicationDataInfluenceDataInfluenceIdDelete,
 		},
 	
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPatch",
 			strings.ToUpper("Patch"),
 			"/application-data/influenceData/:influenceId",
-			s.Processor().HandleApplicationDataInfluenceDataInfluenceIdPatch,
+			s.HandleApplicationDataInfluenceDataInfluenceIdPatch,
 		},
 	
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPut",
 			strings.ToUpper("Put"),
 			"/application-data/influenceData/:influenceId",
-			s.Processor().HandleApplicationDataInfluenceDataInfluenceIdPut,
+			s.HandleApplicationDataInfluenceDataInfluenceIdPut,
 		},
+		
+		{
+			"ApplicationDataInfluenceDataInfluenceIdPut",
+			strings.ToUpper("Post"),
+			"/application-data/influenceData/:influenceId",
+			s.HandleApplicationDataInfluenceDataInfluenceIdPost,
+		},
+
 		
 	}
 }
@@ -738,5 +755,1813 @@ func Index(c *gin.Context) {
 	c.String(http.StatusOK, "Hello World!")
 }
 
+// HTTPAmfContext3gpp - To modify the AMF context data of a UE using 3gpp access in the UDR
+func (s *Server) HandleAmfContext3gpp(c *gin.Context) {
+	var patchItemArray []models.PatchItem
 
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle AmfContext3gpp")
+	collName := "subscriptionData.contextData.amf3gppAccess"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().AmfContext3gppProcedure(c, collName, ueId, patchItemArray)
+}
+
+// HTTPCreateAmfContext3gpp - To store the AMF context data of a UE using 3gpp access in the UDR
+func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
+	var amf3GppAccessRegistration models.Amf3GppAccessRegistration
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&amf3GppAccessRegistration, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateAmfContext3gpp")
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.contextData.amf3gppAccess"
+	s.Processor().CreateAmfContext3gppProcedure(c, collName, ueId, amf3GppAccessRegistration)
+}
+
+// HTTPQueryAmfContext3gpp - Retrieves the AMF context data of a UE using 3gpp access
+func (s *Server)HandleQueryAmfContext3gpp(c *gin.Context) {
+	
+
+	logger.DataRepoLog.Infof("Handle QueryAmfContext3gpp")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.contextData.amf3gppAccess"
+
+	s.Processor().QueryAmfContext3gppProcedure(c, collName, ueId)
+}
+
+// HTTPAmfContextNon3gpp - To modify the AMF context data of a UE using non 3gpp access in the UDR
+func (s *Server) HandleAmfContextNon3gpp(c *gin.Context) {
+	var patchItemArray []models.PatchItem
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle AmfContextNon3gpp")
+
+	ueId := c.Params.ByName("ueId")
+	filter := bson.M{"ueId": ueId}
+	s.Processor().AmfContextNon3gppProcedure(c, ueId, "subscriptionData.contextData.amfNon3gppAccess", patchItemArray, filter)
+}
+
+// HTTPCreateAmfContextNon3gpp - To store the AMF context data of a UE using non-3gpp access in the UDR
+func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
+	var amfNon3GppAccessRegistration models.AmfNon3GppAccessRegistration
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&amfNon3GppAccessRegistration, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateAmfContextNon3gpp")
+
+	s.Processor().CreateAmfContextNon3gppProcedure(c, amfNon3GppAccessRegistration, "subscriptionData.contextData.amfNon3gppAccess", c.Params.ByName("ueId"))
+}
+
+// HTTPQueryAmfContextNon3gpp - Retrieves the AMF context data of a UE using non-3gpp access
+func (s *Server) HandleQueryAmfContextNon3gpp(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryAmfContextNon3gpp")
+
+	collName := "subscriptionData.contextData.amfNon3gppAccess"
+	ueId := c.Params.ByName("ueId")
+	s.Processor().QueryAmfContextNon3gppProcedure(c, collName, ueId)
+}
+
+// HTTPQueryAmData - Retrieves the access and mobility subscription data of a UE
+func (s *Server) HandleQueryAmData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryAmData")
+
+	collName := "subscriptionData.provisionedData.amData"
+	ueId := c.Params.ByName("ueId")
+	servingPlmnId := c.Params.ByName("servingPlmnId")
+	s.Processor().QueryAmDataProcedure(c, collName, ueId, servingPlmnId)
+}
+
+
+// HTTPCreateAuthenticationStatus - To store the Authentication Status data of a UE
+func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
+	var authEvent models.AuthEvent
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&authEvent, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateAuthenticationStatus")
+
+	putData := util.ToBsonM(authEvent)
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.authenticationData.authenticationStatus"
+
+	s.Processor().CreateAuthenticationStatusProcedure(c, collName, ueId, putData)
+}
+
+// HTTPQueryAuthenticationStatus - Retrieves the Authentication Status of a UE
+func (s *Server) HandleQueryAuthenticationStatus(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryAuthenticationStatus")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.authenticationData.authenticationStatus"
+
+	s.Processor().QueryAuthenticationStatusProcedure(c, collName, ueId)
+}
+
+// HTTPModifyAuthentication - modify the authentication subscription data of a UE
+func (s *Server) HandleModifyAuthentication(c *gin.Context) {
+	var patchItemArray []models.PatchItem
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle ModifyAuthentication")
+
+	collName := "subscriptionData.authenticationData.authenticationSubscription"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().ModifyAuthenticationProcedure(c, collName, ueId, patchItemArray)
+}
+
+// HTTPQueryAuthSubsData - Retrieves the authentication subscription data of a UE
+func (s *Server) HandleQueryAuthSubsData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryAuthSubsData")
+
+	collName := "subscriptionData.authenticationData.authenticationSubscription"
+	ueId :=  c.Params.ByName("ueId")
+
+	s.Processor().QueryAuthSubsDataProcedure(c, collName, ueId)
+}
+
+// HTTPCreateAuthenticationSoR - To store the SoR acknowledgement information of a UE
+func (s *Server) HandleCreateAuthenticationSoR(c *gin.Context) {
+	var sorData models.SorData
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&sorData, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateAuthenticationSoR")
+	putData := util.ToBsonM(sorData)
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
+
+	s.Processor().CreateAuthenticationSoRProcedure(c, collName, ueId, putData)
+}
+
+// HTTPQueryAuthSoR - Retrieves the SoR acknowledgement information of a UE
+func (s *Server) HandleQueryAuthSoR(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryAuthSoR")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
+
+	s.Processor().QueryAuthSoRProcedure(c, collName, ueId)
+}
+
+// HTTPApplicationDataInfluenceDataGet -
+func (s *Server) HandleApplicationDataInfluenceDataGet(c *gin.Context) {
+
+	var filter []bson.M
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataGet")
+	collName := "applicationData.influenceData"
+	
+	influenceIdsParam := c.QueryArray("influence-Ids")
+	dnnsParam := c.QueryArray("dnns")
+	internalGroupIdsParam := c.QueryArray("internal-Group-Id")
+	supisParam := c.QueryArray("supis")
+	snssaisParam := c.QueryArray("snssais")
+	if len(influenceIdsParam) != 0 {
+		influenceIds := strings.Split(influenceIdsParam[0], ",")
+		filter = append(filter, bson.M{"influenceId": bson.M{"$in": influenceIds}})
+	}
+	if len(dnnsParam) != 0 {
+		dnns := strings.Split(dnnsParam[0], ",")
+		filter = append(filter, bson.M{"dnn": bson.M{"$in": dnns}})
+	}
+	if len(internalGroupIdsParam) != 0 {
+		internalGroupIds := strings.Split(internalGroupIdsParam[0], ",")
+		withAnyUeIndFilter := []bson.M{
+			{
+				"interGroupId": bson.M{"$in": internalGroupIds},
+			},
+			{
+				"interGroupId": "AnyUE",
+			},
+		}
+		filter = append(filter, bson.M{"$or": withAnyUeIndFilter})
+	} else if len(supisParam) != 0 {
+		supis := strings.Split(supisParam[0], ",")
+		withAnyUeIndFilter := []bson.M{
+			{
+				"supi": bson.M{"$in": supis},
+			},
+			{
+				"interGroupId": "AnyUE",
+			},
+		}
+		filter = append(filter, bson.M{"$or": withAnyUeIndFilter})
+	}
+	if len(snssaisParam) != 0 {
+		snssais := s.Processor().ParseSnssaisFromQueryParam(snssaisParam[0])
+		// NOTE: The following code would have bugs with several tries that return null value from Mongo DB, while most of
+		//       tries would be correct. The errors seem to occur only when the receiving filters on Mongo DB have reverse
+		//       orders of snssai fields, i.e. first sd then sst, even though bson.M{} is used
+		// matchList := buildSnssaiMatchList(snssais)
+		// filter = append(filter, bson.M{"snssai": bson.M{"$in": matchList}})
+		matchList := s.Processor().BuildSnssaiMatchList(snssais)
+		filter = append(filter, bson.M{"$or": matchList})
+	}
+	s.Processor().ApplicationDataInfluenceDataGetProcedure(c, collName, filter)
+}
+
+// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
+func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete")
+
+	influenceId := c.Param("influenceId")
+	if influenceId != "subs-to-notify" {
+		c.String(http.StatusNotFound, "404 page not found")
+	}
+
+	subscriptionId := c.Params.ByName("subscriptionId")
+
+	s.Processor().ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDeleteProcedure(c, subscriptionId)
+}
+
+// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet -
+func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet")
+
+	influenceId := c.Param("influenceId")
+	if influenceId != "subs-to-notify" {
+		c.String(http.StatusNotFound, "404 page not found")
+	}
+
+	subscriptionId := c.Params.ByName("subscriptionId")
+
+	s.Processor().ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetProcedure(c, subscriptionId)
+}
+
+// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut -
+func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
+	influenceId := c.Param("influenceId")
+	if influenceId != "subs-to-notify" {
+		c.String(http.StatusNotFound, "404 page not found")
+	}
+
+	// Get HTTP request body
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	// Deserialize request body
+	var trafficInfluSub models.TrafficInfluSub
+	err = openapi.Deserialize(&trafficInfluSub, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptiondIdPut")
+
+	subscriptionId := c.Params.ByName("subscriptionId")
+
+	s.Processor().ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure(c, subscriptionId, &trafficInfluSub)
+}
+
+func getDataFromRequestBody(c *gin.Context, data interface{}) error {
+	reqBody, err := c.GetRawData()
+	if err != nil {
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.JSON(http.StatusInternalServerError, pd)
+		return err
+	}
+
+	err = openapi.Deserialize(data, reqBody, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
+		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
+		c.JSON(http.StatusBadRequest, pd)
+		return err
+	}
+	return err
+}
+
+// HTTPApplicationDataPfdsAppIdDelete -
+func (s *Server) HandleApplicationDataPfdsAppIdDelete(c *gin.Context) {
+	appID := c.Params.ByName("appId")
+	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdDelete: appID=%q", appID)
+
+	s.Processor().DeleteApplicationDataIndividualPfdFromDBProcedure(c, appID)
+}
+
+// HTTPApplicationDataPfdsAppIdGet -
+func (s *Server) HandleApplicationDataPfdsAppIdGet(c *gin.Context) {
+	appID := c.Params.ByName("appId")
+	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdGet: appID=%q", appID)
+
+	s.Processor().GetApplicationDataIndividualPfdFromDBProcedure(c, appID)
+}
+
+// HTTPApplicationDataPfdsAppIdPut -
+func(s *Server) HandleApplicationDataPfdsAppIdPut(c *gin.Context) {
+	var pfdDataforApp models.PfdDataForApp
+
+	if err := getDataFromRequestBody(c, &pfdDataforApp); err != nil {
+		return
+	}
+
+	appID := c.Params.ByName("appId")
+	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdPut: appID=%q", appID)
+
+	s.Processor().PutApplicationDataIndividualPfdToDBProcedure(c, appID, &pfdDataforApp)
+}
+
+// HTTPApplicationDataPfdsGet -
+func (s *Server) HandleApplicationDataPfdsGet(c *gin.Context) {
+	query := c.Request.URL.Query()
+	pfdsAppIDs := query["appId"]
+	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsGet: pfdsAppIDs=%#v", pfdsAppIDs)
+
+	// TODO: Parse appID with separator ','
+	// Ex: "app1,app2,..."
+	s.Processor().GetApplicationDataPfdsFromDBProcedure(c, pfdsAppIDs)
+}
+
+// HTTPExposureDataSubsToNotifyPost -
+func (s *Server) HandleExposureDataSubsToNotifyPost(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// HTTPExposureDataSubsToNotifySubIdDelete - Deletes a subcription for notifications
+func (s *Server) HandleExposureDataSubsToNotifySubIdDelete(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// HTTPExposureDataSubsToNotifySubIdPut - updates a subcription for notifications
+func (s *Server) HandleExposureDataSubsToNotifySubIdPut(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// HTTPPolicyDataBdtDataBdtReferenceIdDelete -
+func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdDelete")
+
+	collName := "policyData.bdtData"
+	bdtReferenceId := c.Params.ByName("bdtReferenceId")
+
+	s.Processor().PolicyDataBdtDataBdtReferenceIdDeleteProcedure(c, collName, bdtReferenceId)
+}
+
+// HTTPPolicyDataBdtDataBdtReferenceIdGet -
+func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdGet")
+
+	collName := "policyData.bdtData"
+	bdtReferenceId := c.Params.ByName("bdtReferenceId")
+
+	s.Processor().PolicyDataBdtDataBdtReferenceIdGetProcedure(c, collName, bdtReferenceId)
+}
+
+// HTTPPolicyDataBdtDataBdtReferenceIdPut -
+func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
+	var bdtData models.BdtData
+
+	if err := getDataFromRequestBody(c, &bdtData); err != nil {
+		return
+	}
+	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdPut")
+
+	collName := "policyData.bdtData"
+	bdtReferenceId := c.Params.ByName("bdtReferenceId")
+
+	s.Processor().PolicyDataBdtDataBdtReferenceIdPutProcedure(c, collName, bdtReferenceId, bdtData)
+}
+
+// HTTPPolicyDataBdtDataGet -
+func (s *Server) HandlePolicyDataBdtDataGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataGet")
+
+	collName := "policyData.bdtData"
+
+	s.Processor().PolicyDataBdtDataGetProcedure(c, collName)
+}
+
+// HTTPPolicyDataPlmnsPlmnIdUePolicySetGet -
+func (s *Server) HandlePolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle PolicyDataPlmnsPlmnIdUePolicySetGet")
+
+	collName := "policyData.plmns.uePolicySet"
+	plmnId := c.Params.ByName("plmnId")
+
+	s.Processor().PolicyDataPlmnsPlmnIdUePolicySetGetProcedure(c, collName, plmnId)
+}
+
+// HTTPPolicyDataSponsorConnectivityDataSponsorIdGet -
+func (s *Server) HandlePolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle PolicyDataSponsorConnectivityDataSponsorIdGet")
+
+	collName := "policyData.sponsorConnectivityData"
+	sponsorId := c.Params.ByName("sponsorId")
+
+	s.Processor().PolicyDataSponsorConnectivityDataSponsorIdGetProcedure(c, collName, sponsorId)
+}
+
+// HTTPPolicyDataSubsToNotifyPost -
+func (s *Server) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
+	var policyDataSubscription models.PolicyDataSubscription
+
+	reqBody, err := c.GetRawData()
+	if err != nil {
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.JSON(http.StatusInternalServerError, pd)
+	}
+
+	err = openapi.Deserialize(policyDataSubscription, reqBody, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
+		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
+		c.JSON(http.StatusBadRequest, pd)
+	}
+
+	logger.DataRepoLog.Infof("Handle PolicyDataSubsToNotifyPost")
+
+	s.Processor().PolicyDataSubsToNotifyPostProcedure(c, policyDataSubscription)
+}
+
+// HTTPPolicyDataSubsToNotifySubsIdDelete -
+func (s *Server) HandlePolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
+	subsId :=  c.Params.ByName("subsId")
+
+	s.Processor().PolicyDataSubsToNotifySubsIdDeleteProcedure(c, subsId)
+}
+
+// HTTPPolicyDataSubsToNotifySubsIdPut -
+func (s *Server) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
+	var policyDataSubscription models.PolicyDataSubscription
+
+	reqBody, err := c.GetRawData()
+	if err != nil {
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.JSON(http.StatusInternalServerError, pd)
+	}
+
+	err = openapi.Deserialize(policyDataSubscription, reqBody, "application/json")
+	if err != nil {
+		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
+		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
+		c.JSON(http.StatusBadRequest, pd)
+	}
+
+	logger.DataRepoLog.Infof("Handle PolicyDataSubsToNotifySubsIdPut")
+
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().PolicyDataSubsToNotifySubsIdPutProcedure(c, subsId, policyDataSubscription)
+}
+
+// HTTPPolicyDataUesUeIdAmDataGet -
+func (s *Server) HandlePolicyDataUesUeIdAmDataGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdAmDataGet")
+
+	collName := "policyData.ues.amData"
+	ueId := c.Params.ByName("ueId")
+	s.Processor().PolicyDataUesUeIdAmDataGetProcedure(c, collName, ueId)
+}
+
+// HTTPPolicyDataUesUeIdOperatorSpecificDataGet -
+func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
+
+	collName := "policyData.ues.operatorSpecificData"
+	ueId := c.Params.ByName("ueId")
+	s.Processor().PolicyDataUesUeIdOperatorSpecificDataGetProcedure(c, collName, ueId)
+}
+
+// HTTPPolicyDataUesUeIdOperatorSpecificDataPatch - Need to be fixed
+func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context) {
+	var patchItemArray []models.PatchItem
+
+	if err := getDataFromRequestBody(c, &patchItemArray); err != nil {
+		return
+	}
+
+	collName := "policyData.ues.operatorSpecificData"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c, collName, ueId, patchItemArray)
+}
+
+// HTTPPolicyDataUesUeIdOperatorSpecificDataPut -
+func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) {
+	var operatorSpecificDataContainerMap map[string]models.OperatorSpecificDataContainer
+
+	if err := getDataFromRequestBody(c, &operatorSpecificDataContainerMap); err != nil {
+		return
+	}
+
+	collName := "policyData.ues.operatorSpecificData"
+	ueId :=  c.Params.ByName("ueId")
+
+	s.Processor().PolicyDataUesUeIdOperatorSpecificDataPutProcedure(c, collName, ueId,  operatorSpecificDataContainerMap)
+}
+
+// HTTPPolicyDataUesUeIdSmDataGet -
+func (s *Server) HandlePolicyDataUesUeIdSmDataGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdSmDataGet")
+
+	collName := "policyData.ues.smData"
+	ueId := c.Params.ByName("ueId")
+	sNssai := models.Snssai{}
+	sNssaiQuery := c.Request.URL.Query().Get("snssai")
+	dnn := c.Request.URL.Query().Get("dnn")
+
+	err := json.Unmarshal([]byte(sNssaiQuery), &sNssai)
+	if err != nil {
+		logger.DataRepoLog.Warnln(err)
+	}
+	s.Processor().PolicyDataUesUeIdSmDataGetProcedure(c, collName, ueId, sNssai, dnn)
+}
+
+// HTTPPolicyDataUesUeIdSmDataPatch - Need to be fixed
+func (s *Server) HandlePolicyDataUesUeIdSmDataPatch(c *gin.Context) {
+	var usageMonDataMap map[string]models.UsageMonData
+
+	if err := getDataFromRequestBody(c, &usageMonDataMap); err != nil {
+		return
+	}
+	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdSmDataPatch")
+
+	collName := "policyData.ues.smData.usageMonData"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().PolicyDataUesUeIdSmDataPatchProcedure(c, collName, ueId, usageMonDataMap)
+}
+
+// HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete -
+func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
+	ueId := c.Params.ByName("ueId")
+	usageMonId := c.Params.ByName("usageMonId")
+	collName := "policyData.ues.smData.usageMonData"
+	s.Processor().PolicyDataUesUeIdSmDataUsageMonIdDeleteProcedure(c, collName, ueId, usageMonId)
+}
+
+// HTTPPolicyDataUesUeIdSmDataUsageMonIdGet -
+func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
+	collName := "policyData.ues.smData.usageMonData"
+	ueId := c.Params.ByName("ueId")
+	usageMonId := c.Params.ByName("usageMonId")
+
+	s.Processor().PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c, collName, usageMonId, ueId)
+}
+
+// HTTPPolicyDataUesUeIdSmDataUsageMonIdPut -
+func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
+	var usageMonData models.UsageMonData
+
+	if err := getDataFromRequestBody(c, &usageMonData); err != nil {
+		return
+	}
+	ueId := c.Params.ByName("ueId")
+	usageMonId := c.Params.ByName("usageMonId")
+	collName := "policyData.ues.smData.usageMonData"
+
+	s.Processor().PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(c, collName, ueId, usageMonId, usageMonData)
+}
+
+// HTTPPolicyDataUesUeIdUePolicySetGet -
+func (s *Server) HandlePolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
+
+	ueId := c.Params.ByName("ueId")
+	collName := "policyData.ues.uePolicySet"
+
+	s.Processor().PolicyDataUesUeIdUePolicySetGetProcedure(c, collName, ueId)
+}
+
+// HTTPPolicyDataUesUeIdUePolicySetPatch -
+func (s *Server) HandlePolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
+	var uePolicySet models.UePolicySet
+
+	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {
+		return
+	}
+
+	collName := "policyData.ues.uePolicySet"
+	ueId := c.Params.ByName("ueId")
+	s.Processor().PolicyDataUesUeIdUePolicySetPatchProcedure(c, collName, ueId, uePolicySet)
+}
+
+// HTTPPolicyDataUesUeIdUePolicySetPut -
+func (s *Server) HandlePolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
+	var uePolicySet models.UePolicySet
+
+	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {
+		return
+	}
+
+	collName := "policyData.ues.uePolicySet"
+	ueId := c.Params.ByName("ueId")
+	s.Processor().PolicyDataUesUeIdUePolicySetPutProcedure(c, collName, ueId, uePolicySet)
+}
+
+// HTTPQueryProvisionedData - Retrieve multiple provisioned data sets of a UE
+func (s *Server) HandleQueryProvisionedData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryProvisionedData")
+
+	var provisionedDataSets models.ProvisionedDataSets
+	ueId := c.Params.ByName("ueId")
+	servingPlmnId := c.Params.ByName("servingPlmnId")
+
+	s.Processor().QueryProvisionedDataProcedure(c, ueId, servingPlmnId, provisionedDataSets)
+}
+
+// HTTPRemovesdmSubscriptions - Deletes a sdmsubscriptions
+func (s *Server) HandleRemovesdmSubscriptions(c *gin.Context) {
+
+	logger.DataRepoLog.Infof("Handle RemovesdmSubscriptions")
+
+	ueId := c.Params.ByName("ueId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().RemovesdmSubscriptionsProcedure(c, ueId, subsId)
+}
+
+// HTTPUpdatesdmsubscriptions - Stores an individual sdm subscriptions of a UE
+func (s *Server) HandleUpdatesdmsubscriptions(c *gin.Context) {
+	var sdmSubscription models.SdmSubscription
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&sdmSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle Updatesdmsubscriptions")
+
+	ueId := c.Params.ByName("ueId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().UpdatesdmsubscriptionsProcedure(c, ueId, subsId, sdmSubscription)
+}
+
+// HTTPCreateSdmSubscriptions - Create individual sdm subscription
+func (s *Server) HandleCreateSdmSubscriptions(c *gin.Context) {
+	var sdmSubscription models.SdmSubscription
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&sdmSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateSdmSubscriptions")
+
+	collName := "subscriptionData.contextData.amfNon3gppAccess"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().CreateSdmSubscriptionsProcedure(c, sdmSubscription, collName, ueId)
+}
+
+// HTTPQuerysdmsubscriptions - Retrieves the sdm subscriptions of a UE
+func (s *Server) HandleQuerysdmsubscriptions(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle Querysdmsubscriptions")
+
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().QuerysdmsubscriptionsProcedure(c, ueId)
+}
+
+// HTTPCreateSmfContextNon3gpp - To create an individual SMF context data of a UE in the UDR
+func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
+	var smfRegistration models.SmfRegistration
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&smfRegistration, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+
+	logger.DataRepoLog.Infof("Handle CreateSmfContextNon3gpp")
+
+	collName := "subscriptionData.contextData.smfRegistrations"
+	ueId := c.Params.ByName("ueId")
+	pduSessionId, err := strconv.ParseInt(c.Param("pduSessionId"), 10, 64)
+	if err != nil {
+		logger.DataRepoLog.Warnln(err)
+	}
+
+	s.Processor().CreateSmfContextNon3gppProcedure(c, smfRegistration, collName, ueId, pduSessionId)
+}
+
+// HTTPDeleteSmfContext - To remove an individual SMF context data of a UE the UDR
+func (s *Server) HandleDeleteSmfContext(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle DeleteSmfContext")
+
+	collName := "subscriptionData.contextData.smfRegistrations"
+	ueId := c.Params.ByName("ueId")
+	pduSessionId := c.Params.ByName("pduSessionId")
+
+	s.Processor().DeleteSmfContextProcedure(c, collName, ueId, pduSessionId)
+}
+
+// HTTPQuerySmfRegistration - Retrieves the individual SMF registration of a UE
+func (s *Server) HandleQuerySmfRegistration(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmfRegistration")
+
+	ueId := c.Params.ByName("ueId")
+	pduSessionId := c.Params.ByName("pduSessionId")
+	collName := "subscriptionData.contextData.smfRegistrations"
+
+	s.Processor().QuerySmfRegistrationProcedure(c, collName, ueId, pduSessionId)
+}
+
+// HTTPQuerySmfRegList - Retrieves the SMF registration list of a UE
+func (s *Server) HandleQuerySmfRegList(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmfRegList")
+
+	collName := "subscriptionData.contextData.smfRegistrations"
+	ueId := c.Params.ByName("ueId")
+	s.Processor().QuerySmfRegListProcedure(c, collName, ueId)
+
+}
+
+// HTTPQuerySmfSelectData - Retrieves the SMF selection subscription data of a UE
+func (s *Server) HandleQuerySmfSelectData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmfSelectData")
+
+	collName := "subscriptionData.provisionedData.smfSelectionSubscriptionData"
+	ueId := c.Params.ByName("ueId")
+	servingPlmnId := c.Params.ByName("servingPlmnId")
+	s.Processor().QuerySmfSelectDataProcedure(c, collName, ueId, servingPlmnId)
+}
+
+// HTTPCreateSmsfContext3gpp - Create the SMSF context data of a UE via 3GPP access
+func (s *Server) HandleCreateSmsfContext3gpp(c *gin.Context) {
+	var smsfRegistration models.SmsfRegistration
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&smsfRegistration, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateSmsfContext3gpp")
+
+	collName := "subscriptionData.contextData.smsf3gppAccess"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().CreateSmsfContext3gppProcedure(c, collName, ueId, smsfRegistration)
+}
+
+// HTTPDeleteSmsfContext3gpp - To remove the SMSF context data of a UE via 3GPP access
+func (s *Server) HandleDeleteSmsfContext3gpp(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle DeleteSmsfContext3gpp")
+
+	collName := "subscriptionData.contextData.smsf3gppAccess"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().DeleteSmsfContext3gppProcedure(c, collName, ueId)
+}
+
+// HTTPQuerySmsfContext3gpp - Retrieves the SMSF context data of a UE using 3gpp access
+func (s *Server) HandleQuerySmsfContext3gpp(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmsfContext3gpp")
+
+	collName := "subscriptionData.contextData.smsf3gppAccess"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().QuerySmsfContext3gppProcedure(c, collName, ueId)
+}
+
+// HTTPCreateSmsfContextNon3gpp - Create the SMSF context data of a UE via non-3GPP access
+func (s *Server) HandleCreateSmsfContextNon3gpp(c *gin.Context) {
+	var smsfRegistration models.SmsfRegistration
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&smsfRegistration, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateSmsfContextNon3gpp")
+
+	collName := "subscriptionData.contextData.smsfNon3gppAccess"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().CreateSmsfContextNon3gppProcedure(c, smsfRegistration, collName, ueId)
+}
+
+// HTTPDeleteSmsfContextNon3gpp - To remove the SMSF context data of a UE via non-3GPP access
+func (s *Server) HandleDeleteSmsfContextNon3gpp(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle DeleteSmsfContextNon3gpp")
+
+	collName := "subscriptionData.contextData.smsfNon3gppAccess"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().DeleteSmsfContextNon3gppProcedure(c, collName, ueId)
+}
+
+// HTTPQuerySmsfContextNon3gpp - Retrieves the SMSF context data of a UE using non-3gpp access
+func (s *Server) HandleQuerySmsfContextNon3gpp(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmsfContextNon3gpp")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.contextData.smsfNon3gppAccess"
+
+	s.Processor().QuerySmsfContextNon3gppProcedure(c, collName, ueId)
+}
+
+// HTTPQuerySmsMngData - Retrieves the SMS management subscription data of a UE
+func (s *Server) HandleQuerySmsMngData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmsMngData")
+
+	collName := "subscriptionData.provisionedData.smsMngData"
+	ueId := c.Params.ByName("ueId")
+	servingPlmnId := c.Params.ByName("servingPlmnId")
+	s.Processor().QuerySmsMngDataProcedure(c, collName, ueId, servingPlmnId)
+}
+
+// HTTPQuerySmsData - Retrieves the SMS subscription data of a UE
+func (s *Server) HandleQuerySmsData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmsData")
+
+	ueId := c.Params.ByName("ueId")
+	servingPlmnId := c.Params.ByName("servingPlmnId")
+	collName := "subscriptionData.provisionedData.smsData"
+
+	s.Processor().QuerySmsDataProcedure(c, collName, ueId, servingPlmnId)
+}
+
+// HTTPQuerySmData - Retrieves the Session Management subscription data of a UE
+func (s *Server) HandleQuerySmData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QuerySmData")
+
+	collName := "subscriptionData.provisionedData.smData"
+	ueId := c.Params.ByName("ueId")
+	servingPlmnId := c.Params.ByName("servingPlmnId")
+	singleNssai := models.Snssai{}
+	singleNssaiQuery := c.Query("singleNssai")
+	err := json.Unmarshal([]byte(singleNssaiQuery), &singleNssai)
+	if err != nil {
+		logger.DataRepoLog.Warnln(err)
+	}
+
+	dnn := c.Query("dnn")
+	s.Processor().QuerySmDataProcedure(c, collName, ueId, servingPlmnId, singleNssai, dnn)
+}
+
+// HTTPQueryTraceData - Retrieves the trace configuration data of a UE
+func (s *Server) HandleQueryTraceData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryTraceData")
+
+	collName := "subscriptionData.provisionedData.traceData"
+	ueId := c.Params.ByName("ueId")
+	servingPlmnId := c.Params.ByName("servingPlmnId")
+
+	s.Processor().QueryTraceDataProcedure(c, collName, ueId, servingPlmnId)
+}
+
+// HTTPCreateAMFSubscriptions - Creates AMF Subscription Info for an eeSubscription
+func (s *Server) HandleCreateAMFSubscriptions(c *gin.Context) {
+	var amfSubscriptionInfoArray []models.AmfSubscriptionInfo
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&amfSubscriptionInfoArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateAMFSubscriptions")
+
+	ueId := c.Params.ByName("ueId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().CreateAMFSubscriptionsProcedure(c, subsId, ueId, amfSubscriptionInfoArray)
+}
+
+// HTTPRemoveAmfSubscriptionsInfo - Deletes AMF Subscription Info for an eeSubscription
+func (s *Server) HandleRemoveAmfSubscriptionsInfo(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle RemoveAmfSubscriptionsInfo")
+
+	ueId := c.Params.ByName("ueId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().RemoveAmfSubscriptionsInfoProcedure(c, subsId, ueId)
+}
+
+// HTTPModifyAmfSubscriptionInfo - modify the AMF Subscription Info
+func (s *Server) HandleModifyAmfSubscriptionInfo(c *gin.Context) {
+	var patchItemArray []models.PatchItem
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle ModifyAmfSubscriptionInfo")
+
+	ueId := c.Params.ByName("ueId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().ModifyAmfSubscriptionInfoProcedure(c, ueId, subsId, patchItemArray)
+}
+
+// HTTPGetAmfSubscriptionInfo - Retrieve AMF subscription Info
+func (s *Server) HandleGetAmfSubscriptionInfo(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle GetAmfSubscriptionInfo")
+
+	ueId := c.Params.ByName("ueId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().GetAmfSubscriptionInfoProcedure(c, subsId, ueId)
+}
+
+// HandleGetSharedData - retrieve shared data
+func (s *Server) HandleGetSharedData(c *gin.Context) {
+	sharedDataIdArray := c.QueryArray("shared-data-ids")
+	logger.DataRepoLog.Infof("Handle GetSharedData")
+
+	var sharedDataIds []string
+	if len(sharedDataIdArray) != 0 {
+		sharedDataIds = sharedDataIdArray
+		if strings.Contains(sharedDataIds[0], ",") {
+			sharedDataIds = strings.Split(sharedDataIds[0], ",")
+		}
+	}
+	collName := "subscriptionData.sharedData"
+
+	s.Processor().GetSharedDataProcedure(c, collName, sharedDataIds)
+}
+
+// HandlePostSubscriptionDataSubscriptions - Subscription data subscriptions
+func (s *Server) HandlePostSubscriptionDataSubscriptions(c *gin.Context) {
+	var subscriptionDataSubscriptions models.SubscriptionDataSubscriptions
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&subscriptionDataSubscriptions, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	s.Processor().PostSubscriptionDataSubscriptionsProcedure(c, subscriptionDataSubscriptions)
+}
+
+// HTTPRemovesubscriptionDataSubscriptions - Deletes a subscriptionDataSubscriptions
+func (s *Server) HandleRemovesubscriptionDataSubscriptions(c *gin.Context) {
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().RemovesubscriptionDataSubscriptionsProcedure(c, subsId)
+}
+
+// HTTPQueryEEData - Retrieves the ee profile data of a UE
+func (s *Server) HandleQueryEEData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle QueryEEData")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.eeProfileData"
+
+	s.Processor().QueryEEDataProcedure(c, collName, ueId)
+}
+
+// HTTPAmfContext3gpp - To modify operator specific data of a UE
+func (s *Server) HandlePatchOperSpecData(c *gin.Context) {
+	var patchItemArray []models.PatchItem
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle PatchOperSpecData")
+
+	collName := "subscriptionData.operatorSpecificData"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().PatchOperSpecDataProcedure(c, collName, ueId, patchItemArray)
+}
+
+// HTTPQueryOperSpecData - Retrieves the operator specific data of a UE
+func (s *Server) HandleQueryOperSpecData(c *gin.Context) {
+
+	logger.DataRepoLog.Infof("Handle QueryOperSpecData")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.operatorSpecificData"
+
+	s.Processor().QueryOperSpecDataProcedure(c, collName, ueId)
+}
+
+// HTTPGetppData - Read the profile of a given UE
+func (s *Server) HandleGetppData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle GetppData")
+
+	collName := "subscriptionData.ppData"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().GetppDataProcedure(c, collName, ueId)
+}
+
+// HTTPModifyPpData - modify the provisioned parameter data
+func (s *Server) HandleModifyPpData(c *gin.Context) {
+	var patchItemArray []models.PatchItem
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	collName := "subscriptionData.ppData"
+	ueId := c.Params.ByName("ueId")
+
+	s.Processor().ModifyPpDataProcedure(c, collName, ueId, patchItemArray)
+}
+
+// HTTPGetIdentityData - Retrieve identity data by SUPI or GPSI
+func (s *Server) HandleGetIdentityData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle GetIdentityData")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.identityData"
+
+	s.Processor().GetIdentityDataProcedure(c, collName, ueId)
+}
+
+// HTTPGetOdbData - Retrieve ODB Data data by SUPI or GPSI
+func (s *Server) HandleGetOdbData(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle GetOdbData")
+
+	ueId := c.Params.ByName("ueId")
+	collName := "subscriptionData.operatorDeterminedBarringData"
+
+	s.Processor().GetOdbDataProcedure(c, collName, ueId)
+}
+
+// HTTPCreateEeGroupSubscriptions - Create individual EE subscription for a group of UEs or any UE
+func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
+	var eeSubscription models.EeSubscription
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	logger.DataRepoLog.Infof("Handle CreateEeGroupSubscriptions")
+
+	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
+	ueGroupId := c.Params.ByName("ueGroupId")
+	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueGroupId",
+			Cause:  "INVALID_PARAMETER",	
+		}
+		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
+	
+	s.Processor().CreateEeGroupSubscriptionsProcedure(c, ueGroupId, eeSubscription)
+}
+
+// HTTPQueryEeGroupSubscriptions - Retrieves the ee subscriptions of a group of UEs or any UE
+func (s *Server) HandleQueryEeGroupSubscriptions(c *gin.Context) {
+
+	logger.DataRepoLog.Infof("Handle QueryEeGroupSubscriptions")
+
+	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
+	ueGroupId := c.Params.ByName("ueGroupId")
+	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueGroupId",
+			Cause:  "INVALID_PARAMETER",	
+		}
+		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
+	s.Processor().QueryEeGroupSubscriptionsProcedure(c, ueGroupId)
+}
+
+// HTTPCreateEeSubscriptions - Create individual EE subscription
+func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
+	var eeSubscription models.EeSubscription
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+
+	logger.DataRepoLog.Infof("Handle CreateEeSubscriptions")
+
+	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
+	ueId := c.Params.ByName("ueId")
+	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueId",
+			Cause:  "INVALID_PARAMETER",
+		}
+		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
+
+	s.Processor().CreateEeSubscriptionsProcedure(c, ueId, eeSubscription)
+}
+
+// HTTPQueryeesubscriptions - Retrieves the ee subscriptions of a UE
+func (s *Server) HandleQueryeesubscriptions(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle Queryeesubscriptions")
+	
+	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
+	ueId := c.Params.ByName("ueId")
+	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
+		problemDetail := models.ProblemDetails{
+			Title:  "Invalid parameter",
+			Status: http.StatusBadRequest,
+			Detail: "Invalid ueId",
+			Cause:  "INVALID_PARAMETER",
+		}
+		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
+	}
+
+	s.Processor().QueryeesubscriptionsProcedure(c, ueId)
+}
+
+// HTTPRemoveeeSubscriptions - Deletes a eeSubscription
+func (s *Server) HandleRemoveeeSubscriptions(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle RemoveeeSubscriptions")
+
+	ueId := c.Params.ByName("ueId")
+
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().RemoveeeSubscriptionsProcedure(c, ueId, subsId)
+}
+
+// HTTPUpdateEesubscriptions - Stores an individual ee subscriptions of a UE
+func (s *Server) HandleUpdateEesubscriptions(c *gin.Context) {
+	var eeSubscription models.EeSubscription
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	logger.DataRepoLog.Infof("Handle UpdateEesubscriptions")
+
+	ueId := c.Params.ByName("ueId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().UpdateEesubscriptionsProcedure(c, ueId, subsId, eeSubscription)
+}
+
+// HTTPRemoveEeGroupSubscriptions - Deletes a eeSubscription for a group of UEs or any UE
+func (s *Server) HandleRemoveEeGroupSubscriptions(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle RemoveEeGroupSubscriptions")
+
+	ueGroupId := c.Params.ByName("ueGroupId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().RemoveEeGroupSubscriptionsProcedure(c, ueGroupId, subsId)
+}
+
+// HTTPUpdateEeGroupSubscriptions - Stores an individual ee subscription of a group of UEs or any UE
+func (s *Server) HandleUpdateEeGroupSubscriptions(c *gin.Context) {
+	var eeSubscription models.EeSubscription
+
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	logger.DataRepoLog.Infof("Handle UpdateEeGroupSubscriptions")
+
+	ueGroupId := c.Params.ByName("ueGroupId")
+	subsId := c.Params.ByName("subsId")
+
+	s.Processor().UpdateEeGroupSubscriptionsProcedure(c, ueGroupId, subsId, eeSubscription)
+}
+
+// HTTPCreateSessionManagementData - Creates and updates the session
+// management data for a UE and for an individual PDU session
+func (s *Server) HandleCreateSessionManagementData(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// HTTPDeleteSessionManagementData - Deletes the session management
+// data for a UE and for an individual PDU session
+func (s *Server)  HandleDeleteSessionManagementData(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// HTTPQuerySessionManagementData - Retrieves the session management
+// data for a UE and for an individual PDU session
+func (s *Server) HandleQuerySessionManagementData(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// CreateAccessAndMobilityData - Creates and updates the access and mobility exposure data for a UE
+func (s *Server) HandleCreateAccessAndMobilityData(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// DeleteAccessAndMobilityData - Deletes the access and mobility exposure data for a UE
+func (s *Server) HandleDeleteAccessAndMobilityData(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// QueryAccessAndMobilityData - Retrieves the access and mobility exposure data for a UE
+func (s *Server) HandleQueryAccessAndMobilityData(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// HTTPApplicationDataInfluenceDataSubsToNotifyGet -
+func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyGet")
+
+	dnn := c.Query("dnn")
+	internalGroupId := c.Query("internal-Group-Id")
+	supi := c.Query("supi")
+
+	var snssai *models.Snssai
+	if c.Query("snssai") != "" {
+		snssai = new(models.Snssai)
+		err := openapi.Deserialize(snssai, []byte(c.Query("snssai")), "application/json")
+		if err != nil {
+			problemDetails := models.ProblemDetails{
+				Status: http.StatusBadRequest,
+				Detail: err.Error(),
+			}
+			c.JSON(http.StatusBadRequest, problemDetails)
+		}
+	}
+
+	if dnn == "" && snssai == nil && internalGroupId == "" && supi == "" {
+		problemDetails := models.ProblemDetails{
+			Status: http.StatusBadRequest,
+			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
+		}
+		c.JSON(http.StatusBadRequest, problemDetails)
+	}
+
+	s.Processor().ApplicationDataInfluenceDataSubsToNotifyGetProcedure(c, dnn, snssai, internalGroupId, supi)
+}
+
+// HTTPApplicationDataInfluenceDataSubsToNotifyPost -
+func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Context) {
+	// Get HTTP request body
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	// Deserialize request body
+	var trafficInfluSub models.TrafficInfluSub
+	err = openapi.Deserialize(&trafficInfluSub, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyPost")
+	subscriptionId := udr_context.NewInfluenceDataSubscriptionId()
+
+	s.Processor().ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostProcedure(c, subscriptionId, &trafficInfluSub)
+}
+
+// HTTPApplicationDataInfluenceDataInfluenceIdDelete - Delete an individual Influence Data resource
+func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdDelete(c *gin.Context) {
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdDelete")
+
+	collName := "applicationData.influenceData"
+	influenceId := c.Params.ByName("influenceId")
+	s.Processor().ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(c, collName, influenceId)
+}
+
+// HTTPApplicationDataInfluenceDataInfluenceIdPatch -
+// Modify part of the properties of an individual Influence Data resource
+func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPatch(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+// HTTPApplicationDataInfluenceDataInfluenceIdPut - Create or update an individual Influence Data resource
+func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context) {
+	// Get HTTP request body
+	requestBody, err := c.GetRawData()
+	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "System failure",
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
+			Cause:  "SYSTEM_FAILURE",
+		}
+		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.JSON(http.StatusInternalServerError, problemDetail)
+		return
+	}
+
+	// Deserialize request body
+	var trafficInfluData models.TrafficInfluData
+	err = openapi.Deserialize(&trafficInfluData, requestBody, "application/json")
+	if err != nil {
+		problemDetail := "[Request Body] " + err.Error()
+		rsp := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: problemDetail,
+		}
+		logger.DataRepoLog.Errorln(problemDetail)
+		c.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPut")
+
+	collName := "applicationData.influenceData"
+	influenceId := c.Params.ByName("influenceId")
+
+	s.Processor().ApplicationDataInfluenceDataInfluenceIdPutProcedure(c, collName, influenceId, &trafficInfluData)
+}
+func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPost(c *gin.Context) {
+	s.Processor().ApplicationDataInfluenceDataInfluenceIdPostProcedure(c)
+}
 

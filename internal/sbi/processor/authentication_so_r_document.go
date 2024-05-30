@@ -11,70 +11,30 @@
 
 import (
 	"net/http"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
-	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/mongoapi"
 )
 
-// HTTPCreateAuthenticationSoR - To store the SoR acknowledgement information of a UE
-func (p *Processor) HandleCreateAuthenticationSoR(c *gin.Context) {
-	var sorData models.SorData
+func (p *Processor) CreateAuthenticationSoRProcedure(c *gin.Context, collName string, ueId string, putData bson.M) {
+	filter := bson.M{"ueId": ueId}
+	putData["ueId"] = ueId
 
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
+	if _, err := mongoapi.RestfulAPIPutOne(collName, filter, putData); err != nil {
+		logger.DataRepoLog.Errorf("CreateAuthenticationSoRProcedure err: %+v", err)
 	}
-
-	err = openapi.Deserialize(&sorData, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-
-	logger.DataRepoLog.Infof("Handle CreateAuthenticationSoR")
-	putData := util.ToBsonM(sorData)
-	ueId := c.Params.ByName("ueId")
-	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
-
-	datarepository.CreateAuthenticationSoRProcedure(collName, ueId, putData)
 
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPQueryAuthSoR - Retrieves the SoR acknowledgement information of a UE
-func (p *Processor) HandleQueryAuthSoR(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAuthSoR")
-
-	ueId := c.Params.ByName("ueId")
-	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
-
-	data, problemDetails := datarepository.QueryAuthSoRProcedure(collName, ueId)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	} else if data == nil { // data == nil && problemDetails == nil
-		pd := util.ProblemDetailsNotFound("")
+func (p *Processor) QueryAuthSoRProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QueryAuthSoRProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

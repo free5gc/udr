@@ -13,25 +13,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPGetOdbData - Retrieve ODB Data data by SUPI or GPSI
-func (p *Processor) HandleGetOdbData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle GetOdbData")
-
-	ueId := c.Params.ByName("ueId")
-	collName := "subscriptionData.operatorDeterminedBarringData"
-
-	data, problemDetails := datarepository.GetOdbDataProcedure(collName, ueId)
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+func (p *Processor) GetOdbDataProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("GetOdbDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }

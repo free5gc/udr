@@ -14,67 +14,32 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/udr/internal/util"
+	"go.mongodb.org/mongo-driver/bson"
+	
 )
 
-// HTTPModifyAuthentication - modify the authentication subscription data of a UE
-func (p *Processor) HandleModifyAuthentication(c *gin.Context) {
-	var patchItemArray []models.PatchItem
-
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
-	}
-
-	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-
-	logger.DataRepoLog.Infof("Handle ModifyAuthentication")
-
-	collName := "subscriptionData.authenticationData.authenticationSubscription"
-	ueId := c.Params.ByName("ueId")
-
-	problemDetails := datarepository.ModifyAuthenticationProcedure(collName, ueId, patchItemArray)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
+func (p *Processor) ModifyAuthenticationProcedure(c *gin.Context, collName string, ueId string, patchItem []models.PatchItem) {
+	filter := bson.M{"ueId": ueId}
+	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+		logger.DataRepoLog.Errorf("ModifyAuthenticationProcedure err: %+v", err)
+		c.JSON(http.StatusInternalServerError, util.ProblemDetailsModifyNotAllowed(""))
 	}
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPQueryAuthSubsData - Retrieves the authentication subscription data of a UE
-func (p *Processor) HandleQueryAuthSubsData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAuthSubsData")
-
-	collName := "subscriptionData.authenticationData.authenticationSubscription"
-	ueId :=  c.Params.ByName("ueId")
-
-	data, problemDetails := datarepository.QueryAuthSubsDataProcedure(collName, ueId)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+func (p *Processor) QueryAuthSubsDataProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		if pd.Status == http.StatusNotFound {
+			logger.DataRepoLog.Warnf("QueryAuthSubsDataProcedure err: %s", pd.Title)
+		} else {
+			logger.DataRepoLog.Errorf("QueryAuthSubsDataProcedure err: %s", pd.Detail)
+		}
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 	c.JSON(http.StatusOK, data)

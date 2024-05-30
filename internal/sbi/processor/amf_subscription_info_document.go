@@ -11,56 +11,74 @@
 
 import (
 	"net/http"
+	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	jsonpatch "github.com/evanphx/json-patch"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/udr/internal/util"
+	udr_context "github.com/free5gc/udr/internal/context"
 )
 
-// HTTPModifyAmfSubscriptionInfo - modify the AMF Subscription Info
-func (p *Processor) HandleModifyAmfSubscriptionInfo(c *gin.Context) {
-	var patchItemArray []models.PatchItem
+func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId string, subsId string,
+	patchItem []models.PatchItem,
+) {
+	udrSelf := udr_context.GetSelf()
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	UESubsData := value.(*udr_context.UESubsData)
 
-	requestBody, err := c.GetRawData()
+	_, ok = UESubsData.EeSubscriptionCollection[subsId]
+
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+
+	if UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos == nil {
+		pd := util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	var patchJSON []byte
+	if patchJSONtemp, err := json.Marshal(patchItem); err != nil {
+		logger.DataRepoLog.Errorln(err)
+	} else {
+		patchJSON = patchJSONtemp
+	}
+	var patch jsonpatch.Patch
+	if patchtemp, err := jsonpatch.DecodePatch(patchJSON); err != nil {
+		logger.DataRepoLog.Errorln(err)
+		pd := util.ProblemDetailsModifyNotAllowed("PatchItem attributes are invalid")
+		c.JSON(int(pd.Status), pd)
+		return
+	} else {
+		patch = patchtemp
+	}
+	original, err := json.Marshal((UESubsData.EeSubscriptionCollection[subsId]).AmfSubscriptionInfos)
 	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
+		logger.DataRepoLog.Warnln(err)
 	}
 
-	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
+	modified, err := patch.Apply(original)
 	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
+		pd := util.ProblemDetailsModifyNotAllowed("Occur error when applying PatchItem")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-
-	logger.DataRepoLog.Infof("Handle ModifyAmfSubscriptionInfo")
-
-	ueId := c.Params.ByName("ueId")
-	subsId := c.Params.ByName("subsId")
-
-	problemDetails := datarepository.ModifyAmfSubscriptionInfoProcedure(ueId, subsId, patchItemArray)
-	
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
+	var modifiedData []models.AmfSubscriptionInfo
+	err = json.Unmarshal(modified, &modifiedData)
+	if err != nil {
+		logger.DataRepoLog.Error(err)
 	}
 
+	UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos = modifiedData
 	c.Status(http.StatusNoContent)
 }

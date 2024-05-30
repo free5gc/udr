@@ -12,90 +12,92 @@
 import (
 	"fmt"
 	"net/http"
+	"reflect"
+	"encoding/json"
+
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 	"github.com/free5gc/udr/internal/util"
 	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/util/mongoapi"
 )
 
-// HTTPApplicationDataInfluenceDataInfluenceIdDelete - Delete an individual Influence Data resource
-func (p *Processor) HandleApplicationDataInfluenceDataInfluenceIdDelete(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdDelete")
+func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
+	c *gin.Context, collName, influenceId string, request *models.TrafficInfluData) {
+	putData := util.ToBsonM(*request)
+	putData["influenceId"] = influenceId
+	filter := bson.M{"influenceId": influenceId}
 
-	collName := "applicationData.influenceData"
-	influenceId := c.Params.ByName("influenceId")
-	status := datarepository.ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(collName, influenceId)
-	if status == http.StatusNoContent {
-		c.Status(http.StatusNoContent)
-		return
-	} else {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
-	}
-}
+	var original *models.TrafficInfluData
 
-// HTTPApplicationDataInfluenceDataInfluenceIdPatch -
-// Modify part of the properties of an individual Influence Data resource
-func (p *Processor) HandleApplicationDataInfluenceDataInfluenceIdPatch(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-// HTTPApplicationDataInfluenceDataInfluenceIdPut - Create or update an individual Influence Data resource
-func (p *Processor) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context) {
-	// Get HTTP request body
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
+	if mapData, err := mongoapi.RestfulAPIGetOne(collName, filter); err != nil {
+		logger.DataRepoLog.Errorf(err.Error())
+		problemDetails := &models.ProblemDetails{
 			Status: http.StatusInternalServerError,
 			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
 		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
+		c.JSON(int(problemDetails.Status), problemDetails)
 		return
+	} else {
+		if len(mapData) != 0 {
+			original = new(models.TrafficInfluData)
+			byteData, err := json.Marshal(mapData)
+			if err != nil {
+				logger.DataRepoLog.Errorf(err.Error())
+				problemDetails := &models.ProblemDetails{
+					Status: http.StatusInternalServerError,
+					Detail: err.Error(),
+				}
+				c.JSON(int(problemDetails.Status), problemDetails)
+				return 
+			}
+			err = json.Unmarshal(byteData, &original)
+			if err != nil {
+				logger.DataRepoLog.Errorf(err.Error())
+				problemDetails := &models.ProblemDetails{
+					Status: http.StatusInternalServerError,
+					Detail: err.Error(),
+				}
+				c.JSON(int(problemDetails.Status), problemDetails)
+				return 
+			}
+		}
 	}
 
-	// Deserialize request body
-	var trafficInfluData models.TrafficInfluData
-	err = openapi.Deserialize(&trafficInfluData, requestBody, "application/json")
+	isExisted, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
 	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
+		logger.DataRepoLog.Errorf("ApplicationDataInfluenceDataInfluenceIdPutProcedure err: %+v", err)
+		problemDetails := &models.ProblemDetails{
+			Status: http.StatusInternalServerError,
+			Detail: err.Error(),
 		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
+		c.JSON(int(problemDetails.Status), problemDetails)
+		return 
 	}
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPut")
+	if original == nil || !reflect.DeepEqual(*original, *request) {
+		// Notify the change of influence data
+		PreHandleInfluenceDataUpdateNotification(influenceId, original, request)
+	}
 
-	collName := "applicationData.influenceData"
-	influenceId := c.Params.ByName("influenceId")
-
-	response, problemDetails, status := datarepository.ApplicationDataInfluenceDataInfluenceIdPutProcedure( collName, influenceId, &trafficInfluData)
-	if status == http.StatusCreated {
+	if isExisted {
+		c.JSON(http.StatusOK, request)
+	} else {
 		// According to 3GPP TS 29.519 V16.5.0 clause 6.2.6.3.1
 		// Contain the URI of the newly created resource with `Location` key in the header
 		groupUri := udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR)
 		resourceUri := fmt.Sprintf("%s/application-data/influenceData/%s", groupUri, influenceId)
 		c.Header("Location", resourceUri)
-		c.JSON(http.StatusCreated, response)
-	} else if status == http.StatusOK {
-		c.JSON(http.StatusOK, response)
-	} else if status == http.StatusNoContent {
-		c.Status(http.StatusNoContent)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-	} else {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
+		c.JSON(http.StatusCreated, request)
+		return 
 	}
+}
+
+func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPostProcedure(
+	c *gin.Context,
+) {
+	c.Status(http.StatusMethodNotAllowed)
 }

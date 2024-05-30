@@ -10,98 +10,66 @@
 package processor
 
 import (
+	"fmt"
 	"net/http"
-	"regexp"
+	"strconv"
+
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPCreateEeSubscriptions - Create individual EE subscription
-func (p *Processor) HandleCreateEeSubscriptions(c *gin.Context) {
-	var eeSubscription models.EeSubscription
+func (p *Processor) CreateEeSubscriptionsProcedure(c *gin.Context, ueId string, EeSubscription models.EeSubscription) {
+	udrSelf := udr_context.GetSelf()
 
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		udrSelf.UESubsCollection.Store(ueId, new(udr_context.UESubsData))
+		value, _ = udrSelf.UESubsCollection.Load(ueId)
+	}
+	UESubsData := value.(*udr_context.UESubsData)
+	if UESubsData.EeSubscriptionCollection == nil {
+		UESubsData.EeSubscriptionCollection = make(map[string]*udr_context.EeSubscriptionCollection)
 	}
 
-	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
+	newSubscriptionID := strconv.Itoa(udrSelf.EeSubscriptionIDGenerator)
+	UESubsData.EeSubscriptionCollection[newSubscriptionID] = new(udr_context.EeSubscriptionCollection)
+	UESubsData.EeSubscriptionCollection[newSubscriptionID].EeSubscriptions = &EeSubscription
+	udrSelf.EeSubscriptionIDGenerator++
 
-	logger.DataRepoLog.Infof("Handle CreateEeSubscriptions")
+	/* Contains the URI of the newly created resource, according
+	   to the structure: {apiRoot}/subscription-data/{ueId}/context-data/ee-subscriptions/{subsId} */
+	locationHeader := fmt.Sprintf("%s/subscription-data/%s/context-data/ee-subscriptions/%s",
+		udrSelf.GetIPv4GroupUri(udr_context.NUDR_DR), ueId, newSubscriptionID)
 
-	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
-	ueId := c.Params.ByName("ueId")
-	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
-		problemDetail := models.ProblemDetails{
-			Title:  "Invalid parameter",
-			Status: http.StatusBadRequest,
-			Detail: "Invalid ueId",
-			Cause:  "INVALID_PARAMETER",
-		}
-		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
-		c.JSON(http.StatusBadRequest, problemDetail)
-		return
-	}
-
-	locationHeader := datarepository.CreateEeSubscriptionsProcedure(ueId, eeSubscription)
 	c.Header("Location", locationHeader)
-	
-	c.JSON(http.StatusCreated, eeSubscription)
+	c.JSON(http.StatusCreated, EeSubscription)
 }
 
-// HTTPQueryeesubscriptions - Retrieves the ee subscriptions of a UE
-func (p *Processor) HandleQueryeesubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle Queryeesubscriptions")
-	
-	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
-	ueId := c.Params.ByName("ueId")
-	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
-		problemDetail := models.ProblemDetails{
-			Title:  "Invalid parameter",
-			Status: http.StatusBadRequest,
-			Detail: "Invalid ueId",
-			Cause:  "INVALID_PARAMETER",
-		}
-		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
-		c.JSON(http.StatusBadRequest, problemDetail)
+func (p *Processor) QueryeesubscriptionsProcedure(c *gin.Context, ueId string) {
+	udrSelf := udr_context.GetSelf()
+
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 
-	eeSubscriptionSlice, problemDetails := datarepository.QueryeesubscriptionsProcedure(ueId)
+	UESubsData := value.(*udr_context.UESubsData)
+	var eeSubscriptionSlice []models.EeSubscription
 
-	if eeSubscriptionSlice == nil && problemDetails == nil {
+	for _, v := range UESubsData.EeSubscriptionCollection {
+		eeSubscriptionSlice = append(eeSubscriptionSlice, *v.EeSubscriptions)
+	}
+	
+	if (len(eeSubscriptionSlice) == 0) {
 		pd := util.ProblemDetailsUpspecified("")
 		c.JSON(int(pd.Status), pd)
 		return
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
 	}
 	c.JSON(http.StatusOK, eeSubscriptionSlice)
-
 }

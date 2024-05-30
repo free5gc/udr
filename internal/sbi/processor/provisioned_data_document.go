@@ -11,30 +11,153 @@ package processor
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/mitchellh/mapstructure"
+	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 	"github.com/free5gc/udr/internal/util"
+	"go.mongodb.org/mongo-driver/bson"
+	"github.com/free5gc/util/mongoapi"
 )
 
-// HTTPQueryProvisionedData - Retrieve multiple provisioned data sets of a UE
-func (p *Processor) HandleQueryProvisionedData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryProvisionedData")
+func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, servingPlmnId string,
+	provisionedDataSets models.ProvisionedDataSets,
+)  {
+	var collName string
+	var filter bson.M
 
-	var provisionedDataSets models.ProvisionedDataSets
-	ueId := c.Params.ByName("ueId")
-	servingPlmnId := c.Params.ByName("servingPlmnId")
-
-	data, problemDetails := datarepository.QueryProvisionedDataProcedure(ueId, servingPlmnId, provisionedDataSets)
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+	collName = "subscriptionData.provisionedData.amData"
+	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	accessAndMobilitySubscriptionData, pd := getDataFromDB(collName, filter)
+	if pd != nil && pd.Status == http.StatusInternalServerError {
+		logger.DataRepoLog.Errorf(
+			"QueryProvisionedDataProcedure get accessAndMobilitySubscriptionData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return 
 	}
-	c.JSON(http.StatusOK, data)
-	
+	if accessAndMobilitySubscriptionData != nil {
+		var tmp models.AccessAndMobilitySubscriptionData
+		if err := mapstructure.Decode(accessAndMobilitySubscriptionData, &tmp); err != nil {
+			logger.DataRepoLog.Errorf(
+				"QueryProvisionedDataProcedure accessAndMobilitySubscriptionData decode err: %+v", err)
+			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
+			return
+		}
+		provisionedDataSets.AmData = &tmp
+	}
+
+	collName = "subscriptionData.provisionedData.smfSelectionSubscriptionData"
+	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	smfSelectionSubscriptionData, pd := getDataFromDB(collName, filter)
+	if pd != nil && pd.Status == http.StatusInternalServerError {
+		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get smfSelectionSubscriptionData err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+	if smfSelectionSubscriptionData != nil {
+		var tmp models.SmfSelectionSubscriptionData
+		if err := mapstructure.Decode(smfSelectionSubscriptionData, &tmp); err != nil {
+			logger.DataRepoLog.Errorf(
+				"QueryProvisionedDataProcedure smfSelectionSubscriptionData decode err: %+v", err)
+			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
+		}
+		provisionedDataSets.SmfSelData = &tmp
+	}
+
+	collName = "subscriptionData.provisionedData.smsData"
+	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	smsSubscriptionData, pd := getDataFromDB(collName, filter)
+	if pd != nil && pd.Status == http.StatusInternalServerError {
+		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get smsSubscriptionData err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+	if smsSubscriptionData != nil {
+		var tmp models.SmsSubscriptionData
+		if err := mapstructure.Decode(smsSubscriptionData, &tmp); err != nil {
+			logger.DataRepoLog.Errorf(
+				"QueryProvisionedDataProcedure smsSubscriptionData decode err: %+v", err)
+			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
+			return 
+		}
+		provisionedDataSets.SmsSubsData = &tmp
+	}
+
+	collName = "subscriptionData.provisionedData.smData"
+	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	sessionManagementSubscriptionDatas, err := mongoapi.
+		RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+	if err != nil {
+		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get sessionManagementSubscriptionDatas err: %+v", err)
+		c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
+		return
+	}
+	if sessionManagementSubscriptionDatas != nil {
+		var tmp []models.SessionManagementSubscriptionData
+		if err := mapstructure.Decode(sessionManagementSubscriptionDatas, &tmp); err != nil {
+			logger.DataRepoLog.Errorf(
+				"QueryProvisionedDataProcedure sessionManagementSubscriptionDatas decode err: %+v", err)
+			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
+			return 
+		}
+		for _, smData := range tmp {
+			dnnConfigurations := smData.DnnConfigurations
+			tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
+			for escapedDnn, dnnConf := range dnnConfigurations {
+				dnn := util.UnescapeDnn(escapedDnn)
+				tmpDnnConfigurations[dnn] = dnnConf
+			}
+			smData.DnnConfigurations = tmpDnnConfigurations
+		}
+		provisionedDataSets.SmData = tmp
+	}
+
+	collName = "subscriptionData.provisionedData.traceData"
+	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	traceData, pd := getDataFromDB(collName, filter)
+	if pd != nil && pd.Status == http.StatusInternalServerError {
+		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get traceData err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+	if traceData != nil {
+		var tmp models.TraceData
+		if err := mapstructure.Decode(traceData, &tmp); err != nil {
+			logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure traceData decode err: %+v", err)
+			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
+			return 
+		}
+		provisionedDataSets.TraceData = &tmp
+	}
+
+	collName = "subscriptionData.provisionedData.smsMngData"
+	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	smsManagementSubscriptionData, pd := getDataFromDB(collName, filter)
+	if pd != nil && pd.Status == http.StatusInternalServerError {
+		logger.DataRepoLog.Errorf(
+			"QueryProvisionedDataProcedure get smsManagementSubscriptionData err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+	if smsManagementSubscriptionData != nil {
+		var tmp models.SmsManagementSubscriptionData
+		if err := mapstructure.Decode(smsManagementSubscriptionData, &tmp); err != nil {
+			logger.DataRepoLog.Errorf(
+				"QueryProvisionedDataProcedure smsManagementSubscriptionData decode err: %+v", err)
+			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
+			return 
+		}
+		provisionedDataSets.SmsMngData = &tmp
+	}
+
+	if reflect.DeepEqual(provisionedDataSets, models.ProvisionedDataSets{}) {
+		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
+	c.JSON(http.StatusOK, provisionedDataSets)
 }

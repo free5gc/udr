@@ -11,35 +11,33 @@ package processor
 
 import (
 	"net/http"
-	"strings"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/gin-gonic/gin"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 	"github.com/free5gc/udr/internal/util"
 )
 
-// HandleGetSharedData - retrieve shared data
-func (p *Processor) HandleGetSharedData(c *gin.Context) {
-	sharedDataIdArray := c.QueryArray("shared-data-ids")
-	logger.DataRepoLog.Infof("Handle GetSharedData")
-
-	var sharedDataIds []string
-	if len(sharedDataIdArray) != 0 {
-		sharedDataIds = sharedDataIdArray
-		if strings.Contains(sharedDataIds[0], ",") {
-			sharedDataIds = strings.Split(sharedDataIds[0], ",")
+func (p *Processor) GetSharedDataProcedure(c *gin.Context, collName string, sharedDataIds []string) {
+	var sharedDataArray []map[string]interface{}
+	for _, sharedDataId := range sharedDataIds {
+		filter := bson.M{"sharedDataId": sharedDataId}
+		sharedData, pd := getDataFromDB(collName, filter)
+		if pd != nil && pd.Status == http.StatusInternalServerError {
+			logger.DataRepoLog.Errorf("GetSharedDataProcedure err: %s", pd.Detail)
+			c.JSON(int(pd.Status), pd)
+			return
+		}
+		if sharedData != nil {
+			sharedDataArray = append(sharedDataArray, sharedData)
 		}
 	}
-	collName := "subscriptionData.sharedData"
 
-	data, problemDetails := datarepository.GetSharedDataProcedure(collName, sharedDataIds)
-
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+	if sharedDataArray == nil {
+		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		logger.DataRepoLog.Errorf("GetSharedDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return
 	}
-	c.JSON(http.StatusOK, data)
+	c.JSON(http.StatusOK, sharedDataArray)
 }

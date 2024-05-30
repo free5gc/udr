@@ -14,94 +14,60 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/util/mongoapi"
 	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPCreateSmfContextNon3gpp - To create an individual SMF context data of a UE in the UDR
-func (p *Processor) HandleCreateSmfContextNon3gpp(c *gin.Context) {
-	var smfRegistration models.SmfRegistration
+func (p *Processor) CreateSmfContextNon3gppProcedure(c *gin.Context, SmfRegistration models.SmfRegistration,
+	collName string, ueId string, pduSessionIdInt int64,
+) {
+	putData := util.ToBsonM(SmfRegistration)
+	putData["ueId"] = ueId
+	putData["pduSessionId"] = int32(pduSessionIdInt)
 
-	requestBody, err := c.GetRawData()
+	filter := bson.M{"ueId": ueId, "pduSessionId": pduSessionIdInt}
+	existed, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
 	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
+		logger.DataRepoLog.Errorf("CreateSmfContextNon3gppProcedure err: %+v", err)
+		c.JSON(http.StatusInternalServerError, util.ProblemDetailsSystemFailure(err.Error()))
+		return 
 	}
 
-	err = openapi.Deserialize(&smfRegistration, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-
-
-	logger.DataRepoLog.Infof("Handle CreateSmfContextNon3gpp")
-
-	collName := "subscriptionData.contextData.smfRegistrations"
-	ueId := c.Params.ByName("ueId")
-	pduSessionId, err := strconv.ParseInt(c.Param("pduSessionId"), 10, 64)
-	if err != nil {
-		logger.DataRepoLog.Warnln(err)
-	}
-
-	putData, status := datarepository.CreateSmfContextNon3gppProcedure(smfRegistration, collName, ueId, pduSessionId)
-
-	if status == http.StatusCreated {
-		c.JSON(http.StatusCreated, putData)
-	} else if status == http.StatusOK {
+	if existed {
 		c.JSON(http.StatusOK, putData)
-	} else {
-		pd := util.ProblemDetailsUpspecified("")
-		c.JSON(int(pd.Status), pd)
+		return 
 	}
+	c.JSON(http.StatusCreated, putData)
 }
 
-// HTTPDeleteSmfContext - To remove an individual SMF context data of a UE the UDR
-func (p *Processor) HandleDeleteSmfContext(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle DeleteSmfContext")
-
-	collName := "subscriptionData.contextData.smfRegistrations"
-	ueId := c.Params.ByName("ueId")
-	pduSessionId := c.Params.ByName("pduSessionId")
-
-	datarepository.DeleteSmfContextProcedure(collName, ueId, pduSessionId)
+func (p *Processor) DeleteSmfContextProcedure(c *gin.Context, collName string, ueId string, pduSessionId string) {
+	pduSessionIdInt, err := strconv.ParseInt(pduSessionId, 10, 32)
+	if err != nil {
+		logger.DataRepoLog.Error(err)
+	}
+	filter := bson.M{"ueId": ueId, "pduSessionId": pduSessionIdInt}
+	deleteDataFromDB(collName, filter)
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPQuerySmfRegistration - Retrieves the individual SMF registration of a UE
-func (p *Processor) HandleQuerySmfRegistration(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmfRegistration")
+func (p *Processor) QuerySmfRegistrationProcedure(c *gin.Context, collName string, ueId string,
+	pduSessionId string,
+) {
+	pduSessionIdInt, err := strconv.ParseInt(pduSessionId, 10, 32)
+	if err != nil {
+		logger.DataRepoLog.Error(err)
+	}
 
-	ueId := c.Params.ByName("ueId")
-	pduSessionId := c.Params.ByName("pduSessionId")
-	collName := "subscriptionData.contextData.smfRegistrations"
-
-	data, problemDetails := datarepository.QuerySmfRegistrationProcedure(collName, ueId, pduSessionId)
-	
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+	filter := bson.M{"ueId": ueId, "pduSessionId": pduSessionIdInt}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QuerySmfRegistrationProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+		return 
 	}
 	c.JSON(http.StatusOK, data)
-
 }

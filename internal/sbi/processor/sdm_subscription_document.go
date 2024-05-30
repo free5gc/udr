@@ -14,68 +14,54 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPRemovesdmSubscriptions - Deletes a sdmsubscriptions
-func (p *Processor) HandleRemovesdmSubscriptions(c *gin.Context) {
+func (p *Processor) RemovesdmSubscriptionsProcedure(c *gin.Context, ueId string, subsId string) {
+	udrSelf := udr_context.GetSelf()
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return 
+	}
 
-	logger.DataRepoLog.Infof("Handle RemovesdmSubscriptions")
+	UESubsData := value.(*udr_context.UESubsData)
+	_, ok = UESubsData.SdmSubscriptions[subsId]
 
-	ueId := c.Params.ByName("ueId")
-	subsId := c.Params.ByName("subsId")
-
-	problemDetails := datarepository.RemovesdmSubscriptionsProcedure(ueId, subsId)
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
+	delete(UESubsData.SdmSubscriptions, subsId)
+
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPUpdatesdmsubscriptions - Stores an individual sdm subscriptions of a UE
-func (p *Processor) HandleUpdatesdmsubscriptions(c *gin.Context) {
-	var sdmSubscription models.SdmSubscription
-
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
+func (p *Processor) UpdatesdmsubscriptionsProcedure(c *gin.Context, ueId string, subsId string,
+	SdmSubscription models.SdmSubscription,
+) {
+	udrSelf := udr_context.GetSelf()
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 
-	err = openapi.Deserialize(&sdmSubscription, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
+	UESubsData := value.(*udr_context.UESubsData)
+	_, ok = UESubsData.SdmSubscriptions[subsId]
+
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
+	SdmSubscription.SubscriptionId = subsId
+	UESubsData.SdmSubscriptions[subsId] = &SdmSubscription
 
-	logger.DataRepoLog.Infof("Handle Updatesdmsubscriptions")
-
-	ueId := c.Params.ByName("ueId")
-	subsId := c.Params.ByName("subsId")
-
-	problemDetails := datarepository.UpdatesdmsubscriptionsProcedure(ueId, subsId, sdmSubscription)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
 	c.Status(http.StatusNoContent)
 }

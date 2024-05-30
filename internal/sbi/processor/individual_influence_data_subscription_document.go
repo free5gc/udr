@@ -11,96 +11,58 @@
 
 import (
 	"net/http"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/udr/internal/util"
+	
 )
 
-// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
-func (p *Processor) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete")
-
-	influenceId := c.Param("influenceId")
-	if influenceId != "subs-to-notify" {
-		c.String(http.StatusNotFound, "404 page not found")
-	}
-
-	subscriptionId := c.Params.ByName("subscriptionId")
-
-	datarepository.ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDeleteProcedure(subscriptionId)
-
+func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDeleteProcedure(c *gin.Context, subscriptionId string) {
+	udr_context.GetSelf().InfluenceDataSubscriptions.Delete(subscriptionId)
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet -
-func (p *Processor) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet")
-
-	influenceId := c.Param("influenceId")
-	if influenceId != "subs-to-notify" {
-		c.String(http.StatusNotFound, "404 page not found")
+func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetProcedure(c *gin.Context, subscriptionID string, )  {
+	udrSelf := udr_context.GetSelf()
+	if subscription, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionID); ok {
+		c.JSON(http.StatusOK, subscription)
+	} else {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 	}
+}
 
-	subscriptionId := c.Params.ByName("subscriptionId")
-
-	pd, rspData := datarepository.ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetProcedure(subscriptionId)
-	if pd != nil {
+func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure(c *gin.Context, subscriptionId string, request *models.TrafficInfluSub)  {
+	if len(request.Dnns) == 0 &&
+		len(request.Snssais) == 0 &&
+		len(request.InternalGroupIds) == 0 &&
+		len(request.Supis) == 0 {
+		pd := &models.ProblemDetails{
+			Status: http.StatusBadRequest,
+			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
+		}
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	c.JSON(http.StatusOK, rspData)
 
-}
-
-// HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut -
-func (p *Processor) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
-	influenceId := c.Param("influenceId")
-	if influenceId != "subs-to-notify" {
-		c.String(http.StatusNotFound, "404 page not found")
-	}
-
-	// Get HTTP request body
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
-	}
-
-	// Deserialize request body
-	var trafficInfluSub models.TrafficInfluSub
-	err = openapi.Deserialize(&trafficInfluSub, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
+	if request.NotificationUri == "" {
+		pd := models.ProblemDetails{
 			Status: http.StatusBadRequest,
-			Detail: problemDetail,
+			Detail: "Notification URI shall be provided",
 		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptiondIdPut")
 
-	subscriptionId := c.Params.ByName("subscriptionId")
-
-	rspData, problemDetails := datarepository.ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure( subscriptionId, &trafficInfluSub)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
+	udrSelf := udr_context.GetSelf()
+	if subs, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok && reflect.DeepEqual(*request, subs) {
+		c.Status(http.StatusOK)
+	} else {
+		udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, request)
+		c.JSON(http.StatusOK, request)
 	}
-	c.JSON(http.StatusOK, rspData)
-	
 }

@@ -9,26 +9,6 @@
 
 package processor
 
-import (
-	"net/http"
 
-	"github.com/gin-gonic/gin"
-)
 
-// HTTPCreateSessionManagementData - Creates and updates the session
-// management data for a UE and for an individual PDU session
-func (p *Processor) HandleCreateSessionManagementData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
 
-// HTTPDeleteSessionManagementData - Deletes the session management
-// data for a UE and for an individual PDU session
-func (p *Processor) HandleDeleteSessionManagementData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}
-
-// HTTPQuerySessionManagementData - Retrieves the session management
-// data for a UE and for an individual PDU session
-func (p *Processor) HandleQuerySessionManagementData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
-}

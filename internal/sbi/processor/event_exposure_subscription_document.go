@@ -14,68 +14,52 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPRemoveeeSubscriptions - Deletes a eeSubscription
-func (p *Processor) HandleRemoveeeSubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle RemoveeeSubscriptions")
-
-	ueId := c.Params.ByName("ueId")
-
-	subsId := c.Params.ByName("subsId")
-
-	problemDetails := datarepository.RemoveeeSubscriptionsProcedure(ueId, subsId)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+func (p *Processor) RemoveeeSubscriptionsProcedure(c *gin.Context, ueId string, subsId string) {
+	udrSelf := udr_context.GetSelf()
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
+
+	UESubsData := value.(*udr_context.UESubsData)
+	_, ok = UESubsData.EeSubscriptionCollection[subsId]
+
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	delete(UESubsData.EeSubscriptionCollection, subsId)
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPUpdateEesubscriptions - Stores an individual ee subscriptions of a UE
-func (p *Processor) HandleUpdateEesubscriptions(c *gin.Context) {
-	var eeSubscription models.EeSubscription
-
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
+func (p *Processor) UpdateEesubscriptionsProcedure(c *gin.Context, ueId string, subsId string,
+	EeSubscription models.EeSubscription,
+) {
+	udrSelf := udr_context.GetSelf()
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 
-	err = openapi.Deserialize(&eeSubscription, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
+	UESubsData := value.(*udr_context.UESubsData)
+	_, ok = UESubsData.EeSubscriptionCollection[subsId]
+
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle UpdateEesubscriptions")
+	UESubsData.EeSubscriptionCollection[subsId].EeSubscriptions = &EeSubscription
 
-	ueId := c.Params.ByName("ueId")
-	subsId := c.Params.ByName("subsId")
-
-	problemDetails := datarepository.UpdateEesubscriptionsProcedure(ueId, subsId, eeSubscription)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
 	c.Status(http.StatusNoContent)
 }

@@ -11,24 +11,19 @@
 
 import (
 	"net/http"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 )
 
-// HTTPQueryEEData - Retrieves the ee profile data of a UE
-func (p *Processor) HandleQueryEEData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryEEData")
-
-	ueId := c.Params.ByName("ueId")
-	collName := "subscriptionData.eeProfileData"
-
-	data, problemDetails := datarepository.QueryEEDataProcedure(collName, ueId)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+func (p *Processor) QueryEEDataProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QueryEEDataProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 	c.JSON(http.StatusOK, data)

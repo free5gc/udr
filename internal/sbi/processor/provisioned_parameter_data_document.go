@@ -13,50 +13,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPModifyPpData - modify the provisioned parameter data
-func (p *Processor) HandleModifyPpData(c *gin.Context) {
-	var patchItemArray []models.PatchItem
-
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
+func (p *Processor) ModifyPpDataProcedure(c *gin.Context, collName string, ueId string, patchItem []models.PatchItem) {
+	filter := bson.M{"ueId": ueId}
+	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+		logger.DataRepoLog.Errorf("ModifyPpDataProcedure err: %+v", err)
+		pd := util.ProblemDetailsModifyNotAllowed("")
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-
-	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-	collName := "subscriptionData.ppData"
-	ueId := c.Params.ByName("ueId")
-
-	problemDetails := datarepository.ModifyPpDataProcedure(collName, ueId, patchItemArray)
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
-	c.JSON(http.StatusNoContent, nil)
-	
+	c.Status(http.StatusNoContent)
 }

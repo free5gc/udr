@@ -15,26 +15,19 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/util/httpwrapper"
+	"github.com/free5gc/udr/internal/util"
+	udr_context "github.com/free5gc/udr/internal/context"
 )
 
-// HTTPRemovesubscriptionDataSubscriptions - Deletes a subscriptionDataSubscriptions
-func (p *Processor) HandleRemovesubscriptionDataSubscriptions(c *gin.Context) {
-	req := httpwrapper.NewRequest(c.Request, nil)
-	req.Params["ueId"] = c.Params.ByName("ueId")
-
-	rsp := datarepository.HandleRemovesubscriptionDataSubscriptions(req)
-
-	logger.DataRepoLog.Infof("Handle RemovesubscriptionDataSubscriptions")
-
-	subsId := c.Params.ByName("subsId")
-
-	problemDetails := datarepository.RemovesubscriptionDataSubscriptionsProcedure(subsId)
-
-	if problemDetails != nil {
-		c.JSON(http.StatusInternalServerError, problemDetails)
+func (p *Processor) RemovesubscriptionDataSubscriptionsProcedure(c *gin.Context, subsId string) {
+	udrSelf := udr_context.GetSelf()
+	_, ok := udrSelf.SubscriptionDataSubscriptions[subsId]
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		logger.DataRepoLog.Errorf("RemovesubscriptionDataSubscriptionsProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
-	c.JSON(http.StatusNoContent, rsp)
+	delete(udrSelf.SubscriptionDataSubscriptions, subsId)
+	c.Status(http.StatusNoContent)
 }

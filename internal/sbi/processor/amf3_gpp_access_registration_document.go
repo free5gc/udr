@@ -14,109 +14,44 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/free5gc/openapi"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/util/httpwrapper"
+	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/mongoapi"
 )
 
-// HTTPAmfContext3gpp - To modify the AMF context data of a UE using 3gpp access in the UDR
-func (p *Processor) HandleAmfContext3gpp(c *gin.Context) {
-	var patchItemArray []models.PatchItem
-
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
-	}
-
-	err = openapi.Deserialize(&patchItemArray, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-
-	logger.DataRepoLog.Infof("Handle AmfContext3gpp")
-	collName := "subscriptionData.contextData.amf3gppAccess"
-	ueId := c.Params.ByName("ueId")
-
-	problemDetails := datarepository.AmfContext3gppProcedure(collName, ueId, patchItemArray)
-
-	if problemDetails != nil {
+func (p *Processor) AmfContext3gppProcedure(c *gin.Context ,collName string, ueId string, patchItem []models.PatchItem)  {
+	filter := bson.M{"ueId": ueId}
+	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+		logger.DataRepoLog.Errorf("AmfContext3gppProcedure err: %+v", err)
+		problemDetails := util.ProblemDetailsModifyNotAllowed("")
 		c.JSON(int(problemDetails.Status), problemDetails)
-		return
+	}
+	c.Status(http.StatusNoContent)
+
+}
+
+func (p *Processor) CreateAmfContext3gppProcedure(c *gin.Context, collName string, ueId string,
+	Amf3GppAccessRegistration models.Amf3GppAccessRegistration,
+) {
+	filter := bson.M{"ueId": ueId}
+	putData := util.ToBsonM(Amf3GppAccessRegistration)
+	putData["ueId"] = ueId
+
+	if _, err := mongoapi.RestfulAPIPutOne(collName, filter, putData); err != nil {
+		logger.DataRepoLog.Errorf("CreateAmfContext3gppProcedure err: %+v", err)
 	}
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPCreateAmfContext3gpp - To store the AMF context data of a UE using 3gpp access in the UDR
-func (p *Processor) HandleCreateAmfContext3gpp(c *gin.Context) {
-	var amf3GppAccessRegistration models.Amf3GppAccessRegistration
-
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
-		return
-	}
-
-	err = openapi.Deserialize(&amf3GppAccessRegistration, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-
-	logger.DataRepoLog.Infof("Handle CreateAmfContext3gpp")
-	ueId := c.Params.ByName("ueId")
-	collName := "subscriptionData.contextData.amf3gppAccess"
-	datarepository.CreateAmfContext3gppProcedure(collName, ueId, amf3GppAccessRegistration)
-
-	c.Status(http.StatusNoContent)
-}
-
-// HTTPQueryAmfContext3gpp - Retrieves the AMF context data of a UE using 3gpp access
-func (p *Processor)HandleQueryAmfContext3gpp(c *gin.Context) {
-	req := httpwrapper.NewRequest(c.Request, nil)
-	req.Params["ueId"] = c.Params.ByName("ueId")
-
-	logger.DataRepoLog.Infof("Handle QueryAmfContext3gpp")
-
-	ueId := c.Params.ByName("ueId")
-	collName := "subscriptionData.contextData.amf3gppAccess"
-
-	data, problemDetails := datarepository.QueryAmfContext3gppProcedure(collName, ueId)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
+func (p* Processor)QueryAmfContext3gppProcedure(c *gin.Context, collName string, ueId string) {
+	filter := bson.M{"ueId": ueId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QueryAmfContext3gppProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 	}
 	c.JSON(http.StatusOK, data)
 }

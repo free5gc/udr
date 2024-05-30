@@ -15,22 +15,20 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"go.mongodb.org/mongo-driver/bson"
+	
 )
 
-// HTTPQueryAmData - Retrieves the access and mobility subscription data of a UE
-func (p *Processor) HandleQueryAmData(c *gin.Context) {
-	//--------
-	logger.DataRepoLog.Infof("Handle QueryAmData")
 
-	collName := "subscriptionData.provisionedData.amData"
-	ueId := c.Params.ByName("ueId")
-	servingPlmnId := c.Params.ByName("servingPlmnId")
-	response, problemDetails := datarepository.QueryAmDataProcedure(collName, ueId, servingPlmnId)
+func (p *Processor) QueryAmDataProcedure(c *gin.Context, collName string, ueId string, servingPlmnId string)  {
+	logger.DataRepoLog.Infof("QueryAmDataProcedure: ueId: %s, servingPlmnId: %s", ueId, servingPlmnId)
 
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		c.JSON(int(pd.Status), pd)
 		return 
 	}
-	c.JSON(http.StatusOK, response)
+	
+	c.JSON(http.StatusOK, data)
 }

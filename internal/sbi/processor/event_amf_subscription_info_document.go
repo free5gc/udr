@@ -13,69 +13,67 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/free5gc/openapi"
+	
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
+	"github.com/free5gc/udr/internal/util"
+	udr_context "github.com/free5gc/udr/internal/context"
 )
 
-// HTTPCreateAMFSubscriptions - Creates AMF Subscription Info for an eeSubscription
-func (p *Processor) HandleCreateAMFSubscriptions(c *gin.Context) {
-	var amfSubscriptionInfoArray []models.AmfSubscriptionInfo
+func (p *Processor) CreateAMFSubscriptionsProcedure(c *gin.Context, subsId string, ueId string,
+	AmfSubscriptionInfo []models.AmfSubscriptionInfo,
+) {
+	udrSelf := udr_context.GetSelf()
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	if !ok {
+		
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		logger.DataRepoLog.Errorf("CreateAMFSubscriptionsProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	UESubsData := value.(*udr_context.UESubsData)
 
-	requestBody, err := c.GetRawData()
-	if err != nil {
-		problemDetail := models.ProblemDetails{
-			Title:  "System failure",
-			Status: http.StatusInternalServerError,
-			Detail: err.Error(),
-			Cause:  "SYSTEM_FAILURE",
-		}
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		c.JSON(http.StatusInternalServerError, problemDetail)
+	_, ok = UESubsData.EeSubscriptionCollection[subsId]
+	if !ok {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		logger.DataRepoLog.Errorf("CreateAMFSubscriptionsProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
 
-	err = openapi.Deserialize(&amfSubscriptionInfoArray, requestBody, "application/json")
-	if err != nil {
-		problemDetail := "[Request Body] " + err.Error()
-		rsp := models.ProblemDetails{
-			Title:  "Malformed request syntax",
-			Status: http.StatusBadRequest,
-			Detail: problemDetail,
-		}
-		logger.DataRepoLog.Errorln(problemDetail)
-		c.JSON(http.StatusBadRequest, rsp)
-		return
-	}
-
-	logger.DataRepoLog.Infof("Handle CreateAMFSubscriptions")
-
-	ueId := c.Params.ByName("ueId")
-	subsId := c.Params.ByName("subsId")
-
-	problemDetails := datarepository.CreateAMFSubscriptionsProcedure(subsId, ueId, amfSubscriptionInfoArray)
-
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-		return
-	}
+	UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos = AmfSubscriptionInfo
 	c.Status(http.StatusNoContent)
 }
 
-// HTTPRemoveAmfSubscriptionsInfo - Deletes AMF Subscription Info for an eeSubscription
-func (p *Processor) HandleRemoveAmfSubscriptionsInfo(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle RemoveAmfSubscriptionsInfo")
+func (p *Processor) RemoveAmfSubscriptionsInfoProcedure(c *gin.Context, subsId string, ueId string) {
+	udrSelf := udr_context.GetSelf()
+	value, ok := udrSelf.UESubsCollection.Load(ueId)
+	var pd *models.ProblemDetails = nil
 
-	ueId := c.Params.ByName("ueId")
-	subsId := c.Params.ByName("subsId")
+	if !ok {
+		pd = util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		logger.DataRepoLog.Errorf("RemoveAmfSubscriptionsInfoProcedure err: %s", pd.Detail)
+	}
 
-	problemDetails := datarepository.RemoveAmfSubscriptionsInfoProcedure(subsId, ueId)
+	UESubsData := value.(*udr_context.UESubsData)
+	_, ok = UESubsData.EeSubscriptionCollection[subsId]
 
-	if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
+	if !ok {
+		pd = util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		logger.DataRepoLog.Errorf("RemoveAmfSubscriptionsInfoProcedure err: %s", pd.Detail)
+	}
+
+	if UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos == nil {
+		pd = util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
+	}
+
+	if pd != nil {
+		logger.DataRepoLog.Errorf("RemoveAmfSubscriptionsInfoProcedure err: %s", pd.Detail)
+		c.JSON(int(pd.Status), pd)
 		return
 	}
+
+	UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos = nil
 	c.Status(http.StatusNoContent)
 }

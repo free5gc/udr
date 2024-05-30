@@ -11,37 +11,59 @@ package processor
 
 import (
 	"net/http"
+	"reflect"
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/mongoapi"
 )
 
-// HTTPQuerySmData - Retrieves the Session Management subscription data of a UE
-func (p *Processor) HandleQuerySmData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmData")
+func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId string, servingPlmnId string,
+	singleNssai models.Snssai, dnn string,
+) {
+	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 
-	collName := "subscriptionData.provisionedData.smData"
-	ueId := c.Params.ByName("ueId")
-	servingPlmnId := c.Params.ByName("servingPlmnId")
-	singleNssai := models.Snssai{}
-	singleNssaiQuery := c.Query("singleNssai")
-	err := json.Unmarshal([]byte(singleNssaiQuery), &singleNssai)
-	if err != nil {
-		logger.DataRepoLog.Warnln(err)
+	if !reflect.DeepEqual(singleNssai, models.Snssai{}) {
+		if singleNssai.Sd == "" {
+			filter["singleNssai.sst"] = singleNssai.Sst
+		} else {
+			filter["singleNssai.sst"] = singleNssai.Sst
+			filter["singleNssai.sd"] = singleNssai.Sd
+		}
 	}
 
-	dnn := c.Query("dnn")
-	data := datarepository.QuerySmDataProcedure(collName, ueId, servingPlmnId, singleNssai, dnn)
+	if dnn != "" {
+		dnnKey := util.EscapeDnn(dnn)
+		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
+	}
 
-	if data == nil {
+	sessionManagementSubscriptionDatas, err := mongoapi.
+		RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
+	if err != nil {
+		logger.DataRepoLog.Errorf("QuerySmDataProcedure err: %+v", err)
 		pd := util.ProblemDetailsUpspecified("")
 		c.JSON(int(pd.Status), pd)
-	} else {
-		c.JSON(http.StatusOK, data)
+		return 
 	}
+	for _, smData := range sessionManagementSubscriptionDatas {
+		var tmpSmData models.SessionManagementSubscriptionData
+		err := json.Unmarshal(util.MapToByte(smData), &tmpSmData)
+		if err != nil {
+			logger.DataRepoLog.Debug("SmData Unmarshal error")
+			continue
+		}
+		dnnConfigurations := tmpSmData.DnnConfigurations
+		tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
+		for escapedDnn, dnnConf := range dnnConfigurations {
+			dnn := util.UnescapeDnn(escapedDnn)
+			tmpDnnConfigurations[dnn] = dnnConf
+		}
+		smData["DnnConfigurations"] = tmpDnnConfigurations
+	}
+	c.JSON(http.StatusOK, sessionManagementSubscriptionDatas)
 }

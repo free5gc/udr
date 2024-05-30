@@ -13,26 +13,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
-	datarepository "github.com/free5gc/udr/internal/sbi/datarepository"
-	"github.com/free5gc/udr/internal/util"
 )
 
-// HTTPQuerySmfSelectData - Retrieves the SMF selection subscription data of a UE
-func (p *Processor) HandleQuerySmfSelectData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmfSelectData")
-
-	collName := "subscriptionData.provisionedData.smfSelectionSubscriptionData"
-	ueId := c.Params.ByName("ueId")
-	servingPlmnId := c.Params.ByName("servingPlmnId")
-	data ,problemDetails := datarepository.QuerySmfSelectDataProcedure(collName, ueId, servingPlmnId)
-
-	if data == nil && problemDetails == nil {
-		pd := util.ProblemDetailsUpspecified("")
+func (p *Processor) QuerySmfSelectDataProcedure(c *gin.Context, collName string, ueId string,
+	servingPlmnId string,
+) {
+	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
+	data, pd := getDataFromDB(collName, filter)
+	if pd != nil {
+		logger.DataRepoLog.Errorf("QuerySmfSelectDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-	} else if problemDetails != nil {
-		c.JSON(int(problemDetails.Status), problemDetails)
-	} 
+		return
+	}
 	c.JSON(http.StatusOK, data)
 }
