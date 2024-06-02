@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"sync"
-	"time"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -43,7 +43,6 @@ func Init() {
 	}
 	GetSelf().NfService = initNfService(serviceName, "1.0.0")
 	GetSelf().NrfUri = fmt.Sprintf("%s://%s:%d", models.UriScheme_HTTPS, udrContext.RegisterIPv4, 29510)
-
 }
 
 type UDRContext struct {
@@ -51,7 +50,7 @@ type UDRContext struct {
 	UriScheme                               models.UriScheme
 	BindingIPv4                             string
 	SBIPort                                 int
-	NfService                         		map[models.ServiceName]models.NfService		
+	NfService                               map[models.ServiceName]models.NfService
 	RegisterIPv4                            string // IP register to NRF
 	HttpIPv6Address                         string
 	NfId                                    string
@@ -157,7 +156,9 @@ func InitUdrContext() {
 	udrContext.NrfCertPem = configuration.NrfCertPem
 }
 
-func initNfService(serviceName []models.ServiceName, version string) (nfService map[models.ServiceName]models.NfService){
+func initNfService(serviceName []models.ServiceName, version string) (
+	nfService map[models.ServiceName]models.NfService,
+) {
 	versionUri := "v" + strings.Split(version, ".")[0]
 	nfService = make(map[models.ServiceName]models.NfService)
 	for idx, name := range serviceName {

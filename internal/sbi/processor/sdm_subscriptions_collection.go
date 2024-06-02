@@ -50,14 +50,14 @@ func (p *Processor) CreateSdmSubscriptionsProcedure(c *gin.Context, SdmSubscript
 	c.JSON(http.StatusCreated, SdmSubscription)
 }
 
-func (p *Processor) QuerysdmsubscriptionsProcedure(c *gin.Context, ueId string)  {
+func (p *Processor) QuerysdmsubscriptionsProcedure(c *gin.Context, ueId string) {
 	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)
@@ -70,7 +70,7 @@ func (p *Processor) QuerysdmsubscriptionsProcedure(c *gin.Context, ueId string) 
 	if len(sdmSubscriptionSlice) == 0 {
 		pd := util.ProblemDetailsNotFound("SDMSUBSCRIPTION_NOT_FOUND")
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 
 	c.JSON(http.StatusOK, sdmSubscriptionSlice)

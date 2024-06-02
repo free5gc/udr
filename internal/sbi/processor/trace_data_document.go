@@ -26,7 +26,7 @@ func (p *Processor) QueryTraceDataProcedure(c *gin.Context, collName string, ueI
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryTraceDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }

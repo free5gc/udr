@@ -10,25 +10,23 @@
 package processor
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"encoding/json"
+	"reflect"
 	"strconv"
 	"strings"
-	"reflect"
-
-	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
-	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/util/mongoapi"
 )
-
 
 func (p *Processor) DeleteApplicationDataIndividualPfdFromDBProcedure(c *gin.Context, appID string) {
 	filter := bson.M{"applicationId": appID}
@@ -46,7 +44,9 @@ func (p *Processor) GetApplicationDataIndividualPfdFromDBProcedure(c *gin.Contex
 	c.JSON(http.StatusOK, data)
 }
 
-func (p *Processor) PutApplicationDataIndividualPfdToDBProcedure(c *gin.Context, appID string, pfdDataForApp *models.PfdDataForApp) {
+func (p *Processor) PutApplicationDataIndividualPfdToDBProcedure(
+	c *gin.Context, appID string, pfdDataForApp *models.PfdDataForApp,
+) {
 	filter := bson.M{"applicationId": appID}
 	data := util.ToBsonM(*pfdDataForApp)
 
@@ -87,24 +87,30 @@ func (p *Processor) GetApplicationDataPfdsFromDBProcedure(c *gin.Context, pfdsAp
 	c.JSON(http.StatusOK, matchedPfds)
 }
 
-func (p *Processor) PolicyDataBdtDataBdtReferenceIdDeleteProcedure(c *gin.Context, collName string, bdtReferenceId string) {
+func (p *Processor) PolicyDataBdtDataBdtReferenceIdDeleteProcedure(
+	c *gin.Context, collName string, bdtReferenceId string,
+) {
 	filter := bson.M{"bdtReferenceId": bdtReferenceId}
 	deleteDataFromDB(collName, filter)
 	c.Status(http.StatusNoContent)
 }
 
-func (p *Processor) PolicyDataBdtDataBdtReferenceIdGetProcedure(c *gin.Context, collName string, bdtReferenceId string) {
+func (p *Processor) PolicyDataBdtDataBdtReferenceIdGetProcedure(
+	c *gin.Context, collName string, bdtReferenceId string,
+) {
 	filter := bson.M{"bdtReferenceId": bdtReferenceId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataBdtDataBdtReferenceIdGetProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }
 
-func (p *Processor) PolicyDataBdtDataBdtReferenceIdPutProcedure(c *gin.Context, collName string, bdtReferenceId string, bdtData models.BdtData) {
+func (p *Processor) PolicyDataBdtDataBdtReferenceIdPutProcedure(
+	c *gin.Context, collName string, bdtReferenceId string, bdtData models.BdtData,
+) {
 	putData := util.ToBsonM(bdtData)
 	putData["bdtReferenceId"] = bdtReferenceId
 	filter := bson.M{"bdtReferenceId": bdtReferenceId}
@@ -114,7 +120,7 @@ func (p *Processor) PolicyDataBdtDataBdtReferenceIdPutProcedure(c *gin.Context, 
 		logger.DataRepoLog.Errorf("putApplicationDataIndividualPfdToDB err: %+v", err)
 		pd := util.ProblemDetailsUpspecified(err.Error())
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 
 	if existed {
@@ -139,7 +145,7 @@ func (p *Processor) PolicyDataPlmnsPlmnIdUePolicySetGetProcedure(c *gin.Context,
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataPlmnsPlmnIdUePolicySetGetProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }
@@ -157,7 +163,9 @@ func (p *Processor) PolicyDataSponsorConnectivityDataSponsorIdGetProcedure(c *gi
 	c.JSON(http.StatusOK, data)
 }
 
-func (p *Processor) PolicyDataSubsToNotifyPostProcedure(c *gin.Context, PolicyDataSubscription models.PolicyDataSubscription) {
+func (p *Processor) PolicyDataSubsToNotifyPostProcedure(
+	c *gin.Context, PolicyDataSubscription models.PolicyDataSubscription,
+) {
 	udrSelf := udr_context.GetSelf()
 
 	newSubscriptionID := strconv.Itoa(udrSelf.PolicyDataSubscriptionIDGenerator)
@@ -212,7 +220,7 @@ func (p *Processor) PolicyDataUesUeIdAmDataGetProcedure(c *gin.Context, collName
 
 func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataGetProcedure(c *gin.Context, collName string,
 	ueId string,
-){
+) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
@@ -259,7 +267,8 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPutProcedure(c *gin.Con
 	c.Status(http.StatusOK)
 }
 
-func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(c *gin.Context, collName string, ueId string, snssai models.Snssai,
+func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
+	c *gin.Context, collName string, ueId string, snssai models.Snssai,
 	dnn string,
 ) {
 	filter := bson.M{"ueId": ueId}
@@ -267,7 +276,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(c *gin.Context, collName
 	smPolicyData, pd := getDataFromDBWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if pd != nil {
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 
 	hex_snssai := util.SnssaiModelsToHex(snssai)
@@ -406,13 +415,15 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 	c.JSON(int(pd.Status), pd)
 }
 
-func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdDeleteProcedure(c *gin.Context, collName string, ueId string, usageMonId string) {
+func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdDeleteProcedure(
+	c *gin.Context, collName string, ueId string, usageMonId string,
+) {
 	filter := bson.M{"ueId": ueId, "usageMonId": usageMonId}
 	deleteDataFromDB(collName, filter)
 	c.Status(http.StatusNoContent)
 }
 
-func (p *Processor)  PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c *gin.Context, collName string, usageMonId string,
+func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c *gin.Context, collName string, usageMonId string,
 	ueId string,
 ) {
 	filter := bson.M{"ueId": ueId, "usageMonId": usageMonId}
@@ -426,7 +437,8 @@ func (p *Processor)  PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c *gin.Contex
 	c.JSON(http.StatusOK, data)
 }
 
-func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(c *gin.Context, collName string, ueId string, usageMonId string,
+func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(
+	c *gin.Context, collName string, ueId string, usageMonId string,
 	usageMonData models.UsageMonData,
 ) {
 	putData := util.ToBsonM(usageMonData)
@@ -458,7 +470,7 @@ func (p *Processor) PolicyDataUesUeIdUePolicySetGetProcedure(c *gin.Context, col
 
 func (p *Processor) PolicyDataUesUeIdUePolicySetPatchProcedure(c *gin.Context, collName string, ueId string,
 	UePolicySet models.UePolicySet,
-)  {
+) {
 	patchData := util.ToBsonM(UePolicySet)
 	patchData["ueId"] = ueId
 	filter := bson.M{"ueId": ueId}

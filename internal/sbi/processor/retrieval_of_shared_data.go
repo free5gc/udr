@@ -11,9 +11,10 @@ package processor
 
 import (
 	"net/http"
-	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
 )

@@ -13,15 +13,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/free5gc/util/mongoapi"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/mongoapi"
 )
 
-func (p *Processor) CreateSmsfContext3gppProcedure(c *gin.Context, collName string, ueId string, SmsfRegistration models.SmsfRegistration) {
+func (p *Processor) CreateSmsfContext3gppProcedure(
+	c *gin.Context, collName string, ueId string, SmsfRegistration models.SmsfRegistration,
+) {
 	putData := util.ToBsonM(SmsfRegistration)
 	putData["ueId"] = ueId
 	filter := bson.M{"ueId": ueId}
@@ -40,13 +42,13 @@ func (p *Processor) DeleteSmsfContext3gppProcedure(c *gin.Context, collName stri
 	c.Status(http.StatusNoContent)
 }
 
-func(p *Processor)QuerySmsfContext3gppProcedure(c *gin.Context, collName string, ueId string) {
+func (p *Processor) QuerySmsfContext3gppProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QuerySmsfContext3gppProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }

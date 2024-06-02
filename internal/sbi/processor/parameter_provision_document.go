@@ -18,7 +18,7 @@ import (
 	"github.com/free5gc/udr/internal/logger"
 )
 
-func (p *Processor) GetppDataProcedure(c *gin.Context, collName string, ueId string)  {
+func (p *Processor) GetppDataProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	if pd != nil {

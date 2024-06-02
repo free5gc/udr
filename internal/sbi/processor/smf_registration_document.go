@@ -18,8 +18,8 @@ import (
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/util/mongoapi"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/mongoapi"
 )
 
 func (p *Processor) CreateSmfContextNon3gppProcedure(c *gin.Context, SmfRegistration models.SmfRegistration,
@@ -34,12 +34,12 @@ func (p *Processor) CreateSmfContextNon3gppProcedure(c *gin.Context, SmfRegistra
 	if err != nil {
 		logger.DataRepoLog.Errorf("CreateSmfContextNon3gppProcedure err: %+v", err)
 		c.JSON(http.StatusInternalServerError, util.ProblemDetailsSystemFailure(err.Error()))
-		return 
+		return
 	}
 
 	if existed {
 		c.JSON(http.StatusOK, putData)
-		return 
+		return
 	}
 	c.JSON(http.StatusCreated, putData)
 }
@@ -67,7 +67,7 @@ func (p *Processor) QuerySmfRegistrationProcedure(c *gin.Context, collName strin
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QuerySmfRegistrationProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }

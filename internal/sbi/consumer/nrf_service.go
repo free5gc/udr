@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/free5gc/openapi"
+	"github.com/free5gc/openapi/Nnrf_NFDiscovery"
+	"github.com/free5gc/openapi/Nnrf_NFManagement"
+	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/openapi"
-	"github.com/free5gc/openapi/Nnrf_NFManagement"
-	"github.com/free5gc/openapi/Nnrf_NFDiscovery"
-	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/pkg/factory"
 )
 
@@ -69,9 +69,7 @@ func (ns *NrfService) buildNFInstance(context *udr_context.UDRContext) (models.N
 	return profile, nil
 }
 
-
 func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string) (string, string, error) {
-	
 	// Set client and set url
 	profile, err := ns.buildNFInstance(udr_context.GetSelf())
 	if err != nil {
@@ -86,13 +84,13 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 
 	finish := false
 
-	for !finish{
+	for !finish {
 		select {
 		case <-ctx.Done():
 			return "", "", fmt.Errorf("context done")
 		default:
-			nf, res, err := client.NFInstanceIDDocumentApi.RegisterNFInstance(ctx, profile.NfInstanceId, profile)
-			if err != nil || res == nil {
+			nf, res, registerErr := client.NFInstanceIDDocumentApi.RegisterNFInstance(ctx, profile.NfInstanceId, profile)
+			if registerErr != nil || res == nil {
 				// TODO : add log
 				fmt.Println(fmt.Errorf("UDR register to NRF Error[%s]", err.Error()))
 				time.Sleep(2 * time.Second)
@@ -133,7 +131,7 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 			}
 		}
 	}
-	return resouceNrfUri, retrieveNfInstanceId, err 
+	return resouceNrfUri, retrieveNfInstanceId, err
 }
 
 func (ns *NrfService) SendDeregisterNFInstance() (problemDetails *models.ProblemDetails, err error) {
@@ -173,7 +171,7 @@ func (ns *NrfService) SendDeregisterNFInstance() (problemDetails *models.Problem
 	return problemDetails, err
 }
 
-func (ns *NrfService)SendSearchNFInstances(nrfUri string, targetNfType, requestNfType models.NfType,
+func (ns *NrfService) SendSearchNFInstances(nrfUri string, targetNfType, requestNfType models.NfType,
 	param Nnrf_NFDiscovery.SearchNFInstancesParamOpts,
 ) (*models.SearchResult, error) {
 	// Set client and set url

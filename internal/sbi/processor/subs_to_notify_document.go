@@ -14,9 +14,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
-	udr_context "github.com/free5gc/udr/internal/context"
 )
 
 func (p *Processor) RemovesubscriptionDataSubscriptionsProcedure(c *gin.Context, subsId string) {

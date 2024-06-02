@@ -22,15 +22,14 @@ import (
 	"github.com/free5gc/util/mongoapi"
 )
 
-
 type UdrApp struct {
 	cfg    *factory.Config
 	udrCtx *udr_context.UDRContext
 
-	wg 	  sync.WaitGroup
+	wg        sync.WaitGroup
 	sbiServer *sbi.Server
 	processor *processor.Processor
-	consumer *consumer.Consumer
+	consumer  *consumer.Consumer
 }
 
 var _ app.UdrApp = &UdrApp{}
@@ -39,9 +38,9 @@ func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr_context.Init()
 	udr_context.InitUdrContext()
 	udr := &UdrApp{
-		cfg: cfg,
+		cfg:    cfg,
 		udrCtx: udr_context.GetSelf(),
-		wg: sync.WaitGroup{},
+		wg:     sync.WaitGroup{},
 	}
 	udr.SetLogEnable(cfg.GetLogEnable())
 	udr.SetLogLevel(cfg.GetLogLevel())
@@ -54,7 +53,7 @@ func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr.consumer = consumer
 
 	udr.sbiServer = sbi.NewServer(udr, tlsKeyLogPath)
-	
+
 	return udr, nil
 }
 
@@ -106,17 +105,16 @@ func (a *UdrApp) SetReportCaller(reportCaller bool) {
 
 func (u *UdrApp) registerToNrf(ctx context.Context) error {
 	udrContext := u.udrCtx
-	
+
 	nrfUri, nfId, err := u.consumer.SendRegisterNFInstance(ctx, udrContext.NrfUri)
 	if err != nil {
 		return fmt.Errorf("send register NFInstance error[%s]", err.Error())
 	}
 	udrContext.NrfUri = nrfUri
 	udrContext.NfId = nfId
-	
+
 	return nil
 }
-
 
 func (u *UdrApp) deregisterFromNrf() {
 	problemDetails, err := u.consumer.SendDeregisterNFInstance()
@@ -127,7 +125,7 @@ func (u *UdrApp) deregisterFromNrf() {
 	} else {
 		logger.InitLog.Infof("Deregister from NRF successfully")
 	}
-} 
+}
 
 func (a *UdrApp) Start() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -135,7 +133,7 @@ func (a *UdrApp) Start() {
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		<- sigCh // Wait for interrupt signal to gracefully shutdown
+		<-sigCh  // Wait for interrupt signal to gracefully shutdown
 		cancel() // Notify each goroutine and wait them stopped
 	}()
 

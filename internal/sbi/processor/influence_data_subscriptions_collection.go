@@ -15,19 +15,19 @@ import (
 	"net/http"
 	"reflect"
 
-
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/openapi/models"
+	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
-	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/util/mongoapi"
 )
 
-func (p *Processor)ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
-	c *gin.Context, dnn string, snssai *models.Snssai, internalGroupId, supi string) {
+func (p *Processor) ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
+	c *gin.Context, dnn string, snssai *models.Snssai, internalGroupId, supi string,
+) {
 	var response []models.TrafficInfluSub
 
 	udrSelf := udr_context.GetSelf()
@@ -53,12 +53,13 @@ func (p *Processor)ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
 	c.JSON(http.StatusOK, response)
 }
 
-func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostProcedure( c *gin.Context, subscriptionId string, request *models.TrafficInfluSub) {
+func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostProcedure(
+	c *gin.Context, subscriptionId string, request *models.TrafficInfluSub,
+) {
 	if len(request.Dnns) == 0 &&
 		len(request.Snssais) == 0 &&
 		len(request.InternalGroupIds) == 0 &&
 		len(request.Supis) == 0 {
-
 		pd := models.ProblemDetails{
 			Status: http.StatusBadRequest,
 			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
@@ -86,13 +87,17 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostPr
 	} else {
 		udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, request)
 
-		locationHeader := fmt.Sprintf("%s/application-data/influenceData/subs-to-notify/%s", udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), subscriptionId)
+		locationHeader := fmt.Sprintf(
+			"%s/application-data/influenceData/subs-to-notify/%s",
+			udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), subscriptionId)
 		c.Header("Location", locationHeader)
 		c.JSON(http.StatusCreated, request)
 	}
 }
 
-func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure( c *gin.Context, collName, influenceId string) {
+func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(
+	c *gin.Context, collName, influenceId string,
+) {
 	filter := bson.M{"influenceId": influenceId}
 
 	mapData, err := mongoapi.RestfulAPIGetOne(collName, filter)

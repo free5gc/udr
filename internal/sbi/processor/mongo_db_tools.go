@@ -2,12 +2,14 @@ package processor
 
 import (
 	"encoding/json"
-	"github.com/free5gc/util/mongoapi"
+
 	"go.mongodb.org/mongo-driver/bson"
-	"github.com/free5gc/openapi/models"
+
 	"github.com/free5gc/openapi"
-	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/mongoapi"
 )
 
 const (
@@ -15,7 +17,6 @@ const (
 	APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME = "applicationData.influenceData.subsToNotify"
 	APPDATA_PFD_DB_COLLECTION_NAME             = "applicationData.pfds"
 )
-
 
 func patchDataToDBAndNotify(collName string, ueId string, patchItem []models.PatchItem, filter bson.M) error {
 	var err error

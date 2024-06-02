@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
@@ -16,7 +18,6 @@ import (
 	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/util/httpwrapper"
 	logger_util "github.com/free5gc/util/logger"
-	"github.com/gin-gonic/gin"
 )
 
 type Udr interface {
@@ -29,12 +30,12 @@ type Server struct {
 
 	httpServer *http.Server
 	router     *gin.Engine
-	processor *processor.Processor
+	processor  *processor.Processor
 }
 
 func NewServer(udr app.UdrApp, tlsKeyLogPath string) *Server {
 	s := &Server{
-		UdrApp: udr,
+		UdrApp:    udr,
 		processor: processor.NewProcessor(udr),
 	}
 
@@ -50,7 +51,7 @@ func NewServer(udr app.UdrApp, tlsKeyLogPath string) *Server {
 	return s
 }
 
-func (s* Server) Processor() *processor.Processor {
+func (s *Server) Processor() *processor.Processor {
 	return s.processor
 }
 
@@ -97,7 +98,7 @@ func bindRouter(udr app.UdrApp, router *gin.Engine, tlsKeyLogPath string) (*http
 
 func newRouter(s *Server) *gin.Engine {
 	router := logger_util.NewGinWithLogrus(logger.GinLog)
-	
+
 	dataRepositoryGroup := router.Group(factory.UdrDrResUriPrefix)
 	dataRepositoryGroup.Use(func(c *gin.Context) {
 		util.NewRouterAuthorizationCheck(models.ServiceName_NUDR_DR).Check(c, s.Context())

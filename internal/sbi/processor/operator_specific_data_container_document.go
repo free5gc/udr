@@ -20,7 +20,9 @@ import (
 	"github.com/free5gc/udr/internal/util"
 )
 
-func (p *Processor) PatchOperSpecDataProcedure(c *gin.Context, collName string, ueId string, patchItem []models.PatchItem) {
+func (p *Processor) PatchOperSpecDataProcedure(
+	c *gin.Context, collName string, ueId string, patchItem []models.PatchItem,
+) {
 	filter := bson.M{"ueId": ueId}
 	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("PatchOperSpecDataProcedure err: %+v", err)
@@ -31,14 +33,14 @@ func (p *Processor) PatchOperSpecDataProcedure(c *gin.Context, collName string, 
 	c.Status(http.StatusNoContent)
 }
 
-func (p *Processor) QueryOperSpecDataProcedure(c *gin.Context,  collName string, ueId string) {
+func (p *Processor) QueryOperSpecDataProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
 	data, pd := getDataFromDB(collName, filter)
 	// The key of the map is operator specific data element name and the value is the operator specific data of the UE.
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryOperSpecDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }

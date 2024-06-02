@@ -13,16 +13,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
 	"github.com/free5gc/util/mongoapi"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-
-func (p *Processor) AmfContextNon3gppProcedure(c *gin.Context, ueId string, collName string, patchItem []models.PatchItem,
+func (p *Processor) AmfContextNon3gppProcedure(
+	c *gin.Context, ueId string, collName string, patchItem []models.PatchItem,
 	filter bson.M,
 ) {
 	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
@@ -33,7 +33,8 @@ func (p *Processor) AmfContextNon3gppProcedure(c *gin.Context, ueId string, coll
 	c.Status(http.StatusOK)
 }
 
-func (p *Processor) CreateAmfContextNon3gppProcedure(c *gin.Context, AmfNon3GppAccessRegistration models.AmfNon3GppAccessRegistration,
+func (p *Processor) CreateAmfContextNon3gppProcedure(
+	c *gin.Context, AmfNon3GppAccessRegistration models.AmfNon3GppAccessRegistration,
 	collName string, ueId string,
 ) {
 	putData := util.ToBsonM(AmfNon3GppAccessRegistration)
@@ -53,7 +54,7 @@ func (p *Processor) QueryAmfContextNon3gppProcedure(c *gin.Context, collName str
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryAmfContextNon3gppProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }

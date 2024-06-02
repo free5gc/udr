@@ -4,8 +4,6 @@ import (
 	"github.com/free5gc/udr/pkg/app"
 )
 
-
-
 type Processor struct {
 	app.UdrApp
 }

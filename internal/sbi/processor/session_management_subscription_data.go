@@ -10,9 +10,9 @@
 package processor
 
 import (
+	"encoding/json"
 	"net/http"
 	"reflect"
-	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -48,7 +48,7 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 		logger.DataRepoLog.Errorf("QuerySmDataProcedure err: %+v", err)
 		pd := util.ProblemDetailsUpspecified("")
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	for _, smData := range sessionManagementSubscriptionDatas {
 		var tmpSmData models.SessionManagementSubscriptionData

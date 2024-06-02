@@ -236,10 +236,10 @@ linters:
     - staticcheck
     - unused
     - gosimple
-    - structcheck
-    - varcheck
+    # - structcheck
+    # - varcheck
     - ineffassign
-    - deadcode
+    # - deadcode
     - typecheck
     # Additional
     - lll

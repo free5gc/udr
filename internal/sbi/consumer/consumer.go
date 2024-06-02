@@ -1,8 +1,8 @@
 package consumer
 
 import (
-	"github.com/free5gc/udr/pkg/app"
 	"github.com/free5gc/openapi/Nnrf_NFManagement"
+	"github.com/free5gc/udr/pkg/app"
 )
 
 type Consumer struct {
@@ -18,7 +18,7 @@ func NewConsumer(udr app.UdrApp) *Consumer {
 	}
 
 	return &Consumer{
-		UdrApp: udr,
+		UdrApp:     udr,
 		NrfService: nrfService,
 	}
 }

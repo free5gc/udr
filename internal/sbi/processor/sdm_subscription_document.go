@@ -25,7 +25,7 @@ func (p *Processor) RemovesdmSubscriptionsProcedure(c *gin.Context, ueId string,
 	if !ok {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)

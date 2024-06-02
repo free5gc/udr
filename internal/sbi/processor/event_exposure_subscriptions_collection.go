@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"strconv"
 
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/openapi/models"
@@ -65,8 +64,8 @@ func (p *Processor) QueryeesubscriptionsProcedure(c *gin.Context, ueId string) {
 	for _, v := range UESubsData.EeSubscriptionCollection {
 		eeSubscriptionSlice = append(eeSubscriptionSlice, *v.EeSubscriptions)
 	}
-	
-	if (len(eeSubscriptionSlice) == 0) {
+
+	if len(eeSubscriptionSlice) == 0 {
 		pd := util.ProblemDetailsUpspecified("")
 		c.JSON(int(pd.Status), pd)
 		return

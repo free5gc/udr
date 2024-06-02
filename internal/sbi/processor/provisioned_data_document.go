@@ -14,19 +14,19 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
-
 	"github.com/mitchellh/mapstructure"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
-	"go.mongodb.org/mongo-driver/bson"
 	"github.com/free5gc/util/mongoapi"
 )
 
 func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, servingPlmnId string,
 	provisionedDataSets models.ProvisionedDataSets,
-)  {
+) {
 	var collName string
 	var filter bson.M
 
@@ -37,7 +37,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		logger.DataRepoLog.Errorf(
 			"QueryProvisionedDataProcedure get accessAndMobilitySubscriptionData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	if accessAndMobilitySubscriptionData != nil {
 		var tmp models.AccessAndMobilitySubscriptionData
@@ -56,7 +56,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get smfSelectionSubscriptionData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	if smfSelectionSubscriptionData != nil {
 		var tmp models.SmfSelectionSubscriptionData
@@ -74,7 +74,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get smsSubscriptionData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	if smsSubscriptionData != nil {
 		var tmp models.SmsSubscriptionData
@@ -82,7 +82,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smsSubscriptionData decode err: %+v", err)
 			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
-			return 
+			return
 		}
 		provisionedDataSets.SmsSubsData = &tmp
 	}
@@ -102,7 +102,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure sessionManagementSubscriptionDatas decode err: %+v", err)
 			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
-			return 
+			return
 		}
 		for _, smData := range tmp {
 			dnnConfigurations := smData.DnnConfigurations
@@ -122,14 +122,14 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get traceData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	if traceData != nil {
 		var tmp models.TraceData
 		if err := mapstructure.Decode(traceData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure traceData decode err: %+v", err)
 			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
-			return 
+			return
 		}
 		provisionedDataSets.TraceData = &tmp
 	}
@@ -141,7 +141,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		logger.DataRepoLog.Errorf(
 			"QueryProvisionedDataProcedure get smsManagementSubscriptionData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	if smsManagementSubscriptionData != nil {
 		var tmp models.SmsManagementSubscriptionData
@@ -149,7 +149,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smsManagementSubscriptionData decode err: %+v", err)
 			c.JSON(http.StatusInternalServerError, openapi.ProblemDetailsSystemFailure(err.Error()))
-			return 
+			return
 		}
 		provisionedDataSets.SmsMngData = &tmp
 	}
@@ -157,7 +157,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 	if reflect.DeepEqual(provisionedDataSets, models.ProvisionedDataSets{}) {
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, provisionedDataSets)
 }

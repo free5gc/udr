@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -235,7 +234,6 @@ func TestUDR_InfluData_GetBeforeCreateing(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
-
 	server := setupHttpServer()
 	reqUri := factory.UdrDrResUriPrefix + "/application-data/influenceData"
 
@@ -272,7 +270,7 @@ func TestUDR_InfluData_CreateThenGet(t *testing.T) {
 	t.Run("UDR influ-data CreateThenGet - Create one - bad method",
 		func(t *testing.T) {
 			require.Equal(t, http.StatusMethodNotAllowed, rsp.Code)
-	})
+		})
 
 	// Create one - normal
 	influData = getInfluData(td1.supi)
@@ -405,7 +403,3 @@ func TestUDR_InfluData_CreateThenGet(t *testing.T) {
 			require.Equal(t, 0, len(testRsp))
 		})
 }
-
-
-
-

@@ -14,14 +14,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-	"github.com/free5gc/util/mongoapi"
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/mongoapi"
 )
 
-func (p *Processor) CreateSmsfContextNon3gppProcedure(c *gin.Context, SmsfRegistration models.SmsfRegistration, collName string, ueId string) {
+func (p *Processor) CreateSmsfContextNon3gppProcedure(
+	c *gin.Context, SmsfRegistration models.SmsfRegistration, collName string, ueId string,
+) {
 	putData := util.ToBsonM(SmsfRegistration)
 	putData["ueId"] = ueId
 	filter := bson.M{"ueId": ueId}
@@ -46,7 +48,7 @@ func (p *Processor) QuerySmsfContextNon3gppProcedure(c *gin.Context, collName st
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QuerySmsfContextNon3gppProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
-		return 
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }

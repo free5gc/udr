@@ -4,8 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
-
 // Route is the information for every URI.
 type Route struct {
 	// Name is the name of this Route.
@@ -22,9 +20,7 @@ type RouteGroup interface {
 	AddService(engine *gin.Engine) *gin.RouterGroup
 }
 
-
 func AddService(group *gin.RouterGroup, routes []Route) {
-
 	for _, route := range routes {
 		switch route.Method {
 		case "GET":
@@ -39,5 +35,4 @@ func AddService(group *gin.RouterGroup, routes []Route) {
 			group.DELETE(route.Pattern, route.HandlerFunc)
 		}
 	}
-	
 }

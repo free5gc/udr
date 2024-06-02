@@ -10,19 +10,20 @@
 package sbi
 
 import (
-	"net/http"
-	"strings"
 	"encoding/json"
-	"strconv"
+	"net/http"
 	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/udr/internal/logger"
-	"go.mongodb.org/mongo-driver/bson"
-	"github.com/free5gc/udr/internal/util"
 	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/util"
 )
 
 func (s *Server) getDataRepositoryRoutes() []Route {
@@ -33,56 +34,56 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/",
 			Index,
 		},
-	
+
 		{
 			"AmfContext3gpp",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
 			s.HandleAmfContext3gpp,
 		},
-	
+
 		{
 			"CreateAmfContext3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
 			s.HandleCreateAmfContext3gpp,
 		},
-	
+
 		{
 			"QueryAmfContext3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
 			s.HandleQueryAmfContext3gpp,
 		},
-	
+
 		{
 			"AmfContextNon3gpp",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
 			s.HandleAmfContextNon3gpp,
 		},
-	
+
 		{
 			"CreateAmfContextNon3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
 			s.HandleCreateAmfContextNon3gpp,
 		},
-	
+
 		{
 			"QueryAmfContextNon3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
 			s.HandleQueryAmfContextNon3gpp,
 		},
-	
+
 		{
 			"QueryAmData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/am-data",
 			s.HandleQueryAmData,
 		},
-	
+
 		{
 			"QueryAuthenticationStatus",
 			strings.ToUpper("Get"),
@@ -96,42 +97,42 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
 			s.HandleCreateAuthenticationStatus,
 		},
-	
+
 		{
 			"ModifyAuthentication",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
 			s.HandleModifyAuthentication,
 		},
-	
+
 		{
 			"QueryAuthSubsData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
 			s.HandleQueryAuthSubsData,
 		},
-	
+
 		{
 			"CreateAuthenticationSoR",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/sor-data",
 			s.HandleCreateAuthenticationSoR,
 		},
-	
+
 		{
 			"QueryAuthSoR",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/sor-data",
 			s.HandleQueryAuthSoR,
 		},
-	
+
 		{
 			"ApplicationDataInfluenceDataGet",
 			strings.ToUpper("Get"),
 			"/application-data/influenceData",
 			s.HandleApplicationDataInfluenceDataGet,
 		},
-	
+
 		/*
 		 * GIN wildcard issue:
 		 * '/application-data/influenceData/:influenceId' and
@@ -146,7 +147,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
 		},
-	
+
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet",
 			strings.ToUpper("Get"),
@@ -154,7 +155,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
 		},
-	
+
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut",
 			strings.ToUpper("Put"),
@@ -162,350 +163,350 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
 		},
-	
+
 		{
 			"ApplicationDataPfdsAppIdDelete",
 			strings.ToUpper("Delete"),
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdDelete,
 		},
-	
+
 		{
 			"ApplicationDataPfdsAppIdGet",
 			strings.ToUpper("Get"),
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdGet,
 		},
-	
+
 		{
 			"ApplicationDataPfdsAppIdPut",
 			strings.ToUpper("Put"),
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdPut,
 		},
-	
+
 		{
 			"ApplicationDataPfdsGet",
 			strings.ToUpper("Get"),
 			"/application-data/pfds",
 			s.HandleApplicationDataPfdsGet,
 		},
-	
+
 		{
 			"PolicyDataBdtDataBdtReferenceIdDelete",
 			strings.ToUpper("Delete"),
 			"/policy-data/bdt-data/:bdtReferenceId",
 			s.HandlePolicyDataBdtDataBdtReferenceIdDelete,
 		},
-	
+
 		{
 			"PolicyDataBdtDataBdtReferenceIdGet",
 			strings.ToUpper("Get"),
 			"/policy-data/bdt-data/:bdtReferenceId",
 			s.HandlePolicyDataBdtDataBdtReferenceIdGet,
 		},
-	
+
 		{
 			"PolicyDataBdtDataBdtReferenceIdPut",
 			strings.ToUpper("Put"),
 			"/policy-data/bdt-data/:bdtReferenceId",
 			s.HandlePolicyDataBdtDataBdtReferenceIdPut,
 		},
-	
+
 		{
 			"PolicyDataBdtDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/bdt-data",
 			s.HandlePolicyDataBdtDataGet,
 		},
-	
+
 		{
 			"PolicyDataPlmnsPlmnIdUePolicySetGet",
 			strings.ToUpper("Get"),
 			"/policy-data/plmns/:plmnId/ue-policy-set",
 			s.HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
 		},
-	
+
 		{
 			"PolicyDataSponsorConnectivityDataSponsorIdGet",
 			strings.ToUpper("Get"),
 			"/policy-data/sponsor-connectivity-data/:sponsorId",
 			s.HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
 		},
-	
+
 		{
 			"PolicyDataSubsToNotifyPost",
 			strings.ToUpper("Post"),
 			"/policy-data/subs-to-notify",
 			s.HandlePolicyDataSubsToNotifyPost,
 		},
-	
+
 		{
 			"PolicyDataSubsToNotifySubsIdDelete",
 			strings.ToUpper("Delete"),
 			"/policy-data/subs-to-notify/:subsId",
 			s.HandlePolicyDataSubsToNotifySubsIdDelete,
 		},
-	
+
 		{
 			"PolicyDataSubsToNotifySubsIdPut",
 			strings.ToUpper("Put"),
 			"/policy-data/subs-to-notify/:subsId",
 			s.HandlePolicyDataSubsToNotifySubsIdPut,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdAmDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/am-data",
 			s.HandlePolicyDataUesUeIdAmDataGet,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/operator-specific-data",
 			s.HandlePolicyDataUesUeIdOperatorSpecificDataGet,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataPatch",
 			strings.ToUpper("Patch"),
 			"/policy-data/ues/:ueId/operator-specific-data",
 			s.HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataPut",
 			strings.ToUpper("Put"),
 			"/policy-data/ues/:ueId/operator-specific-data",
 			s.HandlePolicyDataUesUeIdOperatorSpecificDataPut,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdSmDataGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/sm-data",
 			s.HandlePolicyDataUesUeIdSmDataGet,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdSmDataPatch",
 			strings.ToUpper("Patch"),
 			"/policy-data/ues/:ueId/sm-data",
 			s.HandlePolicyDataUesUeIdSmDataPatch,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdDelete",
 			strings.ToUpper("Delete"),
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
 			s.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
 			s.HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdPut",
 			strings.ToUpper("Put"),
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
 			s.HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdUePolicySetGet",
 			strings.ToUpper("Get"),
 			"/policy-data/ues/:ueId/ue-policy-set",
 			s.HandlePolicyDataUesUeIdUePolicySetGet,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdUePolicySetPatch",
 			strings.ToUpper("Patch"),
 			"/policy-data/ues/:ueId/ue-policy-set",
 			s.HandlePolicyDataUesUeIdUePolicySetPatch,
 		},
-	
+
 		{
 			"PolicyDataUesUeIdUePolicySetPut",
 			strings.ToUpper("Put"),
 			"/policy-data/ues/:ueId/ue-policy-set",
 			s.HandlePolicyDataUesUeIdUePolicySetPut,
 		},
-	
+
 		{
 			"QueryProvisionedData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data",
 			s.HandleQueryProvisionedData,
 		},
-	
+
 		{
 			"RemovesdmSubscriptions",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
 			s.HandleRemovesdmSubscriptions,
 		},
-	
+
 		{
 			"Updatesdmsubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
 			s.HandleUpdatesdmsubscriptions,
 		},
-	
+
 		{
 			"CreateSdmSubscriptions",
 			strings.ToUpper("Post"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
 			s.HandleCreateSdmSubscriptions,
 		},
-	
+
 		{
 			"Querysdmsubscriptions",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
 			s.HandleQuerysdmsubscriptions,
 		},
-	
+
 		{
 			"CreateSmfContextNon3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
 			s.HandleCreateSmfContextNon3gpp,
 		},
-	
+
 		{
 			"DeleteSmfContext",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
 			s.HandleDeleteSmfContext,
 		},
-	
+
 		{
 			"QuerySmfRegistration",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
 			s.HandleQuerySmfRegistration,
 		},
-	
+
 		{
 			"QuerySmfRegList",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smf-registrations",
 			s.HandleQuerySmfRegList,
 		},
-	
+
 		{
 			"QuerySmfSelectData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/smf-selection-subscription-data",
 			s.HandleQuerySmfSelectData,
 		},
-	
+
 		{
 			"CreateSmsfContext3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
 			s.HandleCreateSmsfContext3gpp,
 		},
-	
+
 		{
 			"DeleteSmsfContext3gpp",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
 			s.HandleDeleteSmsfContext3gpp,
 		},
-	
+
 		{
 			"QuerySmsfContext3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
 			s.HandleQuerySmsfContext3gpp,
 		},
-	
+
 		{
 			"CreateSmsfContextNon3gpp",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
 			s.HandleCreateSmsfContextNon3gpp,
 		},
-	
+
 		{
 			"DeleteSmsfContextNon3gpp",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
 			s.HandleDeleteSmsfContextNon3gpp,
 		},
-	
+
 		{
 			"QuerySmsfContextNon3gpp",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
 			s.HandleQuerySmsfContextNon3gpp,
 		},
-	
+
 		{
 			"QuerySmsMngData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-mng-data",
 			s.HandleQuerySmsMngData,
 		},
-	
+
 		{
 			"QuerySmsData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-data",
 			s.HandleQuerySmsData,
 		},
-	
+
 		{
 			"QuerySmData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sm-data",
 			s.HandleQuerySmData,
 		},
-	
+
 		{
 			"QueryTraceData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/trace-data",
 			s.HandleQueryTraceData,
 		},
-	
+
 		{
 			"CreateAMFSubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleCreateAMFSubscriptions,
 		},
-	
+
 		{
 			"ModifyAmfSubscriptionInfo",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleModifyAmfSubscriptionInfo,
 		},
-	
+
 		{
 			"RemoveAmfSubscriptionsInfo",
 			strings.ToUpper("Delete"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleRemoveAmfSubscriptionsInfo,
 		},
-	
+
 		{
 			"GetAmfSubscriptionInfo",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleGetAmfSubscriptionInfo,
 		},
-		
+
 		/* subShortRoutes */
 		{
 			"GetSharedData",
@@ -513,14 +514,13 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/subscription-data/shared-data",
 			s.HandleGetSharedData,
 		},
-	
+
 		{
 			"PostSubscriptionDataSubscriptions",
 			strings.ToUpper("Post"),
 			"/subscription-data/subs-to-notify",
 			s.HandlePostSubscriptionDataSubscriptions,
 		},
-
 
 		/* subRoutes */
 		// Special case -- should be added before than the general case
@@ -537,49 +537,49 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/subscription-data/:ueId/ee-profile-data",
 			s.HandleQueryEEData,
 		},
-	
+
 		{
 			"PatchOperSpecData",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/operator-specific-data",
 			s.HandlePatchOperSpecData,
 		},
-	
+
 		{
 			"QueryOperSpecData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/operator-specific-data",
 			s.HandleQueryOperSpecData,
 		},
-	
+
 		{
 			"GetppData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/pp-data",
 			s.HandleGetppData,
 		},
-	
+
 		{
 			"ModifyPpData",
 			strings.ToUpper("Patch"),
 			"/subscription-data/:ueId/pp-data",
 			s.HandleModifyPpData,
 		},
-	
+
 		{
 			"GetIdentityData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/identity-data",
 			s.HandleGetIdentityData,
 		},
-	
+
 		{
 			"GetOdbData",
 			strings.ToUpper("Get"),
 			"/subscription-data/:ueId/operator-determined-barring-data",
 			s.HandleGetOdbData,
 		},
-		
+
 		/* eeShortRoutes */
 		{
 			"CreateEeGroupSubscriptions",
@@ -587,21 +587,21 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
 			s.HandleCreateEeGroupSubscriptions,
 		},
-	
+
 		{
 			"QueryEeGroupSubscriptions",
 			strings.ToUpper("Get"),
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
 			s.HandleQueryEeGroupSubscriptions,
 		},
-	
+
 		{
 			"CreateEeSubscriptions",
 			strings.ToUpper("Post"),
 			"/subscription-data/:ueId/context-data/ee-subscriptions",
 			s.HandleCreateEeSubscriptions,
 		},
-	
+
 		{
 			"Queryeesubscriptions",
 			strings.ToUpper("Get"),
@@ -616,28 +616,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleRemoveeeSubscriptions,
 		},
-	
+
 		{
 			"UpdateEesubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleUpdateEesubscriptions,
 		},
-	
+
 		{
 			"UpdateEeGroupSubscriptions",
 			strings.ToUpper("Put"),
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
 			s.HandleUpdateEeGroupSubscriptions,
 		},
-	
+
 		{
 			"RemoveEeGroupSubscriptions",
 			strings.ToUpper("Delete"),
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
 			s.HandleRemoveEeGroupSubscriptions,
 		},
-		
+
 		/* expoRoutes */
 		{
 			"CreateSessionManagementData",
@@ -645,56 +645,56 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
 			s.HandleCreateSessionManagementData,
 		},
-	
+
 		{
 			"DeleteSessionManagementData",
 			strings.ToUpper("Delete"),
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
 			s.HandleDeleteSessionManagementData,
 		},
-	
+
 		{
 			"QuerySessionManagementData",
 			strings.ToUpper("Get"),
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
 			s.HandleQuerySessionManagementData,
 		},
-	
+
 		{
 			"CreateAccessAndMobilityData",
 			strings.ToUpper("Put"),
 			"/exposure-data/:ueId/access-and-mobility-data",
 			s.HandleCreateAccessAndMobilityData,
 		},
-	
+
 		{
 			"DeleteAccessAndMobilityData",
 			strings.ToUpper("Delete"),
 			"/exposure-data/:ueId/access-and-mobility-data",
 			s.HandleDeleteAccessAndMobilityData,
 		},
-	
+
 		{
 			"QueryAccessAndMobilityData",
 			strings.ToUpper("Get"),
 			"/exposure-data/:ueId/access-and-mobility-data",
 			s.HandleQueryAccessAndMobilityData,
 		},
-	
+
 		{
 			"ExposureDataSubsToNotifyPost",
 			strings.ToUpper("Post"),
 			"/exposure-data/subs-to-notify",
 			s.HandleExposureDataSubsToNotifyPost,
 		},
-	
+
 		{
 			"ExposureDataSubsToNotifySubIdDelete",
 			strings.ToUpper("Delete"),
 			"/exposure-data/subs-to-notify/:subId",
 			s.HandleExposureDataSubsToNotifySubIdDelete,
 		},
-	
+
 		{
 			"ExposureDataSubsToNotifySubIdPut",
 			strings.ToUpper("Put"),
@@ -709,28 +709,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/application-data/influenceData/subs-to-notify",
 			s.HandleApplicationDataInfluenceDataSubsToNotifyGet,
 		},
-	
+
 		{
 			"ApplicationDataInfluenceDataSubsToNotifyPost",
 			strings.ToUpper("Post"),
 			"/application-data/influenceData/subs-to-notify",
 			s.HandleApplicationDataInfluenceDataSubsToNotifyPost,
 		},
-	
+
 		{
 			"ApplicationDataInfluenceDataInfluenceIdDelete",
 			strings.ToUpper("Delete"),
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdDelete,
 		},
-	
+
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPatch",
 			strings.ToUpper("Patch"),
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPatch,
 		},
-	
+
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPut",
 			strings.ToUpper("Put"),
@@ -748,7 +748,6 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		
 	}
 }
-
 
 // Index is the index handler.
 func Index(c *gin.Context) {
@@ -829,9 +828,7 @@ func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
 }
 
 // HTTPQueryAmfContext3gpp - Retrieves the AMF context data of a UE using 3gpp access
-func (s *Server)HandleQueryAmfContext3gpp(c *gin.Context) {
-	
-
+func (s *Server) HandleQueryAmfContext3gpp(c *gin.Context) {
 	logger.DataRepoLog.Infof("Handle QueryAmfContext3gpp")
 
 	ueId := c.Params.ByName("ueId")
@@ -874,7 +871,8 @@ func (s *Server) HandleAmfContextNon3gpp(c *gin.Context) {
 
 	ueId := c.Params.ByName("ueId")
 	filter := bson.M{"ueId": ueId}
-	s.Processor().AmfContextNon3gppProcedure(c, ueId, "subscriptionData.contextData.amfNon3gppAccess", patchItemArray, filter)
+	s.Processor().AmfContextNon3gppProcedure(
+		c, ueId, "subscriptionData.contextData.amfNon3gppAccess", patchItemArray, filter)
 }
 
 // HTTPCreateAmfContextNon3gpp - To store the AMF context data of a UE using non-3gpp access in the UDR
@@ -909,7 +907,8 @@ func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
 
 	logger.DataRepoLog.Infof("Handle CreateAmfContextNon3gpp")
 
-	s.Processor().CreateAmfContextNon3gppProcedure(c, amfNon3GppAccessRegistration, "subscriptionData.contextData.amfNon3gppAccess", c.Params.ByName("ueId"))
+	s.Processor().CreateAmfContextNon3gppProcedure(
+		c, amfNon3GppAccessRegistration, "subscriptionData.contextData.amfNon3gppAccess", c.Params.ByName("ueId"))
 }
 
 // HTTPQueryAmfContextNon3gpp - Retrieves the AMF context data of a UE using non-3gpp access
@@ -930,7 +929,6 @@ func (s *Server) HandleQueryAmData(c *gin.Context) {
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 	s.Processor().QueryAmDataProcedure(c, collName, ueId, servingPlmnId)
 }
-
 
 // HTTPCreateAuthenticationStatus - To store the Authentication Status data of a UE
 func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
@@ -1024,7 +1022,7 @@ func (s *Server) HandleQueryAuthSubsData(c *gin.Context) {
 	logger.DataRepoLog.Infof("Handle QueryAuthSubsData")
 
 	collName := "subscriptionData.authenticationData.authenticationSubscription"
-	ueId :=  c.Params.ByName("ueId")
+	ueId := c.Params.ByName("ueId")
 
 	s.Processor().QueryAuthSubsDataProcedure(c, collName, ueId)
 }
@@ -1079,11 +1077,10 @@ func (s *Server) HandleQueryAuthSoR(c *gin.Context) {
 
 // HTTPApplicationDataInfluenceDataGet -
 func (s *Server) HandleApplicationDataInfluenceDataGet(c *gin.Context) {
-
 	var filter []bson.M
 	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataGet")
 	collName := "applicationData.influenceData"
-	
+
 	influenceIdsParam := c.QueryArray("influence-Ids")
 	dnnsParam := c.QueryArray("dnns")
 	internalGroupIdsParam := c.QueryArray("internal-Group-Id")
@@ -1239,7 +1236,7 @@ func (s *Server) HandleApplicationDataPfdsAppIdGet(c *gin.Context) {
 }
 
 // HTTPApplicationDataPfdsAppIdPut -
-func(s *Server) HandleApplicationDataPfdsAppIdPut(c *gin.Context) {
+func (s *Server) HandleApplicationDataPfdsAppIdPut(c *gin.Context) {
 	var pfdDataforApp models.PfdDataForApp
 
 	if err := getDataFromRequestBody(c, &pfdDataforApp); err != nil {
@@ -1367,7 +1364,7 @@ func (s *Server) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
 
 // HTTPPolicyDataSubsToNotifySubsIdDelete -
 func (s *Server) HandlePolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
-	subsId :=  c.Params.ByName("subsId")
+	subsId := c.Params.ByName("subsId")
 
 	s.Processor().PolicyDataSubsToNotifySubsIdDeleteProcedure(c, subsId)
 }
@@ -1408,7 +1405,6 @@ func (s *Server) HandlePolicyDataUesUeIdAmDataGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdOperatorSpecificDataGet -
 func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
-
 	collName := "policyData.ues.operatorSpecificData"
 	ueId := c.Params.ByName("ueId")
 	s.Processor().PolicyDataUesUeIdOperatorSpecificDataGetProcedure(c, collName, ueId)
@@ -1437,9 +1433,9 @@ func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) 
 	}
 
 	collName := "policyData.ues.operatorSpecificData"
-	ueId :=  c.Params.ByName("ueId")
+	ueId := c.Params.ByName("ueId")
 
-	s.Processor().PolicyDataUesUeIdOperatorSpecificDataPutProcedure(c, collName, ueId,  operatorSpecificDataContainerMap)
+	s.Processor().PolicyDataUesUeIdOperatorSpecificDataPutProcedure(c, collName, ueId, operatorSpecificDataContainerMap)
 }
 
 // HTTPPolicyDataUesUeIdSmDataGet -
@@ -1507,7 +1503,6 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdUePolicySetGet -
 func (s *Server) HandlePolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
-
 	ueId := c.Params.ByName("ueId")
 	collName := "policyData.ues.uePolicySet"
 
@@ -1553,7 +1548,6 @@ func (s *Server) HandleQueryProvisionedData(c *gin.Context) {
 
 // HTTPRemovesdmSubscriptions - Deletes a sdmsubscriptions
 func (s *Server) HandleRemovesdmSubscriptions(c *gin.Context) {
-
 	logger.DataRepoLog.Infof("Handle RemovesdmSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
@@ -1677,7 +1671,6 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 		return
 	}
 
-
 	logger.DataRepoLog.Infof("Handle CreateSmfContextNon3gpp")
 
 	collName := "subscriptionData.contextData.smfRegistrations"
@@ -1719,7 +1712,6 @@ func (s *Server) HandleQuerySmfRegList(c *gin.Context) {
 	collName := "subscriptionData.contextData.smfRegistrations"
 	ueId := c.Params.ByName("ueId")
 	s.Processor().QuerySmfRegListProcedure(c, collName, ueId)
-
 }
 
 // HTTPQuerySmfSelectData - Retrieves the SMF selection subscription data of a UE
@@ -2101,7 +2093,6 @@ func (s *Server) HandlePatchOperSpecData(c *gin.Context) {
 
 // HTTPQueryOperSpecData - Retrieves the operator specific data of a UE
 func (s *Server) HandleQueryOperSpecData(c *gin.Context) {
-
 	logger.DataRepoLog.Infof("Handle QueryOperSpecData")
 
 	ueId := c.Params.ByName("ueId")
@@ -2207,39 +2198,48 @@ func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
 
 	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
 	ueGroupId := c.Params.ByName("ueGroupId")
-	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
+
+	match, err := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId)
+	if !match {
 		problemDetail := models.ProblemDetails{
 			Title:  "Invalid parameter",
 			Status: http.StatusBadRequest,
 			Detail: "Invalid ueGroupId",
-			Cause:  "INVALID_PARAMETER",	
+			Cause:  "INVALID_PARAMETER",
 		}
 		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
 	}
-	
+	if err != nil {
+		logger.DataRepoLog.Errorf("Invalid regular expression: %s", err)
+	}
+
 	s.Processor().CreateEeGroupSubscriptionsProcedure(c, ueGroupId, eeSubscription)
 }
 
 // HTTPQueryEeGroupSubscriptions - Retrieves the ee subscriptions of a group of UEs or any UE
 func (s *Server) HandleQueryEeGroupSubscriptions(c *gin.Context) {
-
 	logger.DataRepoLog.Infof("Handle QueryEeGroupSubscriptions")
 
 	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
 	ueGroupId := c.Params.ByName("ueGroupId")
-	if match, _ := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId); !match {
+	match, err := regexp.MatchString("^(extgroupid-[^@]+@[^@]+|anyUE)$", ueGroupId)
+	if !match {
 		problemDetail := models.ProblemDetails{
 			Title:  "Invalid parameter",
 			Status: http.StatusBadRequest,
 			Detail: "Invalid ueGroupId",
-			Cause:  "INVALID_PARAMETER",	
+			Cause:  "INVALID_PARAMETER",
 		}
 		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
 	}
+	if err != nil {
+		logger.DataRepoLog.Errorf("Invalid regular expression: %s", err)
+	}
+
 	s.Processor().QueryEeGroupSubscriptionsProcedure(c, ueGroupId)
 }
 
@@ -2275,9 +2275,12 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 
 	logger.DataRepoLog.Infof("Handle CreateEeSubscriptions")
 
-	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
+	// String represents the SUPI or GPSI.
+	// Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
 	ueId := c.Params.ByName("ueId")
-	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
+	match, err := regexp.MatchString(
+		"^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId)
+	if !match {
 		problemDetail := models.ProblemDetails{
 			Title:  "Invalid parameter",
 			Status: http.StatusBadRequest,
@@ -2288,6 +2291,9 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
 	}
+	if err != nil {
+		logger.DataRepoLog.Errorf("Invalid regular expression: %s", err)
+	}
 
 	s.Processor().CreateEeSubscriptionsProcedure(c, ueId, eeSubscription)
 }
@@ -2295,10 +2301,13 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 // HTTPQueryeesubscriptions - Retrieves the ee subscriptions of a UE
 func (s *Server) HandleQueryeesubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Infof("Handle Queryeesubscriptions")
-	
-	// String represents the SUPI or GPSI.  Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
+
+	// String represents the SUPI or GPSI.
+	// Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
 	ueId := c.Params.ByName("ueId")
-	if match, _ := regexp.MatchString("^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId); !match {
+	match, err := regexp.MatchString(
+		"^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId)
+	if !match {
 		problemDetail := models.ProblemDetails{
 			Title:  "Invalid parameter",
 			Status: http.StatusBadRequest,
@@ -2308,6 +2317,9 @@ func (s *Server) HandleQueryeesubscriptions(c *gin.Context) {
 		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
+	}
+	if err != nil {
+		logger.DataRepoLog.Errorf("Invalid regular expression: %s", err)
 	}
 
 	s.Processor().QueryeesubscriptionsProcedure(c, ueId)
@@ -2416,7 +2428,7 @@ func (s *Server) HandleCreateSessionManagementData(c *gin.Context) {
 
 // HTTPDeleteSessionManagementData - Deletes the session management
 // data for a UE and for an individual PDU session
-func (s *Server)  HandleDeleteSessionManagementData(c *gin.Context) {
+func (s *Server) HandleDeleteSessionManagementData(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 

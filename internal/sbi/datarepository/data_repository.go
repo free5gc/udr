@@ -902,7 +902,9 @@ func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(
 	return httpwrapper.NewResponse(http.StatusOK, nil, rspData)
 }
 
-func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetProcedure(subscriptionID string) (*models.ProblemDetails, any) {
+func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetProcedure(subscriptionID string) (
+	*models.ProblemDetails, any,
+) {
 	udrSelf := udr_context.GetSelf()
 	if subscription, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionID); ok {
 		return nil, subscription
@@ -911,7 +913,6 @@ func ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetProcedure(subscrip
 		return problemDetails, nil
 	}
 }
-
 
 func HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(
 	request *httpwrapper.Request,

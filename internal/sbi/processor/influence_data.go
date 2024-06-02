@@ -10,9 +10,9 @@
 package processor
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"encoding/json"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -21,7 +21,6 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/util/mongoapi"
-
 )
 
 func (p *Processor) ApplicationDataInfluenceDataGetProcedure(c *gin.Context, collName string, filter []bson.M) (
@@ -62,5 +61,3 @@ func (p *Processor) BuildSnssaiMatchList(snssais []models.Snssai) (matchList []b
 	}
 	return
 }
-
-

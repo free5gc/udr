@@ -11,15 +11,15 @@ package processor
 
 import (
 	"net/http"
-	"github.com/gin-gonic/gin"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/util/mongoapi"
 )
 
-func (p *Processor) QuerySmfRegListProcedure(c *gin.Context, collName string, ueId string)  {
+func (p *Processor) QuerySmfRegListProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
 	smfRegList, err := mongoapi.RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
