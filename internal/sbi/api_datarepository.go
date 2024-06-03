@@ -737,15 +737,13 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPut,
 		},
-		
+
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPut",
 			strings.ToUpper("Post"),
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPost,
 		},
-
-		
 	}
 }
 
@@ -2573,7 +2571,7 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context
 
 	s.Processor().ApplicationDataInfluenceDataInfluenceIdPutProcedure(c, collName, influenceId, &trafficInfluData)
 }
+
 func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPost(c *gin.Context) {
 	s.Processor().ApplicationDataInfluenceDataInfluenceIdPostProcedure(c)
 }
-

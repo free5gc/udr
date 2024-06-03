@@ -22,7 +22,7 @@ func (p *Processor) QuerySmsMngDataProcedure(c *gin.Context, collName string, ue
 	servingPlmnId string,
 ) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QuerySmsMngDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)

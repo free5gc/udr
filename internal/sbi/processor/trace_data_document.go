@@ -22,7 +22,7 @@ func (p *Processor) QueryTraceDataProcedure(c *gin.Context, collName string, ueI
 	servingPlmnId string,
 ) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryTraceDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)

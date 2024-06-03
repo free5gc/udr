@@ -24,7 +24,7 @@ func (p *Processor) ModifyAuthenticationProcedure(
 	c *gin.Context, collName string, ueId string, patchItem []models.PatchItem,
 ) {
 	filter := bson.M{"ueId": ueId}
-	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+	if err := p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("ModifyAuthenticationProcedure err: %+v", err)
 		c.JSON(http.StatusInternalServerError, util.ProblemDetailsModifyNotAllowed(""))
 	}
@@ -33,7 +33,7 @@ func (p *Processor) ModifyAuthenticationProcedure(
 
 func (p *Processor) QueryAuthSubsDataProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		if pd.Status == http.StatusNotFound {
 			logger.DataRepoLog.Warnf("QueryAuthSubsDataProcedure err: %s", pd.Title)

@@ -50,7 +50,7 @@ func (p *Processor) DeleteSmfContextProcedure(c *gin.Context, collName string, u
 		logger.DataRepoLog.Error(err)
 	}
 	filter := bson.M{"ueId": ueId, "pduSessionId": pduSessionIdInt}
-	deleteDataFromDB(collName, filter)
+	p.DeleteDataFromDB(collName, filter)
 	c.Status(http.StatusNoContent)
 }
 
@@ -63,7 +63,7 @@ func (p *Processor) QuerySmfRegistrationProcedure(c *gin.Context, collName strin
 	}
 
 	filter := bson.M{"ueId": ueId, "pduSessionId": pduSessionIdInt}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QuerySmfRegistrationProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)

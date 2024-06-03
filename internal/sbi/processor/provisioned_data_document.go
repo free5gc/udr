@@ -32,7 +32,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 
 	collName = "subscriptionData.provisionedData.amData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	accessAndMobilitySubscriptionData, pd := getDataFromDB(collName, filter)
+	accessAndMobilitySubscriptionData, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf(
 			"QueryProvisionedDataProcedure get accessAndMobilitySubscriptionData err: %s", pd.Detail)
@@ -52,7 +52,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 
 	collName = "subscriptionData.provisionedData.smfSelectionSubscriptionData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	smfSelectionSubscriptionData, pd := getDataFromDB(collName, filter)
+	smfSelectionSubscriptionData, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get smfSelectionSubscriptionData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
@@ -70,7 +70,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 
 	collName = "subscriptionData.provisionedData.smsData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	smsSubscriptionData, pd := getDataFromDB(collName, filter)
+	smsSubscriptionData, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get smsSubscriptionData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
@@ -118,7 +118,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 
 	collName = "subscriptionData.provisionedData.traceData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	traceData, pd := getDataFromDB(collName, filter)
+	traceData, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf("QueryProvisionedDataProcedure get traceData err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
@@ -136,7 +136,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 
 	collName = "subscriptionData.provisionedData.smsMngData"
 	filter = bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	smsManagementSubscriptionData, pd := getDataFromDB(collName, filter)
+	smsManagementSubscriptionData, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil && pd.Status == http.StatusInternalServerError {
 		logger.DataRepoLog.Errorf(
 			"QueryProvisionedDataProcedure get smsManagementSubscriptionData err: %s", pd.Detail)

@@ -20,7 +20,7 @@ import (
 
 func (p *Processor) GetOdbDataProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("GetOdbDataProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)

@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/free5gc/openapi/models"
+	db "github.com/free5gc/udr/internal/database"
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/udr/internal/sbi/processor"
 	"github.com/free5gc/udr/pkg/factory"
 	util_logger "github.com/free5gc/util/logger"
 	"github.com/free5gc/util/mongoapi"
@@ -37,11 +37,11 @@ func setupHttpServer() *gin.Engine {
 func setupMongoDB(t *testing.T) {
 	err := mongoapi.SetMongoDB("test5gc", "mongodb://localhost:27017")
 	require.Nil(t, err)
-	err = mongoapi.Drop(processor.APPDATA_INFLUDATA_DB_COLLECTION_NAME)
+	err = mongoapi.Drop(db.APPDATA_INFLUDATA_DB_COLLECTION_NAME)
 	require.Nil(t, err)
-	err = mongoapi.Drop(processor.APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME)
+	err = mongoapi.Drop(db.APPDATA_INFLUDATA_SUBSC_DB_COLLECTION_NAME)
 	require.Nil(t, err)
-	err = mongoapi.Drop(processor.APPDATA_PFD_DB_COLLECTION_NAME)
+	err = mongoapi.Drop(db.APPDATA_PFD_DB_COLLECTION_NAME)
 	require.Nil(t, err)
 }
 

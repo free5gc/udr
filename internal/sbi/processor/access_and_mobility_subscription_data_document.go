@@ -22,7 +22,7 @@ func (p *Processor) QueryAmDataProcedure(c *gin.Context, collName string, ueId s
 	logger.DataRepoLog.Infof("QueryAmDataProcedure: ueId: %s, servingPlmnId: %s", ueId, servingPlmnId)
 
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		c.JSON(int(pd.Status), pd)
 		return

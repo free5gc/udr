@@ -28,7 +28,7 @@ func (p *Processor) GetIdentityDataProcedure(c *gin.Context, collName string, ue
 		},
 	}
 
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("GetIdentityDataProcedure err: %+v", pd)
 		c.JSON(int(pd.Status), pd)

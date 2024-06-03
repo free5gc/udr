@@ -13,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	udr_context "github.com/free5gc/udr/internal/context"
+	"github.com/free5gc/udr/internal/database/mongodb"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/sbi"
 	"github.com/free5gc/udr/internal/sbi/consumer"
@@ -46,7 +47,9 @@ func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr.SetLogLevel(cfg.GetLogLevel())
 	udr.SetReportCaller(cfg.GetLogReportCaller())
 
-	processor := processor.NewProcessor(udr)
+	mongoDBInple := mongodb.NewMongoDbImplement(udr.Config().Configuration.Mongodb)
+
+	processor := processor.NewProcessor(udr, mongoDBInple)
 	udr.processor = processor
 
 	consumer := consumer.NewConsumer(udr)
@@ -167,6 +170,14 @@ func (a *UdrApp) Start() {
 
 	a.sbiServer.Run(&a.wg)
 	go a.listenShutdown(ctx)
+}
+
+func (a *UdrApp) Processor() *processor.Processor {
+	return a.processor
+}
+
+func (a *UdrApp) Consumer() *consumer.Consumer {
+	return a.consumer
 }
 
 func (a *UdrApp) listenShutdown(ctx context.Context) {

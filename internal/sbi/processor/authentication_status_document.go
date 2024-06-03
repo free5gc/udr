@@ -32,7 +32,7 @@ func (p *Processor) CreateAuthenticationStatusProcedure(c *gin.Context, collName
 
 func (p *Processor) QueryAuthenticationStatusProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryAuthenticationStatusProcedure err: %s", pd.Detail)

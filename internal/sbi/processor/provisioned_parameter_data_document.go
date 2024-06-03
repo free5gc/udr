@@ -22,7 +22,7 @@ import (
 
 func (p *Processor) ModifyPpDataProcedure(c *gin.Context, collName string, ueId string, patchItem []models.PatchItem) {
 	filter := bson.M{"ueId": ueId}
-	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+	if err := p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("ModifyPpDataProcedure err: %+v", err)
 		pd := util.ProblemDetailsModifyNotAllowed("")
 		c.JSON(int(pd.Status), pd)

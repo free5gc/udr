@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/openapi/models"
-	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/sbi/processor"
 	"github.com/free5gc/udr/internal/util"
@@ -20,11 +19,6 @@ import (
 	logger_util "github.com/free5gc/util/logger"
 )
 
-type Udr interface {
-	Config() *factory.Config
-	Context() *udr_context.UDRContext
-}
-
 type Server struct {
 	app.UdrApp
 
@@ -33,10 +27,15 @@ type Server struct {
 	processor  *processor.Processor
 }
 
-func NewServer(udr app.UdrApp, tlsKeyLogPath string) *Server {
+type UDR interface {
+	app.UdrApp
+	Processor() *processor.Processor
+}
+
+func NewServer(udr UDR, tlsKeyLogPath string) *Server {
 	s := &Server{
 		UdrApp:    udr,
-		processor: processor.NewProcessor(udr),
+		processor: udr.Processor(),
 	}
 
 	s.router = newRouter(s)

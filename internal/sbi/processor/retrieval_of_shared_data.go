@@ -23,7 +23,7 @@ func (p *Processor) GetSharedDataProcedure(c *gin.Context, collName string, shar
 	var sharedDataArray []map[string]interface{}
 	for _, sharedDataId := range sharedDataIds {
 		filter := bson.M{"sharedDataId": sharedDataId}
-		sharedData, pd := getDataFromDB(collName, filter)
+		sharedData, pd := p.GetDataFromDB(collName, filter)
 		if pd != nil && pd.Status == http.StatusInternalServerError {
 			logger.DataRepoLog.Errorf("GetSharedDataProcedure err: %s", pd.Detail)
 			c.JSON(int(pd.Status), pd)

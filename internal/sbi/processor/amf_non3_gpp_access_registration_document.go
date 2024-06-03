@@ -25,7 +25,7 @@ func (p *Processor) AmfContextNon3gppProcedure(
 	c *gin.Context, ueId string, collName string, patchItem []models.PatchItem,
 	filter bson.M,
 ) {
-	if err := patchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+	if err := p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("AmfContextNon3gppProcedure err: %+v", err)
 		pd := util.ProblemDetailsSystemFailure(err.Error())
 		c.JSON(int(pd.Status), pd)
@@ -50,7 +50,7 @@ func (p *Processor) CreateAmfContextNon3gppProcedure(
 
 func (p *Processor) QueryAmfContextNon3gppProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryAmfContextNon3gppProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)

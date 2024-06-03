@@ -38,13 +38,13 @@ func (p *Processor) CreateSmsfContextNon3gppProcedure(
 
 func (p *Processor) DeleteSmsfContextNon3gppProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
-	deleteDataFromDB(collName, filter)
+	p.DeleteDataFromDB(collName, filter)
 	c.Status(http.StatusNoContent)
 }
 
 func (p *Processor) QuerySmsfContextNon3gppProcedure(c *gin.Context, collName string, ueId string) {
 	filter := bson.M{"ueId": ueId}
-	data, pd := getDataFromDB(collName, filter)
+	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QuerySmsfContextNon3gppProcedure err: %s", pd.Detail)
 		c.JSON(int(pd.Status), pd)
