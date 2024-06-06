@@ -8,49 +8,48 @@ import (
 	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/udr/internal/sbi/processor"
 	"github.com/free5gc/udr/internal/util"
 	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/util/mongoapi"
 )
 
-type MongoDbImplement struct {
+type MongoDbConnector struct {
 	*factory.Mongodb
 }
 
-func NewMongoDbImplement(m *factory.Mongodb) *MongoDbImplement {
-	return &MongoDbImplement{
-		Mongodb: m,
+func NewMongoDbConnector(mongo *factory.Mongodb) MongoDbConnector {
+	return MongoDbConnector{
+		Mongodb: mongo,
 	}
 }
 
-func (m *MongoDbImplement) PatchDataToDBAndNotify(
+func (m MongoDbConnector) PatchDataToDBAndNotify(
 	collName string, ueId string, patchItem []models.PatchItem, filter bson.M,
-) error {
-	var err error
-	origValue, err := mongoapi.RestfulAPIGetOne(collName, filter)
+) ( origValue, newValue map[string]interface{}, err error) {
+	
+	origValue, err = mongoapi.RestfulAPIGetOne(collName, filter)
 	if err != nil {
-		return err
+		return 
 	}
 
 	patchJSON, err := json.Marshal(patchItem)
 	if err != nil {
-		return err
+		return 
 	}
 
 	if err = mongoapi.RestfulAPIJSONPatch(collName, filter, patchJSON); err != nil {
-		return err
+		return 
 	}
 
-	newValue, err := mongoapi.RestfulAPIGetOne(collName, filter)
+	newValue, err = mongoapi.RestfulAPIGetOne(collName, filter)
 	if err != nil {
-		return err
+		return 
 	}
-	processor.PreHandleOnDataChangeNotify(ueId, processor.CurrentResourceUri, patchItem, origValue, newValue)
-	return nil
+	
+	return 
 }
 
-func (m *MongoDbImplement) GetDataFromDB(
+func (m MongoDbConnector) GetDataFromDB(
 	collName string, filter bson.M) (
 	map[string]interface{}, *models.ProblemDetails,
 ) {
@@ -64,7 +63,7 @@ func (m *MongoDbImplement) GetDataFromDB(
 	return data, nil
 }
 
-func (m *MongoDbImplement) GetDataFromDBWithArg(collName string, filter bson.M, strength int) (
+func (m MongoDbConnector) GetDataFromDBWithArg(collName string, filter bson.M, strength int) (
 	map[string]interface{}, *models.ProblemDetails,
 ) {
 	data, err := mongoapi.RestfulAPIGetOne(collName, filter, strength)
@@ -79,7 +78,7 @@ func (m *MongoDbImplement) GetDataFromDBWithArg(collName string, filter bson.M, 
 	return data, nil
 }
 
-func (m *MongoDbImplement) DeleteDataFromDB(collName string, filter bson.M) {
+func (m MongoDbConnector) DeleteDataFromDB(collName string, filter bson.M) {
 	if err := mongoapi.RestfulAPIDeleteOne(collName, filter); err != nil {
 		logger.DataRepoLog.Errorf("deleteDataFromDB: %+v", err)
 	}

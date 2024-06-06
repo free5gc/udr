@@ -25,11 +25,14 @@ func (p *Processor) AmfContextNon3gppProcedure(
 	c *gin.Context, ueId string, collName string, patchItem []models.PatchItem,
 	filter bson.M,
 ) {
-	if err := p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+	var err error
+	var origValue, newValue map[string]interface{}
+	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("AmfContextNon3gppProcedure err: %+v", err)
 		pd := util.ProblemDetailsSystemFailure(err.Error())
 		c.JSON(int(pd.Status), pd)
 	}
+	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
 	c.Status(http.StatusOK)
 }
 

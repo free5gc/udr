@@ -23,13 +23,17 @@ import (
 
 func (p *Processor) AmfContext3gppProcedure(
 	c *gin.Context, collName string, ueId string, patchItem []models.PatchItem,
-) {
+) {	
+	var origValue, newValue map[string]interface{}
+	var err error
 	filter := bson.M{"ueId": ueId}
-	if err := p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("AmfContext3gppProcedure err: %+v", err)
 		problemDetails := util.ProblemDetailsModifyNotAllowed("")
 		c.JSON(int(problemDetails.Status), problemDetails)
 	}
+
+	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
 	c.Status(http.StatusNoContent)
 }
 

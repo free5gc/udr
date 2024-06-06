@@ -25,6 +25,8 @@ const (
 	UdrDrResUriPrefix        = "/nudr-dr/v1"
 )
 
+type DbType string
+
 type Config struct {
 	Info          *Info          `yaml:"info" valid:"required"`
 	Configuration *Configuration `yaml:"configuration" valid:"required"`
@@ -44,7 +46,7 @@ func (c *Config) Validate() (bool, error) {
 }
 
 type Info struct {
-	Version     string `yaml:"version,omitempty" valid:"required,in(1.0.2)"`
+	Version     string `yaml:"version,omitempty" valid:"required,in(1.1.0)"`
 	Description string `yaml:"description,omitempty" valid:"type(string),optional"`
 }
 
@@ -56,7 +58,8 @@ const (
 
 type Configuration struct {
 	Sbi        *Sbi     `yaml:"sbi" valid:"required"`
-	Mongodb    *Mongodb `yaml:"mongodb" valid:"required"`
+	DbConnectorType DbType `yaml:"dbConnectorType" valid:"required,in(mongodb)"`
+	Mongodb    *Mongodb `yaml:"mongodb" valid:"optional"`
 	NrfUri     string   `yaml:"nrfUri" valid:"url,required"`
 	NrfCertPem string   `yaml:"nrfCertPem,omitempty" valid:"optional"`
 }

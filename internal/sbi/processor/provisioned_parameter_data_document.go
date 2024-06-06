@@ -21,12 +21,15 @@ import (
 )
 
 func (p *Processor) ModifyPpDataProcedure(c *gin.Context, collName string, ueId string, patchItem []models.PatchItem) {
+	var err error
+	var origValue, newValue map[string]interface{}
 	filter := bson.M{"ueId": ueId}
-	if err := p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("ModifyPpDataProcedure err: %+v", err)
 		pd := util.ProblemDetailsModifyNotAllowed("")
 		c.JSON(int(pd.Status), pd)
 		return
 	}
+	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
 	c.Status(http.StatusNoContent)
 }

@@ -23,13 +23,17 @@ import (
 func (p *Processor) PatchOperSpecDataProcedure(
 	c *gin.Context, collName string, ueId string, patchItem []models.PatchItem,
 ) {
+	var origValue, newValue map[string]interface{}
+	var err error
+	
 	filter := bson.M{"ueId": ueId}
-	if err := p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
+	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("PatchOperSpecDataProcedure err: %+v", err)
 		pd := util.ProblemDetailsModifyNotAllowed("")
 		c.JSON(int(pd.Status), pd)
 		return
 	}
+	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
 	c.Status(http.StatusNoContent)
 }
 

@@ -13,7 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	udr_context "github.com/free5gc/udr/internal/context"
-	"github.com/free5gc/udr/internal/database/mongodb"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/sbi"
 	"github.com/free5gc/udr/internal/sbi/consumer"
@@ -47,9 +46,9 @@ func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr.SetLogLevel(cfg.GetLogLevel())
 	udr.SetReportCaller(cfg.GetLogReportCaller())
 
-	mongoDBInple := mongodb.NewMongoDbImplement(udr.Config().Configuration.Mongodb)
-
-	processor := processor.NewProcessor(udr, mongoDBInple)
+	
+	
+	processor := processor.NewProcessor(udr)
 	udr.processor = processor
 
 	consumer := consumer.NewConsumer(udr)
