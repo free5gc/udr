@@ -785,6 +785,10 @@ func (s *Server) HandleAmfContext3gpp(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle AmfContext3gpp")
 	collName := "subscriptionData.contextData.amf3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().AmfContext3gppProcedure(c, collName, ueId, patchItemArray)
 }
@@ -820,8 +824,13 @@ func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
 	}
 
 	logger.DataRepoLog.Tracef("Handle CreateAmfContext3gpp")
-	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.contextData.amf3gppAccess"
+
+	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	s.Processor().CreateAmfContext3gppProcedure(c, collName, ueId, amf3GppAccessRegistration)
 }
 
@@ -831,6 +840,16 @@ func (s *Server) HandleQueryAmfContext3gpp(c *gin.Context) {
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.contextData.amf3gppAccess"
+
+	if ueId == "" {
+		problemDetail := &models.ProblemDetails{
+			Title:  util.MALFORMED_REQUEST,
+			Status: http.StatusBadRequest,
+			Detail: "ueId is required",
+		}
+		util.GinProblemJson(c, problemDetail)
+		return
+	}
 
 	s.Processor().QueryAmfContext3gppProcedure(c, collName, ueId)
 }
@@ -868,6 +887,10 @@ func (s *Server) HandleAmfContextNon3gpp(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle AmfContextNon3gpp")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	filter := bson.M{"ueId": ueId}
 	s.Processor().AmfContextNon3gppProcedure(
 		c, ueId, "subscriptionData.contextData.amfNon3gppAccess", patchItemArray, filter)
@@ -904,9 +927,14 @@ func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
 	}
 
 	logger.DataRepoLog.Tracef("Handle CreateAmfContextNon3gpp")
+	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().CreateAmfContextNon3gppProcedure(
-		c, amfNon3GppAccessRegistration, "subscriptionData.contextData.amfNon3gppAccess", c.Params.ByName("ueId"))
+		c, amfNon3GppAccessRegistration, "subscriptionData.contextData.amfNon3gppAccess", ueId)
 }
 
 // HTTPQueryAmfContextNon3gpp - Retrieves the AMF context data of a UE using non-3gpp access
@@ -915,6 +943,10 @@ func (s *Server) HandleQueryAmfContextNon3gpp(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.amfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	s.Processor().QueryAmfContextNon3gppProcedure(c, collName, ueId)
 }
 
@@ -923,8 +955,13 @@ func (s *Server) HandleQueryAmData(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QueryAmData")
 
 	collName := "subscriptionData.provisionedData.amData"
-	ueId := c.Params.ByName("ueId")
 	servingPlmnId := c.Params.ByName("servingPlmnId")
+	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
+
 	s.Processor().QueryAmDataProcedure(c, collName, ueId, servingPlmnId)
 }
 
@@ -962,6 +999,10 @@ func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
 
 	putData := util.ToBsonM(authEvent)
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.authenticationData.authenticationStatus"
 
 	s.Processor().CreateAuthenticationStatusProcedure(c, collName, ueId, putData)
@@ -972,6 +1013,10 @@ func (s *Server) HandleQueryAuthenticationStatus(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QueryAuthenticationStatus")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.authenticationData.authenticationStatus"
 
 	s.Processor().QueryAuthenticationStatusProcedure(c, collName, ueId)
@@ -1011,6 +1056,10 @@ func (s *Server) HandleModifyAuthentication(c *gin.Context) {
 
 	collName := "subscriptionData.authenticationData.authenticationSubscription"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().ModifyAuthenticationProcedure(c, collName, ueId, patchItemArray)
 }
@@ -1021,6 +1070,10 @@ func (s *Server) HandleQueryAuthSubsData(c *gin.Context) {
 
 	collName := "subscriptionData.authenticationData.authenticationSubscription"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().QueryAuthSubsDataProcedure(c, collName, ueId)
 }
@@ -1058,6 +1111,10 @@ func (s *Server) HandleCreateAuthenticationSoR(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle CreateAuthenticationSoR")
 	putData := util.ToBsonM(sorData)
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
 
 	s.Processor().CreateAuthenticationSoRProcedure(c, collName, ueId, putData)
@@ -1068,6 +1125,10 @@ func (s *Server) HandleQueryAuthSoR(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QueryAuthSoR")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
 
 	s.Processor().QueryAuthSoRProcedure(c, collName, ueId)
@@ -1398,6 +1459,10 @@ func (s *Server) HandlePolicyDataUesUeIdAmDataGet(c *gin.Context) {
 
 	collName := "policyData.ues.amData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	s.Processor().PolicyDataUesUeIdAmDataGetProcedure(c, collName, ueId)
 }
 
@@ -1405,6 +1470,10 @@ func (s *Server) HandlePolicyDataUesUeIdAmDataGet(c *gin.Context) {
 func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataGet(c *gin.Context) {
 	collName := "policyData.ues.operatorSpecificData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	s.Processor().PolicyDataUesUeIdOperatorSpecificDataGetProcedure(c, collName, ueId)
 }
 
@@ -1418,6 +1487,10 @@ func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context
 
 	collName := "policyData.ues.operatorSpecificData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c, collName, ueId, patchItemArray)
 }
@@ -1432,6 +1505,10 @@ func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) 
 
 	collName := "policyData.ues.operatorSpecificData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().PolicyDataUesUeIdOperatorSpecificDataPutProcedure(c, collName, ueId, operatorSpecificDataContainerMap)
 }
@@ -1442,6 +1519,10 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataGet(c *gin.Context) {
 
 	collName := "policyData.ues.smData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	sNssai := models.Snssai{}
 	sNssaiQuery := c.Request.URL.Query().Get("snssai")
 	dnn := c.Request.URL.Query().Get("dnn")
@@ -1464,6 +1545,10 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataPatch(c *gin.Context) {
 
 	collName := "policyData.ues.smData.usageMonData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().PolicyDataUesUeIdSmDataPatchProcedure(c, collName, ueId, usageMonDataMap)
 }
@@ -1471,8 +1556,13 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataPatch(c *gin.Context) {
 // HTTPPolicyDataUesUeIdSmDataUsageMonIdDelete -
 func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	usageMonId := c.Params.ByName("usageMonId")
 	collName := "policyData.ues.smData.usageMonData"
+
 	s.Processor().PolicyDataUesUeIdSmDataUsageMonIdDeleteProcedure(c, collName, ueId, usageMonId)
 }
 
@@ -1480,6 +1570,10 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdDelete(c *gin.Context) {
 func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
 	collName := "policyData.ues.smData.usageMonData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	usageMonId := c.Params.ByName("usageMonId")
 
 	s.Processor().PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c, collName, usageMonId, ueId)
@@ -1493,6 +1587,10 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
 		return
 	}
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	usageMonId := c.Params.ByName("usageMonId")
 	collName := "policyData.ues.smData.usageMonData"
 
@@ -1502,6 +1600,10 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
 // HTTPPolicyDataUesUeIdUePolicySetGet -
 func (s *Server) HandlePolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "policyData.ues.uePolicySet"
 
 	s.Processor().PolicyDataUesUeIdUePolicySetGetProcedure(c, collName, ueId)
@@ -1517,6 +1619,11 @@ func (s *Server) HandlePolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
 
 	collName := "policyData.ues.uePolicySet"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
+
 	s.Processor().PolicyDataUesUeIdUePolicySetPatchProcedure(c, collName, ueId, uePolicySet)
 }
 
@@ -1530,6 +1637,11 @@ func (s *Server) HandlePolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
 
 	collName := "policyData.ues.uePolicySet"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
+
 	s.Processor().PolicyDataUesUeIdUePolicySetPutProcedure(c, collName, ueId, uePolicySet)
 }
 
@@ -1539,6 +1651,11 @@ func (s *Server) HandleQueryProvisionedData(c *gin.Context) {
 
 	var provisionedDataSets models.ProvisionedDataSets
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
+
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 
 	s.Processor().QueryProvisionedDataProcedure(c, ueId, servingPlmnId, provisionedDataSets)
@@ -1549,6 +1666,10 @@ func (s *Server) HandleRemovesdmSubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle RemovesdmSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	subsId := c.Params.ByName("subsId")
 
 	s.Processor().RemovesdmSubscriptionsProcedure(c, ueId, subsId)
@@ -1587,6 +1708,10 @@ func (s *Server) HandleUpdatesdmsubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle Updatesdmsubscriptions")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	subsId := c.Params.ByName("subsId")
 
 	s.Processor().UpdatesdmsubscriptionsProcedure(c, ueId, subsId, sdmSubscription)
@@ -1626,6 +1751,10 @@ func (s *Server) HandleCreateSdmSubscriptions(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.amfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().CreateSdmSubscriptionsProcedure(c, sdmSubscription, collName, ueId)
 }
@@ -1635,6 +1764,10 @@ func (s *Server) HandleQuerysdmsubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle Querysdmsubscriptions")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().QuerysdmsubscriptionsProcedure(c, ueId)
 }
@@ -1673,6 +1806,10 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smfRegistrations"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	pduSessionId, err := strconv.ParseInt(c.Param("pduSessionId"), 10, 64)
 	if err != nil {
 		logger.DataRepoLog.Warnln(err)
@@ -1687,6 +1824,10 @@ func (s *Server) HandleDeleteSmfContext(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smfRegistrations"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	pduSessionId := c.Params.ByName("pduSessionId")
 
 	s.Processor().DeleteSmfContextProcedure(c, collName, ueId, pduSessionId)
@@ -1697,6 +1838,10 @@ func (s *Server) HandleQuerySmfRegistration(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QuerySmfRegistration")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	pduSessionId := c.Params.ByName("pduSessionId")
 	collName := "subscriptionData.contextData.smfRegistrations"
 
@@ -1709,6 +1854,10 @@ func (s *Server) HandleQuerySmfRegList(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smfRegistrations"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	s.Processor().QuerySmfRegListProcedure(c, collName, ueId)
 }
 
@@ -1718,6 +1867,10 @@ func (s *Server) HandleQuerySmfSelectData(c *gin.Context) {
 
 	collName := "subscriptionData.provisionedData.smfSelectionSubscriptionData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 	s.Processor().QuerySmfSelectDataProcedure(c, collName, ueId, servingPlmnId)
 }
@@ -1756,6 +1909,10 @@ func (s *Server) HandleCreateSmsfContext3gpp(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smsf3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().CreateSmsfContext3gppProcedure(c, collName, ueId, smsfRegistration)
 }
@@ -1766,6 +1923,10 @@ func (s *Server) HandleDeleteSmsfContext3gpp(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smsf3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().DeleteSmsfContext3gppProcedure(c, collName, ueId)
 }
@@ -1776,6 +1937,10 @@ func (s *Server) HandleQuerySmsfContext3gpp(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smsf3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().QuerySmsfContext3gppProcedure(c, collName, ueId)
 }
@@ -1814,6 +1979,10 @@ func (s *Server) HandleCreateSmsfContextNon3gpp(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smsfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().CreateSmsfContextNon3gppProcedure(c, smsfRegistration, collName, ueId)
 }
@@ -1824,6 +1993,10 @@ func (s *Server) HandleDeleteSmsfContextNon3gpp(c *gin.Context) {
 
 	collName := "subscriptionData.contextData.smsfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().DeleteSmsfContextNon3gppProcedure(c, collName, ueId)
 }
@@ -1833,6 +2006,10 @@ func (s *Server) HandleQuerySmsfContextNon3gpp(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QuerySmsfContextNon3gpp")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.contextData.smsfNon3gppAccess"
 
 	s.Processor().QuerySmsfContextNon3gppProcedure(c, collName, ueId)
@@ -1844,6 +2021,10 @@ func (s *Server) HandleQuerySmsMngData(c *gin.Context) {
 
 	collName := "subscriptionData.provisionedData.smsMngData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 	s.Processor().QuerySmsMngDataProcedure(c, collName, ueId, servingPlmnId)
 }
@@ -1853,6 +2034,10 @@ func (s *Server) HandleQuerySmsData(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QuerySmsData")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 	collName := "subscriptionData.provisionedData.smsData"
 
@@ -1865,6 +2050,10 @@ func (s *Server) HandleQuerySmData(c *gin.Context) {
 
 	collName := "subscriptionData.provisionedData.smData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 	singleNssai := models.Snssai{}
 	singleNssaiQuery := c.Query("singleNssai")
@@ -1883,6 +2072,10 @@ func (s *Server) HandleQueryTraceData(c *gin.Context) {
 
 	collName := "subscriptionData.provisionedData.traceData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 
 	s.Processor().QueryTraceDataProcedure(c, collName, ueId, servingPlmnId)
@@ -1921,6 +2114,10 @@ func (s *Server) HandleCreateAMFSubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle CreateAMFSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	subsId := c.Params.ByName("subsId")
 
 	s.Processor().CreateAMFSubscriptionsProcedure(c, subsId, ueId, amfSubscriptionInfoArray)
@@ -1931,6 +2128,10 @@ func (s *Server) HandleRemoveAmfSubscriptionsInfo(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle RemoveAmfSubscriptionsInfo")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	subsId := c.Params.ByName("subsId")
 
 	s.Processor().RemoveAmfSubscriptionsInfoProcedure(c, subsId, ueId)
@@ -1969,6 +2170,10 @@ func (s *Server) HandleModifyAmfSubscriptionInfo(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle ModifyAmfSubscriptionInfo")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	subsId := c.Params.ByName("subsId")
 
 	s.Processor().ModifyAmfSubscriptionInfoProcedure(c, ueId, subsId, patchItemArray)
@@ -1979,6 +2184,10 @@ func (s *Server) HandleGetAmfSubscriptionInfo(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle GetAmfSubscriptionInfo")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	subsId := c.Params.ByName("subsId")
 
 	s.Processor().GetAmfSubscriptionInfoProcedure(c, subsId, ueId)
@@ -2046,6 +2255,10 @@ func (s *Server) HandleQueryEEData(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QueryEEData")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.eeProfileData"
 
 	s.Processor().QueryEEDataProcedure(c, collName, ueId)
@@ -2085,6 +2298,10 @@ func (s *Server) HandlePatchOperSpecData(c *gin.Context) {
 
 	collName := "subscriptionData.operatorSpecificData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().PatchOperSpecDataProcedure(c, collName, ueId, patchItemArray)
 }
@@ -2094,6 +2311,10 @@ func (s *Server) HandleQueryOperSpecData(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QueryOperSpecData")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.operatorSpecificData"
 
 	s.Processor().QueryOperSpecDataProcedure(c, collName, ueId)
@@ -2105,6 +2326,10 @@ func (s *Server) HandleGetppData(c *gin.Context) {
 
 	collName := "subscriptionData.ppData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().GetppDataProcedure(c, collName, ueId)
 }
@@ -2140,6 +2365,10 @@ func (s *Server) HandleModifyPpData(c *gin.Context) {
 	}
 	collName := "subscriptionData.ppData"
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	s.Processor().ModifyPpDataProcedure(c, collName, ueId, patchItemArray)
 }
@@ -2159,6 +2388,10 @@ func (s *Server) HandleGetOdbData(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle GetOdbData")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.operatorDeterminedBarringData"
 
 	s.Processor().GetOdbDataProcedure(c, collName, ueId)
@@ -2276,6 +2509,10 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 	// String represents the SUPI or GPSI.
 	// Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	match, err := regexp.MatchString(
 		"^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId)
 	if !match {
@@ -2303,6 +2540,10 @@ func (s *Server) HandleQueryeesubscriptions(c *gin.Context) {
 	// String represents the SUPI or GPSI.
 	// Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	match, err := regexp.MatchString(
 		"^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$", ueId)
 	if !match {
@@ -2328,6 +2569,10 @@ func (s *Server) HandleRemoveeeSubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle RemoveeeSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 
 	subsId := c.Params.ByName("subsId")
 
@@ -2366,6 +2611,10 @@ func (s *Server) HandleUpdateEesubscriptions(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle UpdateEesubscriptions")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	subsId := c.Params.ByName("subsId")
 
 	s.Processor().UpdateEesubscriptionsProcedure(c, ueId, subsId, eeSubscription)
