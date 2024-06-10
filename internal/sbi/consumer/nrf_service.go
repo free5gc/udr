@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/free5gc/openapi"
@@ -17,7 +18,31 @@ import (
 )
 
 type NrfService struct {
-	nrfNfMgmtClient *Nnrf_NFManagement.APIClient
+	nfMngmntMu sync.RWMutex
+
+	nfMngmntClients map[string]*Nnrf_NFManagement.APIClient
+}
+
+func (ns *NrfService) getNFManagementClient(uri string) *Nnrf_NFManagement.APIClient {
+	if uri == "" {
+		return nil
+	}
+	ns.nfMngmntMu.RLock()
+	client, ok := ns.nfMngmntClients[uri]
+	if ok {
+		defer ns.nfMngmntMu.RUnlock()
+		return client
+	}
+
+	configuration := Nnrf_NFManagement.NewConfiguration()
+	configuration.SetBasePath(uri)
+	client = Nnrf_NFManagement.NewAPIClient(configuration)
+
+	ns.nfMngmntMu.RUnlock()
+	ns.nfMngmntMu.Lock()
+	defer ns.nfMngmntMu.Unlock()
+	ns.nfMngmntClients[uri] = client
+	return client
 }
 
 func (ns *NrfService) buildNFInstance(context *udr_context.UDRContext) (models.NfProfile, error) {
@@ -78,7 +103,7 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 
 	configuration := Nnrf_NFManagement.NewConfiguration()
 	configuration.SetBasePath(nrfUri)
-	client := Nnrf_NFManagement.NewAPIClient(configuration)
+	client := ns.getNFManagementClient(nrfUri)
 	var resouceNrfUri string
 	var retrieveNfInstanceId string
 
@@ -146,7 +171,7 @@ func (ns *NrfService) SendDeregisterNFInstance() (problemDetails *models.Problem
 	// Set client and set url
 	configuration := Nnrf_NFManagement.NewConfiguration()
 	configuration.SetBasePath(udrSelf.NrfUri)
-	client := Nnrf_NFManagement.NewAPIClient(configuration)
+	client := ns.getNFManagementClient(udrSelf.NrfUri)
 
 	var res *http.Response
 

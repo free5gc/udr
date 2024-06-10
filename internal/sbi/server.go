@@ -113,14 +113,14 @@ func (s *Server) unsecureServe() error {
 }
 
 func (s *Server) secureServe() error {
-	sbiConfig := s.UdrApp.Config().Configuration.Sbi
+	sbiConfig := s.UdrApp.Config()
 
-	pemPath := sbiConfig.Tls.Pem
+	pemPath := sbiConfig.GetCertPemPath()
 	if pemPath == "" {
 		pemPath = factory.UdrDefaultCertPemPath
 	}
 
-	keyPath := sbiConfig.Tls.Key
+	keyPath := sbiConfig.GetCertKeyPath()
 	if keyPath == "" {
 		keyPath = factory.UdrDefaultPrivateKeyPath
 	}

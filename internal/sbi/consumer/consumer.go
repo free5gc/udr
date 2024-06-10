@@ -15,7 +15,7 @@ func NewConsumer(udr app.UdrApp) *Consumer {
 	configuration := Nnrf_NFManagement.NewConfiguration()
 	configuration.SetBasePath(udr.Context().NrfUri)
 	nrfService := &NrfService{
-		nrfNfMgmtClient: Nnrf_NFManagement.NewAPIClient(configuration),
+		nfMngmntClients: make(map[string]*Nnrf_NFManagement.APIClient),
 	}
 
 	return &Consumer{
