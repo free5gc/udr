@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -254,10 +253,7 @@ func TestUDR_InfluData_CreateThenGet(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
-	gin.SetMode(gin.ReleaseMode) // Disable the output of route registration messages in gin-debug.
-
 	// PUT, PATCH, DELETE
-	fmt.Println("TestUDR_InfluData_CreateThenGet")
 	setupMongoDB(t)
 	server := setupHttpServer()
 	baseUri := factory.UdrDrResUriPrefix + "/application-data/influenceData"
