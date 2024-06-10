@@ -7,6 +7,7 @@ import (
 
 type Consumer struct {
 	app.UdrApp
+
 	*NrfService
 }
 

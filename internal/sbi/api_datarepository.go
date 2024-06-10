@@ -782,7 +782,7 @@ func (s *Server) HandleAmfContext3gpp(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle AmfContext3gpp")
+	logger.DataRepoLog.Tracef("Handle AmfContext3gpp")
 	collName := "subscriptionData.contextData.amf3gppAccess"
 	ueId := c.Params.ByName("ueId")
 
@@ -819,7 +819,7 @@ func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateAmfContext3gpp")
+	logger.DataRepoLog.Tracef("Handle CreateAmfContext3gpp")
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.contextData.amf3gppAccess"
 	s.Processor().CreateAmfContext3gppProcedure(c, collName, ueId, amf3GppAccessRegistration)
@@ -827,7 +827,7 @@ func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
 
 // HTTPQueryAmfContext3gpp - Retrieves the AMF context data of a UE using 3gpp access
 func (s *Server) HandleQueryAmfContext3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAmfContext3gpp")
+	logger.DataRepoLog.Tracef("Handle QueryAmfContext3gpp")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.contextData.amf3gppAccess"
@@ -865,7 +865,7 @@ func (s *Server) HandleAmfContextNon3gpp(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle AmfContextNon3gpp")
+	logger.DataRepoLog.Tracef("Handle AmfContextNon3gpp")
 
 	ueId := c.Params.ByName("ueId")
 	filter := bson.M{"ueId": ueId}
@@ -903,7 +903,7 @@ func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateAmfContextNon3gpp")
+	logger.DataRepoLog.Tracef("Handle CreateAmfContextNon3gpp")
 
 	s.Processor().CreateAmfContextNon3gppProcedure(
 		c, amfNon3GppAccessRegistration, "subscriptionData.contextData.amfNon3gppAccess", c.Params.ByName("ueId"))
@@ -911,7 +911,7 @@ func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
 
 // HTTPQueryAmfContextNon3gpp - Retrieves the AMF context data of a UE using non-3gpp access
 func (s *Server) HandleQueryAmfContextNon3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAmfContextNon3gpp")
+	logger.DataRepoLog.Tracef("Handle QueryAmfContextNon3gpp")
 
 	collName := "subscriptionData.contextData.amfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
@@ -920,7 +920,7 @@ func (s *Server) HandleQueryAmfContextNon3gpp(c *gin.Context) {
 
 // HTTPQueryAmData - Retrieves the access and mobility subscription data of a UE
 func (s *Server) HandleQueryAmData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAmData")
+	logger.DataRepoLog.Tracef("Handle QueryAmData")
 
 	collName := "subscriptionData.provisionedData.amData"
 	ueId := c.Params.ByName("ueId")
@@ -958,7 +958,7 @@ func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateAuthenticationStatus")
+	logger.DataRepoLog.Tracef("Handle CreateAuthenticationStatus")
 
 	putData := util.ToBsonM(authEvent)
 	ueId := c.Params.ByName("ueId")
@@ -969,7 +969,7 @@ func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
 
 // HTTPQueryAuthenticationStatus - Retrieves the Authentication Status of a UE
 func (s *Server) HandleQueryAuthenticationStatus(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAuthenticationStatus")
+	logger.DataRepoLog.Tracef("Handle QueryAuthenticationStatus")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.authenticationData.authenticationStatus"
@@ -1007,7 +1007,7 @@ func (s *Server) HandleModifyAuthentication(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle ModifyAuthentication")
+	logger.DataRepoLog.Tracef("Handle ModifyAuthentication")
 
 	collName := "subscriptionData.authenticationData.authenticationSubscription"
 	ueId := c.Params.ByName("ueId")
@@ -1017,7 +1017,7 @@ func (s *Server) HandleModifyAuthentication(c *gin.Context) {
 
 // HTTPQueryAuthSubsData - Retrieves the authentication subscription data of a UE
 func (s *Server) HandleQueryAuthSubsData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAuthSubsData")
+	logger.DataRepoLog.Tracef("Handle QueryAuthSubsData")
 
 	collName := "subscriptionData.authenticationData.authenticationSubscription"
 	ueId := c.Params.ByName("ueId")
@@ -1055,7 +1055,7 @@ func (s *Server) HandleCreateAuthenticationSoR(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateAuthenticationSoR")
+	logger.DataRepoLog.Tracef("Handle CreateAuthenticationSoR")
 	putData := util.ToBsonM(sorData)
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
@@ -1065,7 +1065,7 @@ func (s *Server) HandleCreateAuthenticationSoR(c *gin.Context) {
 
 // HTTPQueryAuthSoR - Retrieves the SoR acknowledgement information of a UE
 func (s *Server) HandleQueryAuthSoR(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryAuthSoR")
+	logger.DataRepoLog.Tracef("Handle QueryAuthSoR")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.ueUpdateConfirmationData.sorData"
@@ -1076,7 +1076,7 @@ func (s *Server) HandleQueryAuthSoR(c *gin.Context) {
 // HTTPApplicationDataInfluenceDataGet -
 func (s *Server) HandleApplicationDataInfluenceDataGet(c *gin.Context) {
 	var filter []bson.M
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataGet")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataGet")
 	collName := "applicationData.influenceData"
 
 	influenceIdsParam := c.QueryArray("influence-Ids")
@@ -1130,7 +1130,7 @@ func (s *Server) HandleApplicationDataInfluenceDataGet(c *gin.Context) {
 
 // HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
 func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete")
 
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
@@ -1144,7 +1144,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDel
 
 // HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet -
 func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet")
 
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
@@ -1191,7 +1191,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptiondIdPut")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptiondIdPut")
 
 	subscriptionId := c.Params.ByName("subscriptionId")
 
@@ -1220,7 +1220,7 @@ func getDataFromRequestBody(c *gin.Context, data interface{}) error {
 // HTTPApplicationDataPfdsAppIdDelete -
 func (s *Server) HandleApplicationDataPfdsAppIdDelete(c *gin.Context) {
 	appID := c.Params.ByName("appId")
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdDelete: appID=%q", appID)
+	logger.DataRepoLog.Tracef("Handle ApplicationDataPfdsAppIdDelete: appID=%q", appID)
 
 	s.Processor().DeleteApplicationDataIndividualPfdFromDBProcedure(c, appID)
 }
@@ -1228,7 +1228,7 @@ func (s *Server) HandleApplicationDataPfdsAppIdDelete(c *gin.Context) {
 // HTTPApplicationDataPfdsAppIdGet -
 func (s *Server) HandleApplicationDataPfdsAppIdGet(c *gin.Context) {
 	appID := c.Params.ByName("appId")
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdGet: appID=%q", appID)
+	logger.DataRepoLog.Tracef("Handle ApplicationDataPfdsAppIdGet: appID=%q", appID)
 
 	s.Processor().GetApplicationDataIndividualPfdFromDBProcedure(c, appID)
 }
@@ -1242,7 +1242,7 @@ func (s *Server) HandleApplicationDataPfdsAppIdPut(c *gin.Context) {
 	}
 
 	appID := c.Params.ByName("appId")
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsAppIdPut: appID=%q", appID)
+	logger.DataRepoLog.Tracef("Handle ApplicationDataPfdsAppIdPut: appID=%q", appID)
 
 	s.Processor().PutApplicationDataIndividualPfdToDBProcedure(c, appID, &pfdDataforApp)
 }
@@ -1251,7 +1251,7 @@ func (s *Server) HandleApplicationDataPfdsAppIdPut(c *gin.Context) {
 func (s *Server) HandleApplicationDataPfdsGet(c *gin.Context) {
 	query := c.Request.URL.Query()
 	pfdsAppIDs := query["appId"]
-	logger.DataRepoLog.Infof("Handle ApplicationDataPfdsGet: pfdsAppIDs=%#v", pfdsAppIDs)
+	logger.DataRepoLog.Tracef("Handle ApplicationDataPfdsGet: pfdsAppIDs=%#v", pfdsAppIDs)
 
 	// TODO: Parse appID with separator ','
 	// Ex: "app1,app2,..."
@@ -1275,7 +1275,7 @@ func (s *Server) HandleExposureDataSubsToNotifySubIdPut(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataBdtReferenceIdDelete -
 func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdDelete")
+	logger.DataRepoLog.Tracef("Handle PolicyDataBdtDataBdtReferenceIdDelete")
 
 	collName := "policyData.bdtData"
 	bdtReferenceId := c.Params.ByName("bdtReferenceId")
@@ -1285,7 +1285,7 @@ func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdDelete(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataBdtReferenceIdGet -
 func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdGet")
+	logger.DataRepoLog.Tracef("Handle PolicyDataBdtDataBdtReferenceIdGet")
 
 	collName := "policyData.bdtData"
 	bdtReferenceId := c.Params.ByName("bdtReferenceId")
@@ -1300,7 +1300,7 @@ func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
 	if err := getDataFromRequestBody(c, &bdtData); err != nil {
 		return
 	}
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataBdtReferenceIdPut")
+	logger.DataRepoLog.Tracef("Handle PolicyDataBdtDataBdtReferenceIdPut")
 
 	collName := "policyData.bdtData"
 	bdtReferenceId := c.Params.ByName("bdtReferenceId")
@@ -1310,7 +1310,7 @@ func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataGet -
 func (s *Server) HandlePolicyDataBdtDataGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataBdtDataGet")
+	logger.DataRepoLog.Tracef("Handle PolicyDataBdtDataGet")
 
 	collName := "policyData.bdtData"
 
@@ -1319,7 +1319,7 @@ func (s *Server) HandlePolicyDataBdtDataGet(c *gin.Context) {
 
 // HTTPPolicyDataPlmnsPlmnIdUePolicySetGet -
 func (s *Server) HandlePolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataPlmnsPlmnIdUePolicySetGet")
+	logger.DataRepoLog.Tracef("Handle PolicyDataPlmnsPlmnIdUePolicySetGet")
 
 	collName := "policyData.plmns.uePolicySet"
 	plmnId := c.Params.ByName("plmnId")
@@ -1329,7 +1329,7 @@ func (s *Server) HandlePolicyDataPlmnsPlmnIdUePolicySetGet(c *gin.Context) {
 
 // HTTPPolicyDataSponsorConnectivityDataSponsorIdGet -
 func (s *Server) HandlePolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataSponsorConnectivityDataSponsorIdGet")
+	logger.DataRepoLog.Tracef("Handle PolicyDataSponsorConnectivityDataSponsorIdGet")
 
 	collName := "policyData.sponsorConnectivityData"
 	sponsorId := c.Params.ByName("sponsorId")
@@ -1355,7 +1355,7 @@ func (s *Server) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, pd)
 	}
 
-	logger.DataRepoLog.Infof("Handle PolicyDataSubsToNotifyPost")
+	logger.DataRepoLog.Tracef("Handle PolicyDataSubsToNotifyPost")
 
 	s.Processor().PolicyDataSubsToNotifyPostProcedure(c, policyDataSubscription)
 }
@@ -1385,7 +1385,7 @@ func (s *Server) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, pd)
 	}
 
-	logger.DataRepoLog.Infof("Handle PolicyDataSubsToNotifySubsIdPut")
+	logger.DataRepoLog.Tracef("Handle PolicyDataSubsToNotifySubsIdPut")
 
 	subsId := c.Params.ByName("subsId")
 
@@ -1394,7 +1394,7 @@ func (s *Server) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdAmDataGet -
 func (s *Server) HandlePolicyDataUesUeIdAmDataGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdAmDataGet")
+	logger.DataRepoLog.Tracef("Handle PolicyDataUesUeIdAmDataGet")
 
 	collName := "policyData.ues.amData"
 	ueId := c.Params.ByName("ueId")
@@ -1438,7 +1438,7 @@ func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) 
 
 // HTTPPolicyDataUesUeIdSmDataGet -
 func (s *Server) HandlePolicyDataUesUeIdSmDataGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdSmDataGet")
+	logger.DataRepoLog.Tracef("Handle PolicyDataUesUeIdSmDataGet")
 
 	collName := "policyData.ues.smData"
 	ueId := c.Params.ByName("ueId")
@@ -1460,7 +1460,7 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataPatch(c *gin.Context) {
 	if err := getDataFromRequestBody(c, &usageMonDataMap); err != nil {
 		return
 	}
-	logger.DataRepoLog.Infof("Handle PolicyDataUesUeIdSmDataPatch")
+	logger.DataRepoLog.Tracef("Handle PolicyDataUesUeIdSmDataPatch")
 
 	collName := "policyData.ues.smData.usageMonData"
 	ueId := c.Params.ByName("ueId")
@@ -1535,7 +1535,7 @@ func (s *Server) HandlePolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
 
 // HTTPQueryProvisionedData - Retrieve multiple provisioned data sets of a UE
 func (s *Server) HandleQueryProvisionedData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryProvisionedData")
+	logger.DataRepoLog.Tracef("Handle QueryProvisionedData")
 
 	var provisionedDataSets models.ProvisionedDataSets
 	ueId := c.Params.ByName("ueId")
@@ -1546,7 +1546,7 @@ func (s *Server) HandleQueryProvisionedData(c *gin.Context) {
 
 // HTTPRemovesdmSubscriptions - Deletes a sdmsubscriptions
 func (s *Server) HandleRemovesdmSubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle RemovesdmSubscriptions")
+	logger.DataRepoLog.Tracef("Handle RemovesdmSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
 	subsId := c.Params.ByName("subsId")
@@ -1584,7 +1584,7 @@ func (s *Server) HandleUpdatesdmsubscriptions(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle Updatesdmsubscriptions")
+	logger.DataRepoLog.Tracef("Handle Updatesdmsubscriptions")
 
 	ueId := c.Params.ByName("ueId")
 	subsId := c.Params.ByName("subsId")
@@ -1622,7 +1622,7 @@ func (s *Server) HandleCreateSdmSubscriptions(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateSdmSubscriptions")
+	logger.DataRepoLog.Tracef("Handle CreateSdmSubscriptions")
 
 	collName := "subscriptionData.contextData.amfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
@@ -1632,7 +1632,7 @@ func (s *Server) HandleCreateSdmSubscriptions(c *gin.Context) {
 
 // HTTPQuerysdmsubscriptions - Retrieves the sdm subscriptions of a UE
 func (s *Server) HandleQuerysdmsubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle Querysdmsubscriptions")
+	logger.DataRepoLog.Tracef("Handle Querysdmsubscriptions")
 
 	ueId := c.Params.ByName("ueId")
 
@@ -1669,7 +1669,7 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateSmfContextNon3gpp")
+	logger.DataRepoLog.Tracef("Handle CreateSmfContextNon3gpp")
 
 	collName := "subscriptionData.contextData.smfRegistrations"
 	ueId := c.Params.ByName("ueId")
@@ -1683,7 +1683,7 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 
 // HTTPDeleteSmfContext - To remove an individual SMF context data of a UE the UDR
 func (s *Server) HandleDeleteSmfContext(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle DeleteSmfContext")
+	logger.DataRepoLog.Tracef("Handle DeleteSmfContext")
 
 	collName := "subscriptionData.contextData.smfRegistrations"
 	ueId := c.Params.ByName("ueId")
@@ -1694,7 +1694,7 @@ func (s *Server) HandleDeleteSmfContext(c *gin.Context) {
 
 // HTTPQuerySmfRegistration - Retrieves the individual SMF registration of a UE
 func (s *Server) HandleQuerySmfRegistration(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmfRegistration")
+	logger.DataRepoLog.Tracef("Handle QuerySmfRegistration")
 
 	ueId := c.Params.ByName("ueId")
 	pduSessionId := c.Params.ByName("pduSessionId")
@@ -1705,7 +1705,7 @@ func (s *Server) HandleQuerySmfRegistration(c *gin.Context) {
 
 // HTTPQuerySmfRegList - Retrieves the SMF registration list of a UE
 func (s *Server) HandleQuerySmfRegList(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmfRegList")
+	logger.DataRepoLog.Tracef("Handle QuerySmfRegList")
 
 	collName := "subscriptionData.contextData.smfRegistrations"
 	ueId := c.Params.ByName("ueId")
@@ -1714,7 +1714,7 @@ func (s *Server) HandleQuerySmfRegList(c *gin.Context) {
 
 // HTTPQuerySmfSelectData - Retrieves the SMF selection subscription data of a UE
 func (s *Server) HandleQuerySmfSelectData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmfSelectData")
+	logger.DataRepoLog.Tracef("Handle QuerySmfSelectData")
 
 	collName := "subscriptionData.provisionedData.smfSelectionSubscriptionData"
 	ueId := c.Params.ByName("ueId")
@@ -1752,7 +1752,7 @@ func (s *Server) HandleCreateSmsfContext3gpp(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateSmsfContext3gpp")
+	logger.DataRepoLog.Tracef("Handle CreateSmsfContext3gpp")
 
 	collName := "subscriptionData.contextData.smsf3gppAccess"
 	ueId := c.Params.ByName("ueId")
@@ -1762,7 +1762,7 @@ func (s *Server) HandleCreateSmsfContext3gpp(c *gin.Context) {
 
 // HTTPDeleteSmsfContext3gpp - To remove the SMSF context data of a UE via 3GPP access
 func (s *Server) HandleDeleteSmsfContext3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle DeleteSmsfContext3gpp")
+	logger.DataRepoLog.Tracef("Handle DeleteSmsfContext3gpp")
 
 	collName := "subscriptionData.contextData.smsf3gppAccess"
 	ueId := c.Params.ByName("ueId")
@@ -1772,7 +1772,7 @@ func (s *Server) HandleDeleteSmsfContext3gpp(c *gin.Context) {
 
 // HTTPQuerySmsfContext3gpp - Retrieves the SMSF context data of a UE using 3gpp access
 func (s *Server) HandleQuerySmsfContext3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmsfContext3gpp")
+	logger.DataRepoLog.Tracef("Handle QuerySmsfContext3gpp")
 
 	collName := "subscriptionData.contextData.smsf3gppAccess"
 	ueId := c.Params.ByName("ueId")
@@ -1810,7 +1810,7 @@ func (s *Server) HandleCreateSmsfContextNon3gpp(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateSmsfContextNon3gpp")
+	logger.DataRepoLog.Tracef("Handle CreateSmsfContextNon3gpp")
 
 	collName := "subscriptionData.contextData.smsfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
@@ -1820,7 +1820,7 @@ func (s *Server) HandleCreateSmsfContextNon3gpp(c *gin.Context) {
 
 // HTTPDeleteSmsfContextNon3gpp - To remove the SMSF context data of a UE via non-3GPP access
 func (s *Server) HandleDeleteSmsfContextNon3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle DeleteSmsfContextNon3gpp")
+	logger.DataRepoLog.Tracef("Handle DeleteSmsfContextNon3gpp")
 
 	collName := "subscriptionData.contextData.smsfNon3gppAccess"
 	ueId := c.Params.ByName("ueId")
@@ -1830,7 +1830,7 @@ func (s *Server) HandleDeleteSmsfContextNon3gpp(c *gin.Context) {
 
 // HTTPQuerySmsfContextNon3gpp - Retrieves the SMSF context data of a UE using non-3gpp access
 func (s *Server) HandleQuerySmsfContextNon3gpp(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmsfContextNon3gpp")
+	logger.DataRepoLog.Tracef("Handle QuerySmsfContextNon3gpp")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.contextData.smsfNon3gppAccess"
@@ -1840,7 +1840,7 @@ func (s *Server) HandleQuerySmsfContextNon3gpp(c *gin.Context) {
 
 // HTTPQuerySmsMngData - Retrieves the SMS management subscription data of a UE
 func (s *Server) HandleQuerySmsMngData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmsMngData")
+	logger.DataRepoLog.Tracef("Handle QuerySmsMngData")
 
 	collName := "subscriptionData.provisionedData.smsMngData"
 	ueId := c.Params.ByName("ueId")
@@ -1850,7 +1850,7 @@ func (s *Server) HandleQuerySmsMngData(c *gin.Context) {
 
 // HTTPQuerySmsData - Retrieves the SMS subscription data of a UE
 func (s *Server) HandleQuerySmsData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmsData")
+	logger.DataRepoLog.Tracef("Handle QuerySmsData")
 
 	ueId := c.Params.ByName("ueId")
 	servingPlmnId := c.Params.ByName("servingPlmnId")
@@ -1861,7 +1861,7 @@ func (s *Server) HandleQuerySmsData(c *gin.Context) {
 
 // HTTPQuerySmData - Retrieves the Session Management subscription data of a UE
 func (s *Server) HandleQuerySmData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QuerySmData")
+	logger.DataRepoLog.Tracef("Handle QuerySmData")
 
 	collName := "subscriptionData.provisionedData.smData"
 	ueId := c.Params.ByName("ueId")
@@ -1879,7 +1879,7 @@ func (s *Server) HandleQuerySmData(c *gin.Context) {
 
 // HTTPQueryTraceData - Retrieves the trace configuration data of a UE
 func (s *Server) HandleQueryTraceData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryTraceData")
+	logger.DataRepoLog.Tracef("Handle QueryTraceData")
 
 	collName := "subscriptionData.provisionedData.traceData"
 	ueId := c.Params.ByName("ueId")
@@ -1918,7 +1918,7 @@ func (s *Server) HandleCreateAMFSubscriptions(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateAMFSubscriptions")
+	logger.DataRepoLog.Tracef("Handle CreateAMFSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
 	subsId := c.Params.ByName("subsId")
@@ -1928,7 +1928,7 @@ func (s *Server) HandleCreateAMFSubscriptions(c *gin.Context) {
 
 // HTTPRemoveAmfSubscriptionsInfo - Deletes AMF Subscription Info for an eeSubscription
 func (s *Server) HandleRemoveAmfSubscriptionsInfo(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle RemoveAmfSubscriptionsInfo")
+	logger.DataRepoLog.Tracef("Handle RemoveAmfSubscriptionsInfo")
 
 	ueId := c.Params.ByName("ueId")
 	subsId := c.Params.ByName("subsId")
@@ -1966,7 +1966,7 @@ func (s *Server) HandleModifyAmfSubscriptionInfo(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle ModifyAmfSubscriptionInfo")
+	logger.DataRepoLog.Tracef("Handle ModifyAmfSubscriptionInfo")
 
 	ueId := c.Params.ByName("ueId")
 	subsId := c.Params.ByName("subsId")
@@ -1976,7 +1976,7 @@ func (s *Server) HandleModifyAmfSubscriptionInfo(c *gin.Context) {
 
 // HTTPGetAmfSubscriptionInfo - Retrieve AMF subscription Info
 func (s *Server) HandleGetAmfSubscriptionInfo(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle GetAmfSubscriptionInfo")
+	logger.DataRepoLog.Tracef("Handle GetAmfSubscriptionInfo")
 
 	ueId := c.Params.ByName("ueId")
 	subsId := c.Params.ByName("subsId")
@@ -1987,7 +1987,7 @@ func (s *Server) HandleGetAmfSubscriptionInfo(c *gin.Context) {
 // HandleGetSharedData - retrieve shared data
 func (s *Server) HandleGetSharedData(c *gin.Context) {
 	sharedDataIdArray := c.QueryArray("shared-data-ids")
-	logger.DataRepoLog.Infof("Handle GetSharedData")
+	logger.DataRepoLog.Tracef("Handle GetSharedData")
 
 	var sharedDataIds []string
 	if len(sharedDataIdArray) != 0 {
@@ -2043,7 +2043,7 @@ func (s *Server) HandleRemovesubscriptionDataSubscriptions(c *gin.Context) {
 
 // HTTPQueryEEData - Retrieves the ee profile data of a UE
 func (s *Server) HandleQueryEEData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryEEData")
+	logger.DataRepoLog.Tracef("Handle QueryEEData")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.eeProfileData"
@@ -2081,7 +2081,7 @@ func (s *Server) HandlePatchOperSpecData(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle PatchOperSpecData")
+	logger.DataRepoLog.Tracef("Handle PatchOperSpecData")
 
 	collName := "subscriptionData.operatorSpecificData"
 	ueId := c.Params.ByName("ueId")
@@ -2091,7 +2091,7 @@ func (s *Server) HandlePatchOperSpecData(c *gin.Context) {
 
 // HTTPQueryOperSpecData - Retrieves the operator specific data of a UE
 func (s *Server) HandleQueryOperSpecData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryOperSpecData")
+	logger.DataRepoLog.Tracef("Handle QueryOperSpecData")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.operatorSpecificData"
@@ -2101,7 +2101,7 @@ func (s *Server) HandleQueryOperSpecData(c *gin.Context) {
 
 // HTTPGetppData - Read the profile of a given UE
 func (s *Server) HandleGetppData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle GetppData")
+	logger.DataRepoLog.Tracef("Handle GetppData")
 
 	collName := "subscriptionData.ppData"
 	ueId := c.Params.ByName("ueId")
@@ -2146,7 +2146,7 @@ func (s *Server) HandleModifyPpData(c *gin.Context) {
 
 // HTTPGetIdentityData - Retrieve identity data by SUPI or GPSI
 func (s *Server) HandleGetIdentityData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle GetIdentityData")
+	logger.DataRepoLog.Tracef("Handle GetIdentityData")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.identityData"
@@ -2156,7 +2156,7 @@ func (s *Server) HandleGetIdentityData(c *gin.Context) {
 
 // HTTPGetOdbData - Retrieve ODB Data data by SUPI or GPSI
 func (s *Server) HandleGetOdbData(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle GetOdbData")
+	logger.DataRepoLog.Tracef("Handle GetOdbData")
 
 	ueId := c.Params.ByName("ueId")
 	collName := "subscriptionData.operatorDeterminedBarringData"
@@ -2192,7 +2192,7 @@ func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle CreateEeGroupSubscriptions")
+	logger.DataRepoLog.Tracef("Handle CreateEeGroupSubscriptions")
 
 	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
 	ueGroupId := c.Params.ByName("ueGroupId")
@@ -2218,7 +2218,7 @@ func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
 
 // HTTPQueryEeGroupSubscriptions - Retrieves the ee subscriptions of a group of UEs or any UE
 func (s *Server) HandleQueryEeGroupSubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle QueryEeGroupSubscriptions")
+	logger.DataRepoLog.Tracef("Handle QueryEeGroupSubscriptions")
 
 	// pattern: '^(extgroupid-[^@]+@[^@]+|anyUE)$' -- 3GPP 29.505 5.2.29.2
 	ueGroupId := c.Params.ByName("ueGroupId")
@@ -2271,7 +2271,7 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 		return
 	}
 
-	logger.DataRepoLog.Infof("Handle CreateEeSubscriptions")
+	logger.DataRepoLog.Tracef("Handle CreateEeSubscriptions")
 
 	// String represents the SUPI or GPSI.
 	// Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
@@ -2298,7 +2298,7 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 
 // HTTPQueryeesubscriptions - Retrieves the ee subscriptions of a UE
 func (s *Server) HandleQueryeesubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle Queryeesubscriptions")
+	logger.DataRepoLog.Tracef("Handle Queryeesubscriptions")
 
 	// String represents the SUPI or GPSI.
 	// Pattern: "^(imsi-[0-9]{5,15}|nai-.+|msisdn-[0-9]{5,15}|extid-[^@]+@[^@]+|gci-.+|gli-.+|.+)$".
@@ -2325,7 +2325,7 @@ func (s *Server) HandleQueryeesubscriptions(c *gin.Context) {
 
 // HTTPRemoveeeSubscriptions - Deletes a eeSubscription
 func (s *Server) HandleRemoveeeSubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle RemoveeeSubscriptions")
+	logger.DataRepoLog.Tracef("Handle RemoveeeSubscriptions")
 
 	ueId := c.Params.ByName("ueId")
 
@@ -2363,7 +2363,7 @@ func (s *Server) HandleUpdateEesubscriptions(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle UpdateEesubscriptions")
+	logger.DataRepoLog.Tracef("Handle UpdateEesubscriptions")
 
 	ueId := c.Params.ByName("ueId")
 	subsId := c.Params.ByName("subsId")
@@ -2373,7 +2373,7 @@ func (s *Server) HandleUpdateEesubscriptions(c *gin.Context) {
 
 // HTTPRemoveEeGroupSubscriptions - Deletes a eeSubscription for a group of UEs or any UE
 func (s *Server) HandleRemoveEeGroupSubscriptions(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle RemoveEeGroupSubscriptions")
+	logger.DataRepoLog.Tracef("Handle RemoveEeGroupSubscriptions")
 
 	ueGroupId := c.Params.ByName("ueGroupId")
 	subsId := c.Params.ByName("subsId")
@@ -2410,7 +2410,7 @@ func (s *Server) HandleUpdateEeGroupSubscriptions(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle UpdateEeGroupSubscriptions")
+	logger.DataRepoLog.Tracef("Handle UpdateEeGroupSubscriptions")
 
 	ueGroupId := c.Params.ByName("ueGroupId")
 	subsId := c.Params.ByName("subsId")
@@ -2453,7 +2453,7 @@ func (s *Server) HandleQueryAccessAndMobilityData(c *gin.Context) {
 
 // HTTPApplicationDataInfluenceDataSubsToNotifyGet -
 func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyGet")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataSubsToNotifyGet")
 
 	dnn := c.Query("dnn")
 	internalGroupId := c.Query("internal-Group-Id")
@@ -2513,7 +2513,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Conte
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataSubsToNotifyPost")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataSubsToNotifyPost")
 	subscriptionId := udr_context.NewInfluenceDataSubscriptionId()
 
 	s.Processor().ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostProcedure(c, subscriptionId, &trafficInfluSub)
@@ -2521,7 +2521,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Conte
 
 // HTTPApplicationDataInfluenceDataInfluenceIdDelete - Delete an individual Influence Data resource
 func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdDelete(c *gin.Context) {
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdDelete")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataInfluenceIdDelete")
 
 	collName := "applicationData.influenceData"
 	influenceId := c.Params.ByName("influenceId")
@@ -2564,7 +2564,7 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
-	logger.DataRepoLog.Infof("Handle ApplicationDataInfluenceDataInfluenceIdPut")
+	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataInfluenceIdPut")
 
 	collName := "applicationData.influenceData"
 	influenceId := c.Params.ByName("influenceId")

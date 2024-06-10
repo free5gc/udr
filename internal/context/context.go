@@ -29,20 +29,20 @@ const (
 )
 
 func Init() {
-	GetSelf().Name = "udr"
-	GetSelf().EeSubscriptionIDGenerator = 1
-	GetSelf().SdmSubscriptionIDGenerator = 1
-	GetSelf().SubscriptionDataSubscriptionIDGenerator = 1
-	GetSelf().PolicyDataSubscriptionIDGenerator = 1
-	GetSelf().SubscriptionDataSubscriptions = make(map[subsId]*models.SubscriptionDataSubscriptions)
-	GetSelf().PolicyDataSubscriptions = make(map[subsId]*models.PolicyDataSubscription)
-	GetSelf().InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+	udrContext.Name = "udr"
+	udrContext.EeSubscriptionIDGenerator = 1
+	udrContext.SdmSubscriptionIDGenerator = 1
+	udrContext.SubscriptionDataSubscriptionIDGenerator = 1
+	udrContext.PolicyDataSubscriptionIDGenerator = 1
+	udrContext.SubscriptionDataSubscriptions = make(map[subsId]*models.SubscriptionDataSubscriptions)
+	udrContext.PolicyDataSubscriptions = make(map[subsId]*models.PolicyDataSubscription)
+	udrContext.InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
 	serviceName := []models.ServiceName{
 		models.ServiceName_NUDR_DR,
 	}
-	GetSelf().NfService = initNfService(serviceName, "1.0.0")
-	GetSelf().NrfUri = fmt.Sprintf("%s://%s:%d", models.UriScheme_HTTPS, udrContext.RegisterIPv4, 29510)
+	udrContext.NfService = initNfService(serviceName, "1.0.0")
+	udrContext.NrfUri = fmt.Sprintf("%s://%s:%d", models.UriScheme_HTTPS, udrContext.RegisterIPv4, 29510)
 }
 
 type UDRContext struct {

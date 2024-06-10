@@ -92,7 +92,7 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 			nf, res, registerErr := client.NFInstanceIDDocumentApi.RegisterNFInstance(ctx, profile.NfInstanceId, profile)
 			if registerErr != nil || res == nil {
 				// TODO : add log
-				fmt.Println(fmt.Errorf("UDR register to NRF Error[%s]", err.Error()))
+				logger.ConsumerLog.Errorf("UDR register to NRF Error[%s]", registerErr.Error())
 				time.Sleep(2 * time.Second)
 				continue
 			}
@@ -187,7 +187,7 @@ func (ns *NrfService) SendSearchNFInstances(nrfUri string, targetNfType, request
 	var res *http.Response
 	result, res, err := client.NFInstancesStoreApi.SearchNFInstances(ctx, targetNfType, requestNfType, &param)
 	if res != nil && res.StatusCode == http.StatusTemporaryRedirect {
-		err = fmt.Errorf("temporary tedirect for non NRF consumer")
+		err = fmt.Errorf("temporary redirect for non NRF consumer")
 	}
 	defer func() {
 		if rspCloseErr := res.Body.Close(); rspCloseErr != nil {

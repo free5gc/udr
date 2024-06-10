@@ -29,6 +29,7 @@ type Server struct {
 
 type UDR interface {
 	app.UdrApp
+
 	Processor() *processor.Processor
 }
 
