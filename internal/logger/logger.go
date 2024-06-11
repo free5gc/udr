@@ -20,7 +20,7 @@ var (
 	GinLog      *logrus.Entry
 	ProcLog     *logrus.Entry
 	SBILog      *logrus.Entry
-	DbLog 	 *logrus.Entry
+	DbLog       *logrus.Entry
 )
 
 func init() {

@@ -25,28 +25,27 @@ func NewMongoDbConnector(mongo *factory.Mongodb) MongoDbConnector {
 
 func (m MongoDbConnector) PatchDataToDBAndNotify(
 	collName string, ueId string, patchItem []models.PatchItem, filter bson.M,
-) ( origValue, newValue map[string]interface{}, err error) {
-	
+) (origValue, newValue map[string]interface{}, err error) {
 	origValue, err = mongoapi.RestfulAPIGetOne(collName, filter)
 	if err != nil {
-		return 
+		return
 	}
 
 	patchJSON, err := json.Marshal(patchItem)
 	if err != nil {
-		return 
+		return
 	}
 
 	if err = mongoapi.RestfulAPIJSONPatch(collName, filter, patchJSON); err != nil {
-		return 
+		return
 	}
 
 	newValue, err = mongoapi.RestfulAPIGetOne(collName, filter)
 	if err != nil {
-		return 
+		return
 	}
-	
-	return 
+
+	return
 }
 
 func (m MongoDbConnector) GetDataFromDB(

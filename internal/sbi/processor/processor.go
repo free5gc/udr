@@ -12,7 +12,6 @@ type Processor struct {
 }
 
 func NewProcessor(udr app.UdrApp) *Processor {
-	
 	return &Processor{
 		UdrApp:      udr,
 		DbConnector: database.NewDbConnector(factory.UdrConfig.Configuration.DbConnectorType),

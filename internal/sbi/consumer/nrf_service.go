@@ -14,7 +14,6 @@ import (
 	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/udr/pkg/factory"
 )
 
 type NrfService struct {
@@ -45,8 +44,8 @@ func (ns *NrfService) getNFManagementClient(uri string) *Nnrf_NFManagement.APICl
 	return client
 }
 
-func (ns *NrfService) buildNFInstance(context *udr_context.UDRContext) (models.NfProfile, error) {
-	config := factory.UdrConfig
+func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.NfProfile, error) {
+	// config := factory.UdrConfig
 
 	profile := models.NfProfile{
 		NfInstanceId:  context.NfId,
@@ -63,40 +62,20 @@ func (ns *NrfService) buildNFInstance(context *udr_context.UDRContext) (models.N
 		},
 	}
 
-	version := config.Info.Version
-	tmpVersion := strings.Split(version, ".")
-	versionUri := "v" + tmpVersion[0]
-	apiPrefix := fmt.Sprintf("%s://%s:%d", context.UriScheme, context.RegisterIPv4, context.SBIPort)
-	profile.NfServices = &[]models.NfService{
-		{
-			ServiceInstanceId: "datarepository",
-			ServiceName:       models.ServiceName_NUDR_DR,
-			Versions: &[]models.NfServiceVersion{
-				{
-					ApiFullVersion:  version,
-					ApiVersionInUri: versionUri,
-				},
-			},
-			Scheme:          context.UriScheme,
-			NfServiceStatus: models.NfServiceStatus_REGISTERED,
-			ApiPrefix:       apiPrefix,
-			IpEndPoints: &[]models.IpEndPoint{
-				{
-					Ipv4Address: context.RegisterIPv4,
-					Transport:   models.TransportProtocol_TCP,
-					Port:        int32(context.SBIPort),
-				},
-			},
-		},
+	var services []models.NfService
+	for _, nfService := range context.NfService {
+		services = append(services, nfService)
+		logger.ConsumerLog.Infof("Add NFService %+v", nfService)
 	}
-
-	// TODO: finish the Udr Info
+	if len(services) > 0 {
+		profile.NfServices = &services
+	}
 	return profile, nil
 }
 
 func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string) (string, string, error) {
 	// Set client and set url
-	profile, err := ns.buildNFInstance(udr_context.GetSelf())
+	profile, err := ns.buildNFProfile(udr_context.GetSelf())
 	if err != nil {
 		return "", "", fmt.Errorf("failed to build nrf profile %s", err.Error())
 	}

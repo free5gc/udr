@@ -23,7 +23,7 @@ import (
 
 func (p *Processor) AmfContext3gppProcedure(
 	c *gin.Context, collName string, ueId string, patchItem []models.PatchItem,
-) {	
+) {
 	var origValue, newValue map[string]interface{}
 	var err error
 	filter := bson.M{"ueId": ueId}

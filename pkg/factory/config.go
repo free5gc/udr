@@ -57,11 +57,11 @@ const (
 )
 
 type Configuration struct {
-	Sbi        *Sbi     `yaml:"sbi" valid:"required"`
-	DbConnectorType DbType `yaml:"dbConnectorType" valid:"required,in(mongodb)"`
-	Mongodb    *Mongodb `yaml:"mongodb" valid:"optional"`
-	NrfUri     string   `yaml:"nrfUri" valid:"url,required"`
-	NrfCertPem string   `yaml:"nrfCertPem,omitempty" valid:"optional"`
+	Sbi             *Sbi     `yaml:"sbi" valid:"required"`
+	DbConnectorType DbType   `yaml:"dbConnectorType" valid:"required,in(mongodb)"`
+	Mongodb         *Mongodb `yaml:"mongodb" valid:"optional"`
+	NrfUri          string   `yaml:"nrfUri" valid:"url,required"`
+	NrfCertPem      string   `yaml:"nrfCertPem,omitempty" valid:"optional"`
 }
 
 type Logger struct {

@@ -46,8 +46,6 @@ func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr.SetLogLevel(cfg.GetLogLevel())
 	udr.SetReportCaller(cfg.GetLogReportCaller())
 
-	
-	
 	processor := processor.NewProcessor(udr)
 	udr.processor = processor
 

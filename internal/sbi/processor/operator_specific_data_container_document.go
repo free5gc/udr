@@ -25,7 +25,7 @@ func (p *Processor) PatchOperSpecDataProcedure(
 ) {
 	var origValue, newValue map[string]interface{}
 	var err error
-	
+
 	filter := bson.M{"ueId": ueId}
 	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("PatchOperSpecDataProcedure err: %+v", err)
