@@ -2378,6 +2378,10 @@ func (s *Server) HandleGetIdentityData(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle GetIdentityData")
 
 	ueId := c.Params.ByName("ueId")
+	if ueId == "" {
+		util.EmptyUeIdProblemJson(c)
+		return
+	}
 	collName := "subscriptionData.identityData"
 
 	s.Processor().GetIdentityDataProcedure(c, collName, ueId)

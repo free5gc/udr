@@ -130,12 +130,11 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 				}
 				finish = true
 			} else {
-				fmt.Println("handler returned wrong status code", status)
-				fmt.Println("NRF return wrong status code", status)
+				logger.ConsumerLog.Errorf("NRF returned wrong status code: %d", status)
 			}
 		}
 	}
-	return resouceNrfUri, retrieveNfInstanceId, err
+	return resouceNrfUri, retrieveNfInstanceId, nil
 }
 
 func (ns *NrfService) SendDeregisterNFInstance() (problemDetails *models.ProblemDetails, err error) {
