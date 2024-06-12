@@ -41,8 +41,11 @@ func Init() {
 	serviceName := []models.ServiceName{
 		models.ServiceName_NUDR_DR,
 	}
-	udrContext.NfService = initNfService(serviceName, "1.0.0")
 	udrContext.NrfUri = fmt.Sprintf("%s://%s:%d", models.UriScheme_HTTPS, udrContext.RegisterIPv4, 29510)
+	initUdrContext()
+
+	config := factory.UdrConfig
+	udrContext.NfService = initNfService(serviceName, config.Info.Version)
 }
 
 type UDRContext struct {
@@ -120,7 +123,7 @@ func (context *UDRContext) Reset() {
 	context.Name = "udr"
 }
 
-func InitUdrContext() {
+func initUdrContext() {
 	config := factory.UdrConfig
 	logger.UtilLog.Infof("udrconfig Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
 	configuration := config.Configuration

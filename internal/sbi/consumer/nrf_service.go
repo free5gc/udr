@@ -65,11 +65,11 @@ func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.Nf
 	var services []models.NfService
 	for _, nfService := range context.NfService {
 		services = append(services, nfService)
-		logger.ConsumerLog.Infof("Add NFService %+v", nfService)
 	}
 	if len(services) > 0 {
 		profile.NfServices = &services
 	}
+
 	return profile, nil
 }
 

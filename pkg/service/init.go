@@ -36,7 +36,6 @@ var _ app.UdrApp = &UdrApp{}
 
 func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr_context.Init()
-	udr_context.InitUdrContext()
 	udr := &UdrApp{
 		cfg:    cfg,
 		udrCtx: udr_context.GetSelf(),
