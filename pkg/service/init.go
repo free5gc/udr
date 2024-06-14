@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"runtime/debug"
 	"sync"
-	"syscall"
 
 	"github.com/sirupsen/logrus"
 
@@ -26,6 +24,9 @@ type UdrApp struct {
 	cfg    *factory.Config
 	udrCtx *udr_context.UDRContext
 
+	ctx    context.Context
+	cancel context.CancelFunc
+
 	wg        sync.WaitGroup
 	sbiServer *sbi.Server
 	processor *processor.Processor
@@ -34,13 +35,16 @@ type UdrApp struct {
 
 var _ app.UdrApp = &UdrApp{}
 
-func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
+func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr_context.Init()
+
 	udr := &UdrApp{
 		cfg:    cfg,
 		udrCtx: udr_context.GetSelf(),
 		wg:     sync.WaitGroup{},
 	}
+	udr.ctx, udr.cancel = context.WithCancel(ctx)
+
 	udr.SetLogEnable(cfg.GetLogEnable())
 	udr.SetLogLevel(cfg.GetLogLevel())
 	udr.SetReportCaller(cfg.GetLogReportCaller())
@@ -56,12 +60,20 @@ func NewApp(cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	return udr, nil
 }
 
-func (u *UdrApp) Config() *factory.Config {
-	return u.cfg
+func (a *UdrApp) Consumer() *consumer.Consumer {
+	return a.consumer
 }
 
-func (u *UdrApp) Context() *udr_context.UDRContext {
-	return u.udrCtx
+func (a *UdrApp) Processor() *processor.Processor {
+	return a.processor
+}
+
+func (a *UdrApp) Config() *factory.Config {
+	return a.cfg
+}
+
+func (a *UdrApp) Context() *udr_context.UDRContext {
+	return a.udrCtx
 }
 
 func (a *UdrApp) SetLogEnable(enable bool) {
@@ -127,16 +139,7 @@ func (u *UdrApp) deregisterFromNrf() {
 }
 
 func (a *UdrApp) Start() {
-	ctx, cancel := context.WithCancel(context.Background())
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigCh  // Wait for interrupt signal to gracefully shutdown
-		cancel() // Notify each goroutine and wait them stopped
-	}()
-
-	err := a.registerToNrf(ctx)
+	err := a.registerToNrf(a.ctx)
 	if err != nil {
 		logger.InitLog.Errorf("register to NRF failed: %v", err)
 	} else {
@@ -165,15 +168,7 @@ func (a *UdrApp) Start() {
 	}()
 
 	a.sbiServer.Run(&a.wg)
-	go a.listenShutdown(ctx)
-}
-
-func (a *UdrApp) Processor() *processor.Processor {
-	return a.processor
-}
-
-func (a *UdrApp) Consumer() *consumer.Consumer {
-	return a.consumer
+	go a.listenShutdown(a.ctx)
 }
 
 func (a *UdrApp) listenShutdown(ctx context.Context) {
@@ -183,6 +178,8 @@ func (a *UdrApp) listenShutdown(ctx context.Context) {
 
 func (a *UdrApp) Terminate() {
 	logger.InitLog.Infof("Terminating UDR...")
+	a.cancel()
+
 	// deregister with NRF
 	a.deregisterFromNrf()
 	a.sbiServer.Shutdown()
