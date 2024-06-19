@@ -2056,7 +2056,7 @@ func (s *Server) HandleQuerySmData(c *gin.Context) {
 	}
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 	singleNssai := models.Snssai{}
-	singleNssaiQuery := c.Query("singleNssai")
+	singleNssaiQuery := c.Query("single-nssai")
 	err := json.Unmarshal([]byte(singleNssaiQuery), &singleNssai)
 	if err != nil {
 		logger.DataRepoLog.Warnln(err)
