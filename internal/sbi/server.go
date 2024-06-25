@@ -20,11 +20,10 @@ import (
 )
 
 type Server struct {
-	app.UdrApp
+	UDR
 
 	httpServer *http.Server
 	router     *gin.Engine
-	processor  *processor.Processor
 }
 
 type UDR interface {
@@ -35,8 +34,7 @@ type UDR interface {
 
 func NewServer(udr UDR, tlsKeyLogPath string) *Server {
 	s := &Server{
-		UdrApp:    udr,
-		processor: udr.Processor(),
+		UDR: udr,
 	}
 
 	s.router = newRouter(s)
@@ -49,10 +47,6 @@ func NewServer(udr UDR, tlsKeyLogPath string) *Server {
 	}
 
 	return s
-}
-
-func (s *Server) Processor() *processor.Processor {
-	return s.processor
 }
 
 func (s *Server) Run(wg *sync.WaitGroup) {
@@ -113,7 +107,7 @@ func (s *Server) unsecureServe() error {
 }
 
 func (s *Server) secureServe() error {
-	sbiConfig := s.UdrApp.Config()
+	sbiConfig := s.UDR.Config()
 
 	pemPath := sbiConfig.GetCertPemPath()
 	if pemPath == "" {
@@ -129,7 +123,7 @@ func (s *Server) secureServe() error {
 }
 
 func (s *Server) serve() error {
-	sbiConfig := s.UdrApp.Config().Configuration.Sbi
+	sbiConfig := s.UDR.Config().Configuration.Sbi
 
 	switch sbiConfig.Scheme {
 	case "http":
