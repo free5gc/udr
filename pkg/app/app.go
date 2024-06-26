@@ -5,7 +5,7 @@ import (
 	"github.com/free5gc/udr/pkg/factory"
 )
 
-type UdrApp interface {
+type App interface {
 	SetLogEnable(enable bool)
 	SetLogLevel(level string)
 	SetReportCaller(reportCaller bool)

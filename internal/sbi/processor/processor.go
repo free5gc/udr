@@ -7,13 +7,13 @@ import (
 )
 
 type Processor struct {
-	app.UdrApp
+	app.App
 	database.DbConnector
 }
 
-func NewProcessor(udr app.UdrApp) *Processor {
+func NewProcessor(udr app.App) *Processor {
 	return &Processor{
-		UdrApp:      udr,
+		App:         udr,
 		DbConnector: database.NewDbConnector(factory.UdrConfig.Configuration.DbConnectorType),
 	}
 }

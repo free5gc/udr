@@ -29,7 +29,7 @@ func (ns *NrfService) getNFManagementClient(uri string) *Nnrf_NFManagement.APICl
 	ns.nfMngmntMu.RLock()
 	client, ok := ns.nfMngmntClients[uri]
 	if ok {
-		defer ns.nfMngmntMu.RUnlock()
+		ns.nfMngmntMu.RUnlock()
 		return client
 	}
 

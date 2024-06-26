@@ -33,7 +33,7 @@ type UdrApp struct {
 	consumer  *consumer.Consumer
 }
 
-var _ app.UdrApp = &UdrApp{}
+var _ app.App = &UdrApp{}
 
 func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
 	udr_context.Init()

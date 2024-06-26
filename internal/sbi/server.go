@@ -27,7 +27,7 @@ type Server struct {
 }
 
 type UDR interface {
-	app.UdrApp
+	app.App
 
 	Processor() *processor.Processor
 }
@@ -83,7 +83,7 @@ func (s *Server) shutdownHttpServer() {
 	}
 }
 
-func bindRouter(udr app.UdrApp, router *gin.Engine, tlsKeyLogPath string) (*http.Server, error) {
+func bindRouter(udr app.App, router *gin.Engine, tlsKeyLogPath string) (*http.Server, error) {
 	sbiConfig := udr.Config().Configuration.Sbi
 	bindAddr := fmt.Sprintf("%s:%d", sbiConfig.BindingIPv4, sbiConfig.Port)
 

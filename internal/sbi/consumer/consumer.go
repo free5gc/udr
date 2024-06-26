@@ -6,12 +6,12 @@ import (
 )
 
 type Consumer struct {
-	app.UdrApp
+	app.App
 
 	*NrfService
 }
 
-func NewConsumer(udr app.UdrApp) *Consumer {
+func NewConsumer(udr app.App) *Consumer {
 	configuration := Nnrf_NFManagement.NewConfiguration()
 	configuration.SetBasePath(udr.Context().NrfUri)
 	nrfService := &NrfService{
@@ -19,7 +19,7 @@ func NewConsumer(udr app.UdrApp) *Consumer {
 	}
 
 	return &Consumer{
-		UdrApp:     udr,
+		App:        udr,
 		NrfService: nrfService,
 	}
 }
