@@ -74,7 +74,6 @@ func action(cliCtx *cli.Context) error {
 	UDR = udr
 
 	udr.Start()
-	udr.Wait()
 
 	return nil
 }

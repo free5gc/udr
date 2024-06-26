@@ -166,14 +166,16 @@ func (a *UdrApp) Start() {
 			a.deregisterFromNrf()
 		}
 	}()
+	
+	go a.listenShutdown(a.ctx)
 
 	a.sbiServer.Run(&a.wg)
-	go a.listenShutdown(a.ctx)
+	a.WaitRoutineStopped()
 }
 
 func (a *UdrApp) listenShutdown(ctx context.Context) {
 	<-ctx.Done()
-	a.Terminate()
+	a.terminateProcedure()
 }
 
 func (a *UdrApp) Terminate() {
@@ -186,7 +188,29 @@ func (a *UdrApp) Terminate() {
 	logger.InitLog.Infof("UDR terminated")
 }
 
-func (a *UdrApp) Wait() {
+func (a *UdrApp) terminateProcedure() {
+	logger.MainLog.Infof("Terminating UDR...")
+	a.CallServerStop()
+
+	// deregister with NRF
+	pd, err := a.Consumer().SendDeregisterNFInstance()
+	if pd != nil {
+		logger.MainLog.Errorf("Deregister NF instance Failed Problem[%+v]", pd)
+	} else if err != nil {
+		logger.MainLog.Errorf("Deregister NF instance Error[%+v]", err)
+	} else {
+		logger.MainLog.Infof("Deregister from NRF successfully")
+	}
+	logger.MainLog.Infof("UDR SBI Server terminated")
+}
+
+func (a *UdrApp) CallServerStop() {
+	if a.sbiServer != nil {
+		a.sbiServer.Shutdown()
+	}
+}
+
+func (a *UdrApp) WaitRoutineStopped() {
 	a.wg.Wait()
 	logger.MainLog.Infof("UDR terminated")
 }
