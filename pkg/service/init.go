@@ -166,7 +166,7 @@ func (a *UdrApp) Start() {
 			a.deregisterFromNrf()
 		}
 	}()
-	
+
 	go a.listenShutdown(a.ctx)
 
 	a.sbiServer.Run(&a.wg)

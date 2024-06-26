@@ -749,7 +749,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 // Index is the index handler.
 func Index(c *gin.Context) {
-	c.String(http.StatusOK, "Hello World!")
+	c.String(http.StatusNotImplemented, "Hello World!")
 }
 
 // HTTPAmfContext3gpp - To modify the AMF context data of a UE using 3gpp access in the UDR
@@ -1321,17 +1321,17 @@ func (s *Server) HandleApplicationDataPfdsGet(c *gin.Context) {
 
 // HTTPExposureDataSubsToNotifyPost -
 func (s *Server) HandleExposureDataSubsToNotifyPost(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // HTTPExposureDataSubsToNotifySubIdDelete - Deletes a subcription for notifications
 func (s *Server) HandleExposureDataSubsToNotifySubIdDelete(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // HTTPExposureDataSubsToNotifySubIdPut - updates a subcription for notifications
 func (s *Server) HandleExposureDataSubsToNotifySubIdPut(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // HTTPPolicyDataBdtDataBdtReferenceIdDelete -
@@ -2674,34 +2674,34 @@ func (s *Server) HandleUpdateEeGroupSubscriptions(c *gin.Context) {
 // HTTPCreateSessionManagementData - Creates and updates the session
 // management data for a UE and for an individual PDU session
 func (s *Server) HandleCreateSessionManagementData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // HTTPDeleteSessionManagementData - Deletes the session management
 // data for a UE and for an individual PDU session
 func (s *Server) HandleDeleteSessionManagementData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // HTTPQuerySessionManagementData - Retrieves the session management
 // data for a UE and for an individual PDU session
 func (s *Server) HandleQuerySessionManagementData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // CreateAccessAndMobilityData - Creates and updates the access and mobility exposure data for a UE
 func (s *Server) HandleCreateAccessAndMobilityData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // DeleteAccessAndMobilityData - Deletes the access and mobility exposure data for a UE
 func (s *Server) HandleDeleteAccessAndMobilityData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // QueryAccessAndMobilityData - Retrieves the access and mobility exposure data for a UE
 func (s *Server) HandleQueryAccessAndMobilityData(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // HTTPApplicationDataInfluenceDataSubsToNotifyGet -
@@ -2784,7 +2784,7 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdDelete(c *gin.Cont
 // HTTPApplicationDataInfluenceDataInfluenceIdPatch -
 // Modify part of the properties of an individual Influence Data resource
 func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPatch(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
 // HTTPApplicationDataInfluenceDataInfluenceIdPut - Create or update an individual Influence Data resource
