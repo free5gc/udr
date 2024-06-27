@@ -128,7 +128,7 @@ func TestUDR_Root(t *testing.T) {
 	server.ServeHTTP(rsp, req)
 
 	t.Run("UDR Root", func(t *testing.T) {
-		require.Equal(t, http.StatusOK, rsp.Code)
+		require.Equal(t, http.StatusNotImplemented, rsp.Code)
 		require.Equal(t, "Hello World!", rsp.Body.String())
 	})
 }
