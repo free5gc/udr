@@ -19,6 +19,8 @@ var (
 	ConsumerLog *logrus.Entry
 	GinLog      *logrus.Entry
 	ProcLog     *logrus.Entry
+	SBILog      *logrus.Entry
+	DbLog       *logrus.Entry
 )
 
 func init() {
@@ -39,4 +41,6 @@ func init() {
 	ProcLog = NfLog.WithField(logger_util.FieldCategory, "Proc")
 	HttpLog = NfLog.WithField(logger_util.FieldCategory, "HTTP")
 	UtilLog = NfLog.WithField(logger_util.FieldCategory, "Util")
+	SBILog = NfLog.WithField(logger_util.FieldCategory, "SBI")
+	DbLog = NfLog.WithField(logger_util.FieldCategory, "DB")
 }

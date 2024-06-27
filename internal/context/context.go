@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,14 +29,23 @@ const (
 )
 
 func Init() {
-	GetSelf().Name = "udr"
-	GetSelf().EeSubscriptionIDGenerator = 1
-	GetSelf().SdmSubscriptionIDGenerator = 1
-	GetSelf().SubscriptionDataSubscriptionIDGenerator = 1
-	GetSelf().PolicyDataSubscriptionIDGenerator = 1
-	GetSelf().SubscriptionDataSubscriptions = make(map[subsId]*models.SubscriptionDataSubscriptions)
-	GetSelf().PolicyDataSubscriptions = make(map[subsId]*models.PolicyDataSubscription)
-	GetSelf().InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+	udrContext.Name = "udr"
+	udrContext.EeSubscriptionIDGenerator = 1
+	udrContext.SdmSubscriptionIDGenerator = 1
+	udrContext.SubscriptionDataSubscriptionIDGenerator = 1
+	udrContext.PolicyDataSubscriptionIDGenerator = 1
+	udrContext.SubscriptionDataSubscriptions = make(map[subsId]*models.SubscriptionDataSubscriptions)
+	udrContext.PolicyDataSubscriptions = make(map[subsId]*models.PolicyDataSubscription)
+	udrContext.InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+
+	serviceName := []models.ServiceName{
+		models.ServiceName_NUDR_DR,
+	}
+	udrContext.NrfUri = fmt.Sprintf("%s://%s:%d", models.UriScheme_HTTPS, udrContext.RegisterIPv4, 29510)
+	initUdrContext()
+
+	config := factory.UdrConfig
+	udrContext.NfService = initNfService(serviceName, config.Info.Version)
 }
 
 type UDRContext struct {
@@ -42,6 +53,7 @@ type UDRContext struct {
 	UriScheme                               models.UriScheme
 	BindingIPv4                             string
 	SBIPort                                 int
+	NfService                               map[models.ServiceName]models.NfService
 	RegisterIPv4                            string // IP register to NRF
 	HttpIPv6Address                         string
 	NfId                                    string
@@ -111,44 +123,75 @@ func (context *UDRContext) Reset() {
 	context.Name = "udr"
 }
 
-func InitUdrContext(context *UDRContext) {
+func initUdrContext() {
 	config := factory.UdrConfig
 	logger.UtilLog.Infof("udrconfig Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
 	configuration := config.Configuration
-	context.NfId = uuid.New().String()
-	context.RegisterIPv4 = factory.UDR_DEFAULT_IPV4 // default localhost
-	context.SBIPort = factory.UDR_DEFAULT_PORT_INT  // default port
+	udrContext.NfId = uuid.New().String()
+	udrContext.RegisterIPv4 = factory.UDR_DEFAULT_IPV4 // default localhost
+	udrContext.SBIPort = factory.UDR_DEFAULT_PORT_INT  // default port
 	if sbi := configuration.Sbi; sbi != nil {
-		context.UriScheme = models.UriScheme(sbi.Scheme)
+		udrContext.UriScheme = models.UriScheme(sbi.Scheme)
 		if sbi.RegisterIPv4 != "" {
-			context.RegisterIPv4 = sbi.RegisterIPv4
+			udrContext.RegisterIPv4 = sbi.RegisterIPv4
 		}
 		if sbi.Port != 0 {
-			context.SBIPort = sbi.Port
+			udrContext.SBIPort = sbi.Port
 		}
 
-		context.BindingIPv4 = os.Getenv(sbi.BindingIPv4)
-		if context.BindingIPv4 != "" {
+		udrContext.BindingIPv4 = os.Getenv(sbi.BindingIPv4)
+		if udrContext.BindingIPv4 != "" {
 			logger.UtilLog.Info("Parsing ServerIPv4 address from ENV Variable.")
 		} else {
-			context.BindingIPv4 = sbi.BindingIPv4
-			if context.BindingIPv4 == "" {
+			udrContext.BindingIPv4 = sbi.BindingIPv4
+			if udrContext.BindingIPv4 == "" {
 				logger.UtilLog.Warn("Error parsing ServerIPv4 address as string. Using the 0.0.0.0 address as default.")
-				context.BindingIPv4 = "0.0.0.0"
+				udrContext.BindingIPv4 = "0.0.0.0"
 			}
 		}
 	}
 	if configuration.NrfUri != "" {
-		context.NrfUri = configuration.NrfUri
+		udrContext.NrfUri = configuration.NrfUri
 	} else {
 		logger.UtilLog.Warn("NRF Uri is empty! Using localhost as NRF IPv4 address.")
-		context.NrfUri = fmt.Sprintf("%s://%s:%d", context.UriScheme, "127.0.0.1", 29510)
+		udrContext.NrfUri = fmt.Sprintf("%s://%s:%d", udrContext.UriScheme, "127.0.0.1", 29510)
 	}
-	context.NrfCertPem = configuration.NrfCertPem
+	udrContext.NrfCertPem = configuration.NrfCertPem
 }
 
-func (context *UDRContext) GetIPv4Uri() string {
-	return fmt.Sprintf("%s://%s:%d", context.UriScheme, context.RegisterIPv4, context.SBIPort)
+func initNfService(serviceName []models.ServiceName, version string) (
+	nfService map[models.ServiceName]models.NfService,
+) {
+	versionUri := "v" + strings.Split(version, ".")[0]
+	nfService = make(map[models.ServiceName]models.NfService)
+	for idx, name := range serviceName {
+		nfService[name] = models.NfService{
+			ServiceInstanceId: strconv.Itoa(idx),
+			ServiceName:       name,
+			Versions: &[]models.NfServiceVersion{
+				{
+					ApiFullVersion:  version,
+					ApiVersionInUri: versionUri,
+				},
+			},
+			Scheme:          udrContext.UriScheme,
+			NfServiceStatus: models.NfServiceStatus_REGISTERED,
+			ApiPrefix:       GetIPv4Uri(),
+			IpEndPoints: &[]models.IpEndPoint{
+				{
+					Ipv4Address: udrContext.RegisterIPv4,
+					Transport:   models.TransportProtocol_TCP,
+					Port:        int32(udrContext.SBIPort),
+				},
+			},
+		}
+	}
+
+	return
+}
+
+func GetIPv4Uri() string {
+	return fmt.Sprintf("%s://%s:%d", udrContext.UriScheme, udrContext.RegisterIPv4, udrContext.SBIPort)
 }
 
 func (context *UDRContext) GetIPv4GroupUri(udrServiceType UDRServiceType) string {
