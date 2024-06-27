@@ -9,11 +9,13 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/free5gc/openapi/models"
 	db "github.com/free5gc/udr/internal/database"
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/sbi/processor"
 	"github.com/free5gc/udr/pkg/factory"
 	util_logger "github.com/free5gc/util/logger"
 	"github.com/free5gc/util/mongoapi"
@@ -24,10 +26,32 @@ type testdata struct {
 	supi    string
 }
 
-func setupHttpServer() *gin.Engine {
+func setupHttpServer(t *testing.T) *gin.Engine {
 	router := util_logger.NewGinWithLogrus(logger.GinLog)
 	dataRepositoryGroup := router.Group(factory.UdrDrResUriPrefix)
-	var s Server
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	udr := NewMockUDR(ctrl)
+	factory.UdrConfig = &factory.Config{
+		Configuration: &factory.Configuration{
+			DbConnectorType: "mongodb",
+			Mongodb:         &factory.Mongodb{},
+			Sbi: &factory.Sbi{
+				BindingIPv4: "127.0.0.1",
+				Port:        8000,
+			},
+		},
+	}
+	udr.EXPECT().
+		Config().
+		Return(factory.UdrConfig).
+		AnyTimes()
+
+	processor := processor.NewProcessor(udr)
+	udr.EXPECT().Processor().Return(processor).AnyTimes()
+
+	s := NewServer(udr, "")
 	dataRepositoryRoutes := s.getDataRepositoryRoutes()
 	AddService(dataRepositoryGroup, dataRepositoryRoutes)
 	return router
@@ -45,7 +69,7 @@ func setupMongoDB(t *testing.T) {
 }
 
 func getUri(t *testing.T, baseUri, extUri string) *httptest.ResponseRecorder {
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	reqUri := baseUri + extUri
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqUri, nil)
 	require.Nil(t, err)
@@ -84,7 +108,7 @@ func getInfluData(supi string) *models.TrafficInfluData {
 func postPutInfluData(t *testing.T, method string, baseUri, extUri string, influData *models.TrafficInfluData) (
 	*httptest.ResponseRecorder, []byte,
 ) {
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	reqUri := baseUri + extUri
 	bjson, err := json.Marshal(influData)
 	require.Nil(t, err)
@@ -109,7 +133,7 @@ func putInfluData(t *testing.T, baseUri, extUri string, influData *models.Traffi
 }
 
 func delUri(t *testing.T, baseUri, extUri string) *httptest.ResponseRecorder {
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	reqUri := baseUri + extUri
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodDelete, reqUri, nil)
 	require.Nil(t, err)
@@ -119,7 +143,7 @@ func delUri(t *testing.T, baseUri, extUri string) *httptest.ResponseRecorder {
 }
 
 func TestUDR_Root(t *testing.T) {
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	reqUri := factory.UdrDrResUriPrefix + "/"
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqUri, nil)
@@ -138,7 +162,7 @@ func TestUDR_GetSubs2Notify_GetBeforeCreateingOne(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	reqUri := factory.UdrDrResUriPrefix + "/application-data/influenceData/subs-to-notify?dnn=internet"
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqUri, nil)
@@ -157,7 +181,7 @@ func TestUDR_GetSubs2Notify_CreateThenGet(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	baseUri := factory.UdrDrResUriPrefix + "/application-data/influenceData/subs-to-notify"
 	reqUri := baseUri
 
@@ -233,7 +257,7 @@ func TestUDR_InfluData_GetBeforeCreateing(t *testing.T) {
 		t.Skip("skipping testing in short mode")
 	}
 
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	reqUri := factory.UdrDrResUriPrefix + "/application-data/influenceData"
 
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, reqUri, nil)
@@ -255,7 +279,7 @@ func TestUDR_InfluData_CreateThenGet(t *testing.T) {
 
 	// PUT, PATCH, DELETE
 	setupMongoDB(t)
-	server := setupHttpServer()
+	server := setupHttpServer(t)
 	baseUri := factory.UdrDrResUriPrefix + "/application-data/influenceData"
 	td1 := testdata{"/influenceId0001", "imsi-208930000000001"}
 	td2 := testdata{"/influenceId0002", "imsi-208930000000002"}
