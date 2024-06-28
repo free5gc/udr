@@ -127,8 +127,8 @@ func (u *UdrApp) registerToNrf(ctx context.Context) error {
 	return nil
 }
 
-func (u *UdrApp) deregisterFromNrf() {
-	problemDetails, err := u.consumer.SendDeregisterNFInstance()
+func (a *UdrApp) deregisterFromNrf() {
+	problemDetails, err := a.consumer.SendDeregisterNFInstance()
 	if problemDetails != nil {
 		logger.InitLog.Errorf("Deregister NF instance Failed Problem[%+v]", problemDetails)
 	} else if err != nil {
@@ -167,6 +167,7 @@ func (a *UdrApp) Start() {
 		}
 	}()
 
+	a.wg.Add(1)
 	go a.listenShutdown(a.ctx)
 
 	a.sbiServer.Run(&a.wg)
@@ -174,34 +175,20 @@ func (a *UdrApp) Start() {
 }
 
 func (a *UdrApp) listenShutdown(ctx context.Context) {
+	defer a.wg.Done()
+
 	<-ctx.Done()
 	a.terminateProcedure()
 }
 
 func (a *UdrApp) Terminate() {
-	logger.InitLog.Infof("Terminating UDR...")
 	a.cancel()
-
-	// deregister with NRF
-	a.deregisterFromNrf()
-	a.sbiServer.Shutdown()
-	logger.InitLog.Infof("UDR terminated")
 }
 
 func (a *UdrApp) terminateProcedure() {
 	logger.MainLog.Infof("Terminating UDR...")
 	a.CallServerStop()
-
-	// deregister with NRF
-	pd, err := a.Consumer().SendDeregisterNFInstance()
-	if pd != nil {
-		logger.MainLog.Errorf("Deregister NF instance Failed Problem[%+v]", pd)
-	} else if err != nil {
-		logger.MainLog.Errorf("Deregister NF instance Error[%+v]", err)
-	} else {
-		logger.MainLog.Infof("Deregister from NRF successfully")
-	}
-	logger.MainLog.Infof("UDR SBI Server terminated")
+	a.deregisterFromNrf()
 }
 
 func (a *UdrApp) CallServerStop() {
