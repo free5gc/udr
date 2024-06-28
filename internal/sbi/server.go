@@ -60,6 +60,7 @@ func (s *Server) Run(wg *sync.WaitGroup) {
 		if err != http.ErrServerClosed {
 			logger.SBILog.Panicf("HTTP server setup failed: %+v", err)
 		}
+		logger.SBILog.Infof("SBI server (listen on %s) stopped", s.httpServer.Addr)
 	}()
 }
 
