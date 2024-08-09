@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/openapi/nrf/NFDiscovery"
 	"github.com/free5gc/openapi/nrf/NFManagement"
@@ -127,12 +126,13 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 	return resourceNrfUri, retrieveNfInstanceId, nil
 }
 
-func (ns *NrfService) SendDeregisterNFInstance() (problemDetails *models.ProblemDetails, err error) {
+func (ns *NrfService) SendDeregisterNFInstance() (err error) {
 	logger.ConsumerLog.Infof("Send Deregister NFInstance")
 
 	ctx, pd, err := udr_context.GetSelf().GetTokenCtx(models.ServiceName_NNRF_NFM, models.NrfNfManagementNfType_NRF)
 	if err != nil {
-		return pd, err
+		logger.ConsumerLog.Errorf("Get token context failed: problem details: %+v", pd)
+		return err
 	}
 
 	udrSelf := udr_context.GetSelf()
@@ -146,23 +146,9 @@ func (ns *NrfService) SendDeregisterNFInstance() (problemDetails *models.Problem
 	}
 	_, deregisterErr := client.NFInstanceIDDocumentApi.DeregisterNFInstance(ctx, deregisterReq)
 	if deregisterErr != nil {
-		switch apiErr := deregisterErr.(type) {
-		case openapi.GenericOpenAPIError:
-			switch errModel := apiErr.Model().(type) {
-			case NFManagement.DeregisterNFInstanceError:
-				problemDetails = &errModel.ProblemDetails
-				return problemDetails, nil
-			case error:
-				problemDetails = openapi.ProblemDetailsSystemFailure(errModel.Error())
-				return problemDetails, nil
-			}
-		case error:
-			problemDetails = openapi.ProblemDetailsSystemFailure(apiErr.Error())
-			return problemDetails, nil
-		}
-		return nil, deregisterErr
+		return deregisterErr
 	}
-	return nil, nil
+	return nil
 }
 
 func (ns *NrfService) SendSearchNFInstances(nrfUri string,
