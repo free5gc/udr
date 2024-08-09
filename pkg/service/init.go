@@ -10,6 +10,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/free5gc/openapi"
+	"github.com/free5gc/openapi/nrf/NFManagement"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/sbi"
@@ -128,14 +130,24 @@ func (u *UdrApp) registerToNrf(ctx context.Context) error {
 }
 
 func (a *UdrApp) deregisterFromNrf() {
-	problemDetails, err := a.consumer.SendDeregisterNFInstance()
-	if problemDetails != nil {
-		logger.InitLog.Errorf("Deregister NF instance Failed Problem[%+v]", problemDetails)
-	} else if err != nil {
+	err := a.consumer.SendDeregisterNFInstance()
+	if err != nil {
+		switch apiErr := err.(type) {
+		case openapi.GenericOpenAPIError:
+			switch errModel := apiErr.Model().(type) {
+			case NFManagement.DeregisterNFInstanceError:
+				pd := &errModel.ProblemDetails
+				logger.InitLog.Errorf("Deregister NF instance Failed Problem[%+v]", pd)
+			case error:
+				logger.InitLog.Errorf("Deregister NF instance Error[%+v]", err)
+			}
+		case error:
+			logger.InitLog.Errorf("Deregister NF instance Error[%+v]", err)
+		}
 		logger.InitLog.Errorf("Deregister NF instance Error[%+v]", err)
-	} else {
-		logger.InitLog.Infof("Deregister from NRF successfully")
 	}
+
+	logger.InitLog.Infof("Deregister from NRF successfully")
 }
 
 func (a *UdrApp) Start() {
