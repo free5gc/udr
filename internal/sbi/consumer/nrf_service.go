@@ -146,13 +146,23 @@ func (ns *NrfService) SendDeregisterNFInstance() (problemDetails *models.Problem
 	}
 	_, deregisterErr := client.NFInstanceIDDocumentApi.DeregisterNFInstance(ctx, deregisterReq)
 	if deregisterErr != nil {
-		if apiErr, ok := deregisterErr.(openapi.GenericOpenAPIError); ok {
-			pd = apiErr.Model().(*models.ProblemDetails)
-			return pd, deregisterErr
+		switch apiErr := deregisterErr.(type) {
+		case openapi.GenericOpenAPIError:
+			switch errModel := apiErr.Model().(type) {
+			case NFManagement.DeregisterNFInstanceError:
+				problemDetails = &errModel.ProblemDetails
+				return problemDetails, nil
+			case error:
+				problemDetails = openapi.ProblemDetailsSystemFailure(errModel.Error())
+				return problemDetails, nil
+			}
+		case error:
+			problemDetails = openapi.ProblemDetailsSystemFailure(apiErr.Error())
+			return problemDetails, nil
 		}
 		return nil, deregisterErr
 	}
-	return problemDetails, err
+	return nil, nil
 }
 
 func (ns *NrfService) SendSearchNFInstances(nrfUri string,
