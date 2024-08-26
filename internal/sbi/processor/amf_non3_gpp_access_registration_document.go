@@ -33,7 +33,8 @@ func (p *Processor) AmfContextNon3gppProcedure(
 		c.JSON(int(pd.Status), pd)
 	}
 	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
-	c.Status(http.StatusOK)
+	c.Status(http.StatusNoContent)
+
 }
 
 func (p *Processor) CreateAmfContextNon3gppProcedure(
