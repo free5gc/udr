@@ -34,7 +34,6 @@ func (p *Processor) AmfContextNon3gppProcedure(
 	}
 	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
 	c.Status(http.StatusNoContent)
-
 }
 
 func (p *Processor) CreateAmfContextNon3gppProcedure(
