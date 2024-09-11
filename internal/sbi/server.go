@@ -100,6 +100,14 @@ func newRouter(s *Server) *gin.Engine {
 	})
 	dataRepositoryRoutes := s.getDataRepositoryRoutes()
 	AddService(dataRepositoryGroup, dataRepositoryRoutes)
+
+	groupIdGroup := router.Group(factory.UdrGroupIdResUriPrefix)
+	groupIdGroup.Use(func(c *gin.Context) {
+		util.NewRouterAuthorizationCheck(models.ServiceName_NUDR_GROUP_ID_MAP).Check(c, s.Context())
+	})
+	groupIdRoutes := s.getGroupIdMap()
+	AddService(groupIdGroup, groupIdRoutes)
+
 	return router
 }
 
