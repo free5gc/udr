@@ -2,15 +2,16 @@ package sbi
 
 import (
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) getGroupIdMap() []Route {
 	return []Route{
 		{
-			Name: "Index",
-			Method: "GET",
-			Pattern: "/",
+			Name:        "Index",
+			Method:      "GET",
+			Pattern:     "/",
 			HandlerFunc: Index,
 		},
 		{
@@ -23,6 +24,6 @@ func (s *Server) getGroupIdMap() []Route {
 }
 
 // GetNfGroupIDs - Retrieves NF-Group IDs for provided Subscriber and NF types
-func (s *Server)HTTPGetNfGroupIDs(c *gin.Context) {
+func (s *Server) HTTPGetNfGroupIDs(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{})
 }
