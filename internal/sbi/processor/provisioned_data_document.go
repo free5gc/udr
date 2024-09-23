@@ -113,7 +113,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 			}
 			smData.DnnConfigurations = tmpDnnConfigurations
 		}
-		provisionedDataSets.SmData = tmp
+		provisionedDataSets.SmData.IndividualSmSubsData = tmp
 	}
 
 	collName = "subscriptionData.provisionedData.traceData"

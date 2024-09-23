@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"github.com/free5gc/openapi/Nnrf_NFManagement"
+	"github.com/free5gc/openapi/nrf/NFManagement"
 	"github.com/free5gc/udr/pkg/app"
 )
 
@@ -12,10 +12,10 @@ type Consumer struct {
 }
 
 func NewConsumer(udr app.App) *Consumer {
-	configuration := Nnrf_NFManagement.NewConfiguration()
+	configuration := NFManagement.NewConfiguration()
 	configuration.SetBasePath(udr.Context().NrfUri)
 	nrfService := &NrfService{
-		nfMngmntClients: make(map[string]*Nnrf_NFManagement.APIClient),
+		nfMngmntClients: make(map[string]*NFManagement.APIClient),
 	}
 
 	return &Consumer{

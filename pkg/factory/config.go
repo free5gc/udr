@@ -22,7 +22,9 @@ const (
 	UdrSbiDefaultPort        = 8000
 	UdrSbiDefaultScheme      = "https"
 	UdrDefaultNrfUri         = "https://127.0.0.10:8000"
-	UdrDrResUriPrefix        = "/nudr-dr/v1"
+	UdrDrResUriPrefix        = "/nudr-dr/v2"
+	UdrGroupIdResUriPrefix   = "/nudr-group-id-map/v1"
+	HSSIsmSDMUriPrefix       = "/nhss-ims-sdm/v1"
 )
 
 type DbType string
