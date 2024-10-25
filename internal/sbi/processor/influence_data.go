@@ -48,7 +48,7 @@ func (p *Processor) ApplicationDataInfluenceDataGetProcedure(c *gin.Context, col
 
 func (p *Processor) ParseSnssaisFromQueryParam(snssaiStr string) []models.Snssai {
 	var snssais []models.Snssai
-	err := json.Unmarshal([]byte("["+snssaiStr+"]"), &snssais)
+	err := json.Unmarshal([]byte(snssaiStr), &snssais)
 	if err != nil {
 		logger.DataRepoLog.Warnln("Unmarshal Error in snssaiStruct", err)
 	}
