@@ -53,7 +53,7 @@ type UDRContext struct {
 	UriScheme                               models.UriScheme
 	BindingIPv4                             string
 	SBIPort                                 int
-	NfService                               map[models.ServiceName]models.NfService
+	NfService                               map[models.ServiceName]models.NrfNfManagementNfService
 	RegisterIPv4                            string // IP register to NRF
 	HttpIPv6Address                         string
 	NfId                                    string
@@ -160,15 +160,15 @@ func initUdrContext() {
 }
 
 func initNfService(serviceName []models.ServiceName, version string) (
-	nfService map[models.ServiceName]models.NfService,
+	nfService map[models.ServiceName]models.NrfNfManagementNfService,
 ) {
 	versionUri := "v" + strings.Split(version, ".")[0]
-	nfService = make(map[models.ServiceName]models.NfService)
+	nfService = make(map[models.ServiceName]models.NrfNfManagementNfService)
 	for idx, name := range serviceName {
-		nfService[name] = models.NfService{
+		nfService[name] = models.NrfNfManagementNfService{
 			ServiceInstanceId: strconv.Itoa(idx),
 			ServiceName:       name,
-			Versions: &[]models.NfServiceVersion{
+			Versions: []models.NfServiceVersion{
 				{
 					ApiFullVersion:  version,
 					ApiVersionInUri: versionUri,
@@ -177,10 +177,10 @@ func initNfService(serviceName []models.ServiceName, version string) (
 			Scheme:          udrContext.UriScheme,
 			NfServiceStatus: models.NfServiceStatus_REGISTERED,
 			ApiPrefix:       GetIPv4Uri(),
-			IpEndPoints: &[]models.IpEndPoint{
+			IpEndPoints: []models.IpEndPoint{
 				{
 					Ipv4Address: udrContext.RegisterIPv4,
-					Transport:   models.TransportProtocol_TCP,
+					Transport:   models.NrfNfManagementTransportProtocol_TCP,
 					Port:        int32(udrContext.SBIPort),
 				},
 			},
@@ -226,13 +226,13 @@ func NewInfluenceDataSubscriptionId() string {
 	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
 }
 
-func (c *UDRContext) GetTokenCtx(serviceName models.ServiceName, targetNF models.NfType) (
+func (c *UDRContext) GetTokenCtx(serviceName models.ServiceName, targetNF models.NrfNfManagementNfType) (
 	context.Context, *models.ProblemDetails, error,
 ) {
 	if !c.OAuth2Required {
 		return context.TODO(), nil, nil
 	}
-	return oauth.GetTokenCtx(models.NfType_UDR, targetNF,
+	return oauth.GetTokenCtx(models.NrfNfManagementNfType_UDR, targetNF,
 		c.NfId, c.NrfUri, string(serviceName))
 }
 
