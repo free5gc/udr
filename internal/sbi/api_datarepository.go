@@ -37,98 +37,98 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"AmfContext3gpp",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleAmfContext3gpp,
 		},
 
 		{
 			"CreateAmfContext3gpp",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleCreateAmfContext3gpp,
 		},
 
 		{
 			"QueryAmfContext3gpp",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleQueryAmfContext3gpp,
 		},
 
 		{
 			"AmfContextNon3gpp",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleAmfContextNon3gpp,
 		},
 
 		{
 			"CreateAmfContextNon3gpp",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleCreateAmfContextNon3gpp,
 		},
 
 		{
 			"QueryAmfContextNon3gpp",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleQueryAmfContextNon3gpp,
 		},
 
 		{
 			"QueryAmData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/am-data",
 			s.HandleQueryAmData,
 		},
 
 		{
 			"QueryAuthenticationStatus",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/authentication-data/authentication-status",
 			s.HandleQueryAuthenticationStatus,
 		},
 
 		{
 			"CreateAuthenticationStatus",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/authentication-data/authentication-status",
 			s.HandleCreateAuthenticationStatus,
 		},
 
 		{
 			"ModifyAuthentication",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/subscription-data/:ueId/authentication-data/authentication-subscription",
 			s.HandleModifyAuthentication,
 		},
 
 		{
 			"QueryAuthSubsData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/authentication-data/authentication-subscription",
 			s.HandleQueryAuthSubsData,
 		},
 
 		{
 			"CreateAuthenticationSoR",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/ue-update-confirmation-data/sor-data",
 			s.HandleCreateAuthenticationSoR,
 		},
 
 		{
 			"QueryAuthSoR",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/ue-update-confirmation-data/sor-data",
 			s.HandleQueryAuthSoR,
 		},
 
 		{
 			"ApplicationDataInfluenceDataGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/influenceData",
 			s.HandleApplicationDataInfluenceDataGet,
 		},
@@ -142,7 +142,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		 */
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/application-data/influenceData/:influenceId/:subscriptionId",
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
@@ -150,7 +150,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/influenceData/:influenceId/:subscriptionId",
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
@@ -158,7 +158,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/application-data/influenceData/:influenceId/:subscriptionId",
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
@@ -166,343 +166,343 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"ApplicationDataPfdsAppIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdDelete,
 		},
 
 		{
 			"ApplicationDataPfdsAppIdGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdGet,
 		},
 
 		{
 			"ApplicationDataPfdsAppIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdPut,
 		},
 
 		{
 			"ApplicationDataPfdsGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/pfds",
 			s.HandleApplicationDataPfdsGet,
 		},
 
 		{
 			"PolicyDataBdtDataBdtReferenceIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/policy-data/bdt-data/:bdtReferenceId",
 			s.HandlePolicyDataBdtDataBdtReferenceIdDelete,
 		},
 
 		{
 			"PolicyDataBdtDataBdtReferenceIdGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/bdt-data/:bdtReferenceId",
 			s.HandlePolicyDataBdtDataBdtReferenceIdGet,
 		},
 
 		{
 			"PolicyDataBdtDataBdtReferenceIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/policy-data/bdt-data/:bdtReferenceId",
 			s.HandlePolicyDataBdtDataBdtReferenceIdPut,
 		},
 
 		{
 			"PolicyDataBdtDataGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/bdt-data",
 			s.HandlePolicyDataBdtDataGet,
 		},
 
 		{
 			"PolicyDataPlmnsPlmnIdUePolicySetGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/plmns/:plmnId/ue-policy-set",
 			s.HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
 		},
 
 		{
 			"PolicyDataSponsorConnectivityDataSponsorIdGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/sponsor-connectivity-data/:sponsorId",
 			s.HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
 		},
 
 		{
 			"PolicyDataSubsToNotifyPost",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/policy-data/subs-to-notify",
 			s.HandlePolicyDataSubsToNotifyPost,
 		},
 
 		{
 			"PolicyDataSubsToNotifySubsIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/policy-data/subs-to-notify/:subsId",
 			s.HandlePolicyDataSubsToNotifySubsIdDelete,
 		},
 
 		{
 			"PolicyDataSubsToNotifySubsIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/policy-data/subs-to-notify/:subsId",
 			s.HandlePolicyDataSubsToNotifySubsIdPut,
 		},
 
 		{
 			"PolicyDataUesUeIdAmDataGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/ues/:ueId/am-data",
 			s.HandlePolicyDataUesUeIdAmDataGet,
 		},
 
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/ues/:ueId/operator-specific-data",
 			s.HandlePolicyDataUesUeIdOperatorSpecificDataGet,
 		},
 
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataPatch",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/policy-data/ues/:ueId/operator-specific-data",
 			s.HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
 		},
 
 		{
 			"PolicyDataUesUeIdOperatorSpecificDataPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/policy-data/ues/:ueId/operator-specific-data",
 			s.HandlePolicyDataUesUeIdOperatorSpecificDataPut,
 		},
 
 		{
 			"PolicyDataUesUeIdSmDataGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/ues/:ueId/sm-data",
 			s.HandlePolicyDataUesUeIdSmDataGet,
 		},
 
 		{
 			"PolicyDataUesUeIdSmDataPatch",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/policy-data/ues/:ueId/sm-data",
 			s.HandlePolicyDataUesUeIdSmDataPatch,
 		},
 
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
 			s.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
 		},
 
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
 			s.HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
 		},
 
 		{
 			"PolicyDataUesUeIdSmDataUsageMonIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/policy-data/ues/:ueId/sm-data/:usageMonId",
 			s.HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
 		},
 
 		{
 			"PolicyDataUesUeIdUePolicySetGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/policy-data/ues/:ueId/ue-policy-set",
 			s.HandlePolicyDataUesUeIdUePolicySetGet,
 		},
 
 		{
 			"PolicyDataUesUeIdUePolicySetPatch",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/policy-data/ues/:ueId/ue-policy-set",
 			s.HandlePolicyDataUesUeIdUePolicySetPatch,
 		},
 
 		{
 			"PolicyDataUesUeIdUePolicySetPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/policy-data/ues/:ueId/ue-policy-set",
 			s.HandlePolicyDataUesUeIdUePolicySetPut,
 		},
 
 		{
 			"QueryProvisionedData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data",
 			s.HandleQueryProvisionedData,
 		},
 
 		{
 			"RemovesdmSubscriptions",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
 			s.HandleRemovesdmSubscriptions,
 		},
 
 		{
 			"Updatesdmsubscriptions",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
 			s.HandleUpdatesdmsubscriptions,
 		},
 
 		{
 			"CreateSdmSubscriptions",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/subscription-data/:ueId/context-data/sdm-subscriptions",
 			s.HandleCreateSdmSubscriptions,
 		},
 
 		{
 			"Querysdmsubscriptions",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/sdm-subscriptions",
 			s.HandleQuerysdmsubscriptions,
 		},
 
 		{
 			"CreateSmfContextNon3gpp",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
 			s.HandleCreateSmfContextNon3gpp,
 		},
 
 		{
 			"DeleteSmfContext",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
 			s.HandleDeleteSmfContext,
 		},
 
 		{
 			"QuerySmfRegistration",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
 			s.HandleQuerySmfRegistration,
 		},
 
 		{
 			"QuerySmfRegList",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/smf-registrations",
 			s.HandleQuerySmfRegList,
 		},
 
 		{
 			"QuerySmfSelectData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/smf-selection-subscription-data",
 			s.HandleQuerySmfSelectData,
 		},
 
 		{
 			"CreateSmsfContext3gpp",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
 			s.HandleCreateSmsfContext3gpp,
 		},
 
 		{
 			"DeleteSmsfContext3gpp",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
 			s.HandleDeleteSmsfContext3gpp,
 		},
 
 		{
 			"QuerySmsfContext3gpp",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
 			s.HandleQuerySmsfContext3gpp,
 		},
 
 		{
 			"CreateSmsfContextNon3gpp",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
 			s.HandleCreateSmsfContextNon3gpp,
 		},
 
 		{
 			"DeleteSmsfContextNon3gpp",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
 			s.HandleDeleteSmsfContextNon3gpp,
 		},
 
 		{
 			"QuerySmsfContextNon3gpp",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
 			s.HandleQuerySmsfContextNon3gpp,
 		},
 
 		{
 			"QuerySmsMngData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-mng-data",
 			s.HandleQuerySmsMngData,
 		},
 
 		{
 			"QuerySmsData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-data",
 			s.HandleQuerySmsData,
 		},
 
 		{
 			"QuerySmData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sm-data",
 			s.HandleQuerySmData,
 		},
 
 		{
 			"QueryTraceData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/trace-data",
 			s.HandleQueryTraceData,
 		},
 
 		{
 			"CreateAMFSubscriptions",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleCreateAMFSubscriptions,
 		},
 
 		{
 			"ModifyAmfSubscriptionInfo",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleModifyAmfSubscriptionInfo,
 		},
 
 		{
 			"RemoveAmfSubscriptionsInfo",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleRemoveAmfSubscriptionsInfo,
 		},
 
 		{
 			"GetAmfSubscriptionInfo",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleGetAmfSubscriptionInfo,
 		},
@@ -510,14 +510,14 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		/* subShortRoutes */
 		{
 			"GetSharedData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/shared-data",
 			s.HandleGetSharedData,
 		},
 
 		{
 			"PostSubscriptionDataSubscriptions",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/subscription-data/subs-to-notify",
 			s.HandlePostSubscriptionDataSubscriptions,
 		},
@@ -526,56 +526,56 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		// Special case -- should be added before than the general case
 		{
 			"RemovesubscriptionDataSubscriptions",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/subs-to-notify/:subsId",
 			s.HandleRemovesubscriptionDataSubscriptions,
 		},
 
 		{
 			"QueryEEData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/ee-profile-data",
 			s.HandleQueryEEData,
 		},
 
 		{
 			"PatchOperSpecData",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/subscription-data/:ueId/operator-specific-data",
 			s.HandlePatchOperSpecData,
 		},
 
 		{
 			"QueryOperSpecData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/operator-specific-data",
 			s.HandleQueryOperSpecData,
 		},
 
 		{
 			"GetppData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/pp-data",
 			s.HandleGetppData,
 		},
 
 		{
 			"ModifyPpData",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/subscription-data/:ueId/pp-data",
 			s.HandleModifyPpData,
 		},
 
 		{
 			"GetIdentityData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/identity-data",
 			s.HandleGetIdentityData,
 		},
 
 		{
 			"GetOdbData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/operator-determined-barring-data",
 			s.HandleGetOdbData,
 		},
@@ -583,28 +583,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		/* eeShortRoutes */
 		{
 			"CreateEeGroupSubscriptions",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/subscription-data/:ueId/context-data/ee-subscriptions",
 			s.HandleCreateEeGroupSubscriptions,
 		},
 
 		{
 			"QueryEeGroupSubscriptions",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/ee-subscriptions",
 			s.HandleQueryEeGroupSubscriptions,
 		},
 
 		{
 			"CreateEeSubscriptions",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleCreateEeSubscriptions,
 		},
 
 		{
 			"Queryeesubscriptions",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleQueryeesubscriptions,
 		},
@@ -612,28 +612,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		/* eeRoutes */
 		{
 			"RemoveeeSubscriptions",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleRemoveeeSubscriptions,
 		},
 
 		{
 			"UpdateEesubscriptions",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleUpdateEesubscriptions,
 		},
 
 		{
 			"UpdateEeGroupSubscriptions",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
 			s.HandleUpdateEeGroupSubscriptions,
 		},
 
 		{
 			"RemoveEeGroupSubscriptions",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
 			s.HandleRemoveEeGroupSubscriptions,
 		},
@@ -641,63 +641,63 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		/* expoRoutes */
 		{
 			"CreateSessionManagementData",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
 			s.HandleCreateSessionManagementData,
 		},
 
 		{
 			"DeleteSessionManagementData",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
 			s.HandleDeleteSessionManagementData,
 		},
 
 		{
 			"QuerySessionManagementData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/exposure-data/:ueId/session-management-data/:pduSessionId",
 			s.HandleQuerySessionManagementData,
 		},
 
 		{
 			"CreateAccessAndMobilityData",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/exposure-data/:ueId/access-and-mobility-data",
 			s.HandleCreateAccessAndMobilityData,
 		},
 
 		{
 			"DeleteAccessAndMobilityData",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/exposure-data/:ueId/access-and-mobility-data",
 			s.HandleDeleteAccessAndMobilityData,
 		},
 
 		{
 			"QueryAccessAndMobilityData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/exposure-data/:ueId/access-and-mobility-data",
 			s.HandleQueryAccessAndMobilityData,
 		},
 
 		{
 			"ExposureDataSubsToNotifyPost",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/exposure-data/subs-to-notify",
 			s.HandleExposureDataSubsToNotifyPost,
 		},
 
 		{
 			"ExposureDataSubsToNotifySubIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/exposure-data/subs-to-notify/:subId",
 			s.HandleExposureDataSubsToNotifySubIdDelete,
 		},
 
 		{
 			"ExposureDataSubsToNotifySubIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/exposure-data/subs-to-notify/:subId",
 			s.HandleExposureDataSubsToNotifySubIdPut,
 		},
@@ -705,42 +705,42 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		/* appRoutes */
 		{
 			"ApplicationDataInfluenceDataSubsToNotifyGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/influenceData/subs-to-notify",
 			s.HandleApplicationDataInfluenceDataSubsToNotifyGet,
 		},
 
 		{
 			"ApplicationDataInfluenceDataSubsToNotifyPost",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/application-data/influenceData/subs-to-notify",
 			s.HandleApplicationDataInfluenceDataSubsToNotifyPost,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdDelete,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPatch",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPatch,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPut,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPut",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPost,
 		},
