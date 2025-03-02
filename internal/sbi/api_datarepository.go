@@ -38,42 +38,42 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		{
 			"AmfContext3gpp",
 			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
+			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleAmfContext3gpp,
 		},
 
 		{
 			"CreateAmfContext3gpp",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
+			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleCreateAmfContext3gpp,
 		},
 
 		{
 			"QueryAmfContext3gpp",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
+			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleQueryAmfContext3gpp,
 		},
 
 		{
 			"AmfContextNon3gpp",
 			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
+			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleAmfContextNon3gpp,
 		},
 
 		{
 			"CreateAmfContextNon3gpp",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
+			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleCreateAmfContextNon3gpp,
 		},
 
 		{
 			"QueryAmfContextNon3gpp",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
+			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleQueryAmfContextNon3gpp,
 		},
 
@@ -87,42 +87,42 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		{
 			"QueryAuthenticationStatus",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
+			"/subscription-data/:ueId/authentication-data/authentication-status",
 			s.HandleQueryAuthenticationStatus,
 		},
 
 		{
 			"CreateAuthenticationStatus",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
+			"/subscription-data/:ueId/authentication-data/authentication-status",
 			s.HandleCreateAuthenticationStatus,
 		},
 
 		{
 			"ModifyAuthentication",
 			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
+			"/subscription-data/:ueId/authentication-data/authentication-subscription",
 			s.HandleModifyAuthentication,
 		},
 
 		{
 			"QueryAuthSubsData",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
+			"/subscription-data/:ueId/authentication-data/authentication-subscription",
 			s.HandleQueryAuthSubsData,
 		},
 
 		{
 			"CreateAuthenticationSoR",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/sor-data",
+			"/subscription-data/:ueId/ue-update-confirmation-data/sor-data",
 			s.HandleCreateAuthenticationSoR,
 		},
 
 		{
 			"QueryAuthSoR",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/sor-data",
+			"/subscription-data/:ueId/ue-update-confirmation-data/sor-data",
 			s.HandleQueryAuthSoR,
 		},
 
@@ -349,56 +349,56 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		{
 			"RemovesdmSubscriptions",
 			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
 			s.HandleRemovesdmSubscriptions,
 		},
 
 		{
 			"Updatesdmsubscriptions",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
 			s.HandleUpdatesdmsubscriptions,
 		},
 
 		{
 			"CreateSdmSubscriptions",
 			strings.ToUpper("Post"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
+			"/subscription-data/:ueId/context-data/sdm-subscriptions",
 			s.HandleCreateSdmSubscriptions,
 		},
 
 		{
 			"Querysdmsubscriptions",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
+			"/subscription-data/:ueId/context-data/sdm-subscriptions",
 			s.HandleQuerysdmsubscriptions,
 		},
 
 		{
 			"CreateSmfContextNon3gpp",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
+			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
 			s.HandleCreateSmfContextNon3gpp,
 		},
 
 		{
 			"DeleteSmfContext",
 			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
+			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
 			s.HandleDeleteSmfContext,
 		},
 
 		{
 			"QuerySmfRegistration",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
+			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
 			s.HandleQuerySmfRegistration,
 		},
 
 		{
 			"QuerySmfRegList",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations",
+			"/subscription-data/:ueId/context-data/smf-registrations",
 			s.HandleQuerySmfRegList,
 		},
 
@@ -412,42 +412,42 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		{
 			"CreateSmsfContext3gpp",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
+			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
 			s.HandleCreateSmsfContext3gpp,
 		},
 
 		{
 			"DeleteSmsfContext3gpp",
 			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
+			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
 			s.HandleDeleteSmsfContext3gpp,
 		},
 
 		{
 			"QuerySmsfContext3gpp",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
+			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
 			s.HandleQuerySmsfContext3gpp,
 		},
 
 		{
 			"CreateSmsfContextNon3gpp",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
+			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
 			s.HandleCreateSmsfContextNon3gpp,
 		},
 
 		{
 			"DeleteSmsfContextNon3gpp",
 			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
+			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
 			s.HandleDeleteSmsfContextNon3gpp,
 		},
 
 		{
 			"QuerySmsfContextNon3gpp",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
+			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
 			s.HandleQuerySmsfContextNon3gpp,
 		},
 
@@ -482,28 +482,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		{
 			"CreateAMFSubscriptions",
 			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleCreateAMFSubscriptions,
 		},
 
 		{
 			"ModifyAmfSubscriptionInfo",
 			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleModifyAmfSubscriptionInfo,
 		},
 
 		{
 			"RemoveAmfSubscriptionsInfo",
 			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleRemoveAmfSubscriptionsInfo,
 		},
 
 		{
 			"GetAmfSubscriptionInfo",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
 			s.HandleGetAmfSubscriptionInfo,
 		},
 
@@ -584,28 +584,28 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		{
 			"CreateEeGroupSubscriptions",
 			strings.ToUpper("Post"),
-			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions",
 			s.HandleCreateEeGroupSubscriptions,
 		},
 
 		{
 			"QueryEeGroupSubscriptions",
 			strings.ToUpper("Get"),
-			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions",
 			s.HandleQueryEeGroupSubscriptions,
 		},
 
 		{
 			"CreateEeSubscriptions",
 			strings.ToUpper("Post"),
-			"/subscription-data/:ueId/context-data/ee-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleCreateEeSubscriptions,
 		},
 
 		{
 			"Queryeesubscriptions",
 			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/context-data/ee-subscriptions",
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
 			s.HandleQueryeesubscriptions,
 		},
 
