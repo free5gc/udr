@@ -127,219 +127,6 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		},
 
 		{
-			"ApplicationDataInfluenceDataGet",
-			http.MethodGet,
-			"/application-data/influenceData",
-			s.HandleApplicationDataInfluenceDataGet,
-		},
-
-		/*
-		 * GIN wildcard issue:
-		 * '/application-data/influenceData/:influenceId' and
-		 * '/application-data/influenceData/subs-to-notify' patterns will be conflicted.
-		 * Only can use '/application-data/influenceData/:influenceId' pattern.
-		 * Here ":influenceId" value should be "subs-to-notify".
-		 */
-		{
-			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete",
-			http.MethodDelete,
-			"/application-data/influenceData/:influenceId/:subscriptionId",
-			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
-			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
-		},
-
-		{
-			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet",
-			http.MethodGet,
-			"/application-data/influenceData/:influenceId/:subscriptionId",
-			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
-			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
-		},
-
-		{
-			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut",
-			http.MethodPut,
-			"/application-data/influenceData/:influenceId/:subscriptionId",
-			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
-			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
-		},
-
-		{
-			"ApplicationDataPfdsAppIdDelete",
-			http.MethodDelete,
-			"/application-data/pfds/:appId",
-			s.HandleApplicationDataPfdsAppIdDelete,
-		},
-
-		{
-			"ApplicationDataPfdsAppIdGet",
-			http.MethodGet,
-			"/application-data/pfds/:appId",
-			s.HandleApplicationDataPfdsAppIdGet,
-		},
-
-		{
-			"ApplicationDataPfdsAppIdPut",
-			http.MethodPut,
-			"/application-data/pfds/:appId",
-			s.HandleApplicationDataPfdsAppIdPut,
-		},
-
-		{
-			"ApplicationDataPfdsGet",
-			http.MethodGet,
-			"/application-data/pfds",
-			s.HandleApplicationDataPfdsGet,
-		},
-
-		{
-			"PolicyDataBdtDataBdtReferenceIdDelete",
-			http.MethodDelete,
-			"/policy-data/bdt-data/:bdtReferenceId",
-			s.HandlePolicyDataBdtDataBdtReferenceIdDelete,
-		},
-
-		{
-			"PolicyDataBdtDataBdtReferenceIdGet",
-			http.MethodGet,
-			"/policy-data/bdt-data/:bdtReferenceId",
-			s.HandlePolicyDataBdtDataBdtReferenceIdGet,
-		},
-
-		{
-			"PolicyDataBdtDataBdtReferenceIdPut",
-			http.MethodPut,
-			"/policy-data/bdt-data/:bdtReferenceId",
-			s.HandlePolicyDataBdtDataBdtReferenceIdPut,
-		},
-
-		{
-			"PolicyDataBdtDataGet",
-			http.MethodGet,
-			"/policy-data/bdt-data",
-			s.HandlePolicyDataBdtDataGet,
-		},
-
-		{
-			"PolicyDataPlmnsPlmnIdUePolicySetGet",
-			http.MethodGet,
-			"/policy-data/plmns/:plmnId/ue-policy-set",
-			s.HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
-		},
-
-		{
-			"PolicyDataSponsorConnectivityDataSponsorIdGet",
-			http.MethodGet,
-			"/policy-data/sponsor-connectivity-data/:sponsorId",
-			s.HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
-		},
-
-		{
-			"PolicyDataSubsToNotifyPost",
-			http.MethodPost,
-			"/policy-data/subs-to-notify",
-			s.HandlePolicyDataSubsToNotifyPost,
-		},
-
-		{
-			"PolicyDataSubsToNotifySubsIdDelete",
-			http.MethodDelete,
-			"/policy-data/subs-to-notify/:subsId",
-			s.HandlePolicyDataSubsToNotifySubsIdDelete,
-		},
-
-		{
-			"PolicyDataSubsToNotifySubsIdPut",
-			http.MethodPut,
-			"/policy-data/subs-to-notify/:subsId",
-			s.HandlePolicyDataSubsToNotifySubsIdPut,
-		},
-
-		{
-			"PolicyDataUesUeIdAmDataGet",
-			http.MethodGet,
-			"/policy-data/ues/:ueId/am-data",
-			s.HandlePolicyDataUesUeIdAmDataGet,
-		},
-
-		{
-			"PolicyDataUesUeIdOperatorSpecificDataGet",
-			http.MethodGet,
-			"/policy-data/ues/:ueId/operator-specific-data",
-			s.HandlePolicyDataUesUeIdOperatorSpecificDataGet,
-		},
-
-		{
-			"PolicyDataUesUeIdOperatorSpecificDataPatch",
-			http.MethodPatch,
-			"/policy-data/ues/:ueId/operator-specific-data",
-			s.HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
-		},
-
-		{
-			"PolicyDataUesUeIdOperatorSpecificDataPut",
-			http.MethodPut,
-			"/policy-data/ues/:ueId/operator-specific-data",
-			s.HandlePolicyDataUesUeIdOperatorSpecificDataPut,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataGet",
-			http.MethodGet,
-			"/policy-data/ues/:ueId/sm-data",
-			s.HandlePolicyDataUesUeIdSmDataGet,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataPatch",
-			http.MethodPatch,
-			"/policy-data/ues/:ueId/sm-data",
-			s.HandlePolicyDataUesUeIdSmDataPatch,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataUsageMonIdDelete",
-			http.MethodDelete,
-			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataUsageMonIdGet",
-			http.MethodGet,
-			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataUsageMonIdPut",
-			http.MethodPut,
-			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
-		},
-
-		{
-			"PolicyDataUesUeIdUePolicySetGet",
-			http.MethodGet,
-			"/policy-data/ues/:ueId/ue-policy-set",
-			s.HandlePolicyDataUesUeIdUePolicySetGet,
-		},
-
-		{
-			"PolicyDataUesUeIdUePolicySetPatch",
-			http.MethodPatch,
-			"/policy-data/ues/:ueId/ue-policy-set",
-			s.HandlePolicyDataUesUeIdUePolicySetPatch,
-		},
-
-		{
-			"PolicyDataUesUeIdUePolicySetPut",
-			http.MethodPut,
-			"/policy-data/ues/:ueId/ue-policy-set",
-			s.HandlePolicyDataUesUeIdUePolicySetPut,
-		},
-
-		{
 			"QueryProvisionedData",
 			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data",
@@ -638,6 +425,263 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			s.HandleRemoveEeGroupSubscriptions,
 		},
 
+		{
+			"ApplicationDataInfluenceDataGet",
+			http.MethodGet,
+			"/application-data/influenceData",
+			s.HandleApplicationDataInfluenceDataGet,
+		},
+
+		/*
+		 * GIN wildcard issue:
+		 * '/application-data/influenceData/:influenceId' and
+		 * '/application-data/influenceData/subs-to-notify' patterns will be conflicted.
+		 * Only can use '/application-data/influenceData/:influenceId' pattern.
+		 * Here ":influenceId" value should be "subs-to-notify".
+		 */
+		{
+			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete",
+			http.MethodDelete,
+			"/application-data/influenceData/:influenceId/:subscriptionId",
+			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
+			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
+		},
+
+		{
+			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet",
+			http.MethodGet,
+			"/application-data/influenceData/:influenceId/:subscriptionId",
+			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
+			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
+		},
+
+		{
+			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut",
+			http.MethodPut,
+			"/application-data/influenceData/:influenceId/:subscriptionId",
+			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
+			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
+		},
+
+		{
+			"ApplicationDataPfdsAppIdDelete",
+			http.MethodDelete,
+			"/application-data/pfds/:appId",
+			s.HandleApplicationDataPfdsAppIdDelete,
+		},
+
+		{
+			"ApplicationDataPfdsAppIdGet",
+			http.MethodGet,
+			"/application-data/pfds/:appId",
+			s.HandleApplicationDataPfdsAppIdGet,
+		},
+
+		{
+			"ApplicationDataPfdsAppIdPut",
+			http.MethodPut,
+			"/application-data/pfds/:appId",
+			s.HandleApplicationDataPfdsAppIdPut,
+		},
+
+		{
+			"ApplicationDataPfdsGet",
+			http.MethodGet,
+			"/application-data/pfds",
+			s.HandleApplicationDataPfdsGet,
+		},
+
+		/* appRoutes */
+		{
+			"ApplicationDataInfluenceDataSubsToNotifyGet",
+			http.MethodGet,
+			"/application-data/influenceData/subs-to-notify",
+			s.HandleApplicationDataInfluenceDataSubsToNotifyGet,
+		},
+
+		{
+			"ApplicationDataInfluenceDataSubsToNotifyPost",
+			http.MethodPost,
+			"/application-data/influenceData/subs-to-notify",
+			s.HandleApplicationDataInfluenceDataSubsToNotifyPost,
+		},
+
+		{
+			"ApplicationDataInfluenceDataInfluenceIdDelete",
+			http.MethodDelete,
+			"/application-data/influenceData/:influenceId",
+			s.HandleApplicationDataInfluenceDataInfluenceIdDelete,
+		},
+
+		{
+			"ApplicationDataInfluenceDataInfluenceIdPatch",
+			http.MethodPatch,
+			"/application-data/influenceData/:influenceId",
+			s.HandleApplicationDataInfluenceDataInfluenceIdPatch,
+		},
+
+		{
+			"ApplicationDataInfluenceDataInfluenceIdPut",
+			http.MethodPut,
+			"/application-data/influenceData/:influenceId",
+			s.HandleApplicationDataInfluenceDataInfluenceIdPut,
+		},
+
+		{
+			"ApplicationDataInfluenceDataInfluenceIdPut",
+			http.MethodPost,
+			"/application-data/influenceData/:influenceId",
+			s.HandleApplicationDataInfluenceDataInfluenceIdPost,
+		},
+
+		/* Policy-data */
+		{
+			"PolicyDataBdtDataBdtReferenceIdDelete",
+			http.MethodDelete,
+			"/policy-data/bdt-data/:bdtReferenceId",
+			s.HandlePolicyDataBdtDataBdtReferenceIdDelete,
+		},
+
+		{
+			"PolicyDataBdtDataBdtReferenceIdGet",
+			http.MethodGet,
+			"/policy-data/bdt-data/:bdtReferenceId",
+			s.HandlePolicyDataBdtDataBdtReferenceIdGet,
+		},
+
+		{
+			"PolicyDataBdtDataBdtReferenceIdPut",
+			http.MethodPut,
+			"/policy-data/bdt-data/:bdtReferenceId",
+			s.HandlePolicyDataBdtDataBdtReferenceIdPut,
+		},
+
+		{
+			"PolicyDataBdtDataGet",
+			http.MethodGet,
+			"/policy-data/bdt-data",
+			s.HandlePolicyDataBdtDataGet,
+		},
+
+		{
+			"PolicyDataPlmnsPlmnIdUePolicySetGet",
+			http.MethodGet,
+			"/policy-data/plmns/:plmnId/ue-policy-set",
+			s.HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
+		},
+
+		{
+			"PolicyDataSponsorConnectivityDataSponsorIdGet",
+			http.MethodGet,
+			"/policy-data/sponsor-connectivity-data/:sponsorId",
+			s.HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
+		},
+
+		{
+			"PolicyDataSubsToNotifyPost",
+			http.MethodPost,
+			"/policy-data/subs-to-notify",
+			s.HandlePolicyDataSubsToNotifyPost,
+		},
+
+		{
+			"PolicyDataSubsToNotifySubsIdDelete",
+			http.MethodDelete,
+			"/policy-data/subs-to-notify/:subsId",
+			s.HandlePolicyDataSubsToNotifySubsIdDelete,
+		},
+
+		{
+			"PolicyDataSubsToNotifySubsIdPut",
+			http.MethodPut,
+			"/policy-data/subs-to-notify/:subsId",
+			s.HandlePolicyDataSubsToNotifySubsIdPut,
+		},
+
+		{
+			"PolicyDataUesUeIdAmDataGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/am-data",
+			s.HandlePolicyDataUesUeIdAmDataGet,
+		},
+
+		{
+			"PolicyDataUesUeIdOperatorSpecificDataGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/operator-specific-data",
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataGet,
+		},
+
+		{
+			"PolicyDataUesUeIdOperatorSpecificDataPatch",
+			http.MethodPatch,
+			"/policy-data/ues/:ueId/operator-specific-data",
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
+		},
+
+		{
+			"PolicyDataUesUeIdOperatorSpecificDataPut",
+			http.MethodPut,
+			"/policy-data/ues/:ueId/operator-specific-data",
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataPut,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/sm-data",
+			s.HandlePolicyDataUesUeIdSmDataGet,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataPatch",
+			http.MethodPatch,
+			"/policy-data/ues/:ueId/sm-data",
+			s.HandlePolicyDataUesUeIdSmDataPatch,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataUsageMonIdDelete",
+			http.MethodDelete,
+			"/policy-data/ues/:ueId/sm-data/:usageMonId",
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataUsageMonIdGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/sm-data/:usageMonId",
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataUsageMonIdPut",
+			http.MethodPut,
+			"/policy-data/ues/:ueId/sm-data/:usageMonId",
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
+		},
+
+		{
+			"PolicyDataUesUeIdUePolicySetGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/ue-policy-set",
+			s.HandlePolicyDataUesUeIdUePolicySetGet,
+		},
+
+		{
+			"PolicyDataUesUeIdUePolicySetPatch",
+			http.MethodPatch,
+			"/policy-data/ues/:ueId/ue-policy-set",
+			s.HandlePolicyDataUesUeIdUePolicySetPatch,
+		},
+
+		{
+			"PolicyDataUesUeIdUePolicySetPut",
+			http.MethodPut,
+			"/policy-data/ues/:ueId/ue-policy-set",
+			s.HandlePolicyDataUesUeIdUePolicySetPut,
+		},
+
 		/* expoRoutes */
 		{
 			"CreateSessionManagementData",
@@ -700,49 +744,6 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			http.MethodPut,
 			"/exposure-data/subs-to-notify/:subId",
 			s.HandleExposureDataSubsToNotifySubIdPut,
-		},
-
-		/* appRoutes */
-		{
-			"ApplicationDataInfluenceDataSubsToNotifyGet",
-			http.MethodGet,
-			"/application-data/influenceData/subs-to-notify",
-			s.HandleApplicationDataInfluenceDataSubsToNotifyGet,
-		},
-
-		{
-			"ApplicationDataInfluenceDataSubsToNotifyPost",
-			http.MethodPost,
-			"/application-data/influenceData/subs-to-notify",
-			s.HandleApplicationDataInfluenceDataSubsToNotifyPost,
-		},
-
-		{
-			"ApplicationDataInfluenceDataInfluenceIdDelete",
-			http.MethodDelete,
-			"/application-data/influenceData/:influenceId",
-			s.HandleApplicationDataInfluenceDataInfluenceIdDelete,
-		},
-
-		{
-			"ApplicationDataInfluenceDataInfluenceIdPatch",
-			http.MethodPatch,
-			"/application-data/influenceData/:influenceId",
-			s.HandleApplicationDataInfluenceDataInfluenceIdPatch,
-		},
-
-		{
-			"ApplicationDataInfluenceDataInfluenceIdPut",
-			http.MethodPut,
-			"/application-data/influenceData/:influenceId",
-			s.HandleApplicationDataInfluenceDataInfluenceIdPut,
-		},
-
-		{
-			"ApplicationDataInfluenceDataInfluenceIdPut",
-			http.MethodPost,
-			"/application-data/influenceData/:influenceId",
-			s.HandleApplicationDataInfluenceDataInfluenceIdPost,
 		},
 	}
 }
