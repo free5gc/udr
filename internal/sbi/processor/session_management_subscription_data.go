@@ -41,6 +41,7 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 		dnnKey := util.EscapeDnn(dnn)
 		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
 	}
+	resp := models.SmSubsData{}
 
 	sessionManagementSubscriptionDatas, err := mongoapi.
 		RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
@@ -57,6 +58,8 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 			logger.DataRepoLog.Debug("SmData Unmarshal error")
 			continue
 		}
+		resp.IndividualSmSubsData = append(resp.IndividualSmSubsData, tmpSmData)
+
 		dnnConfigurations := tmpSmData.DnnConfigurations
 		tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
 		for escapedDnn, dnnConf := range dnnConfigurations {
@@ -65,5 +68,5 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 		}
 		smData["DnnConfigurations"] = tmpDnnConfigurations
 	}
-	c.JSON(http.StatusOK, sessionManagementSubscriptionDatas)
+	c.JSON(http.StatusOK, resp)
 }

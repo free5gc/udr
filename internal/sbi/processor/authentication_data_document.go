@@ -23,12 +23,15 @@ import (
 func (p *Processor) ModifyAuthenticationProcedure(
 	c *gin.Context, collName string, ueId string, patchItem []models.PatchItem,
 ) {
+	logger.ProcLog.Debugf("ModifyAuthenticationProcedure: %s %v", ueId, patchItem)
+
 	var err error
 	var origValue, newValue map[string]interface{}
 	filter := bson.M{"ueId": ueId}
 	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("ModifyAuthenticationProcedure err: %+v", err)
 		c.JSON(http.StatusInternalServerError, util.ProblemDetailsModifyNotAllowed(""))
+		return
 	}
 	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
 	c.Status(http.StatusNoContent)

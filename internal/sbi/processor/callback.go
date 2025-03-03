@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/free5gc/openapi/Nudr_DataRepository"
 	"github.com/free5gc/openapi/models"
+	"github.com/free5gc/openapi/udr/DataRepository"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
@@ -15,7 +15,7 @@ import (
 var CurrentResourceUri string
 
 func PreHandleOnDataChangeNotify(ueId string, resourceId string, patchItems []models.PatchItem,
-	origValue interface{}, newValue interface{},
+	origValue map[string]interface{}, newValue map[string]interface{},
 ) {
 	notifyItems := []models.NotifyItem{}
 	changes := []models.ChangeItem{}
@@ -87,32 +87,27 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 	}()
 
 	udrSelf := udr_context.GetSelf()
-	configuration := Nudr_DataRepository.NewConfiguration()
-	client := Nudr_DataRepository.NewAPIClient(configuration)
+	configuration := DataRepository.NewConfiguration()
+	client := DataRepository.NewAPIClient(configuration)
 
 	for _, subscriptionDataSubscription := range udrSelf.SubscriptionDataSubscriptions {
 		if ueId == subscriptionDataSubscription.UeId {
 			onDataChangeNotifyUrl := subscriptionDataSubscription.CallbackReference
 
-			dataChangeNotify := models.DataChangeNotify{}
-			dataChangeNotify.UeId = ueId
-			dataChangeNotify.OriginalCallbackReference = []string{subscriptionDataSubscription.OriginalCallbackReference}
-			dataChangeNotify.NotifyItems = notifyItems
-			httpResponse, err := client.DataChangeNotifyCallbackDocumentApi.OnDataChangeNotify(
-				context.TODO(), onDataChangeNotifyUrl, dataChangeNotify)
-			if err != nil {
-				logger.HttpLog.Errorln(err.Error())
-			} else if httpResponse == nil {
-				logger.HttpLog.Errorln("Empty HTTP response")
+			dataChangeReq := DataRepository.SubscriptionDataSubscriptionsOnDataChangePostRequest{}
+			dataChangeReq.DataChangeNotify.UeId = ueId
+			dataChangeReq.DataChangeNotify.OriginalCallbackReference = []string{
+				subscriptionDataSubscription.OriginalCallbackReference,
 			}
+			dataChangeReq.DataChangeNotify.NotifyItems = notifyItems
+			rsp, err := client.SubsToNotifyCollectionApi.SubscriptionDataSubscriptionsOnDataChangePost(
+				context.TODO(), onDataChangeNotifyUrl, &dataChangeReq)
 
-			defer func() {
-				if httpResponse.Body != nil {
-					if err := httpResponse.Body.Close(); err != nil {
-						logger.HttpLog.Errorln("Failed to close response body:", err)
-					}
-				}
-			}()
+			if err != nil {
+				logger.SBILog.Errorln(err.Error())
+			} else if rsp == nil {
+				logger.SBILog.Errorln("Empty SubscriptionDataSubscriptionsOnDataChangePost response")
+			}
 		}
 	}
 }
@@ -130,31 +125,32 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 	for _, policyDataSubscription := range udrSelf.PolicyDataSubscriptions {
 		policyDataChangeNotificationUrl := policyDataSubscription.NotificationUri
 
-		configuration := Nudr_DataRepository.NewConfiguration()
-		client := Nudr_DataRepository.NewAPIClient(configuration)
-		httpResponse, err := client.PolicyDataChangeNotifyCallbackDocumentApi.PolicyDataChangeNotify(
-			context.TODO(), policyDataChangeNotificationUrl, policyDataChangeNotification)
-		if err != nil {
-			logger.HttpLog.Errorln(err.Error())
-		} else if httpResponse == nil {
-			logger.HttpLog.Errorln("Empty HTTP response")
+		configuration := DataRepository.NewConfiguration()
+		client := DataRepository.NewAPIClient(configuration)
+
+		req := DataRepository.CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPostRequest{
+			PolicyDataChangeNotification: []models.PolicyDataChangeNotification{
+				policyDataChangeNotification,
+			},
 		}
 
-		defer func() {
-			if httpResponse.Body != nil {
-				if err := httpResponse.Body.Close(); err != nil {
-					logger.HttpLog.Errorln("Failed to close response body:", err)
-				}
-			}
-		}()
+		rsp, err := client.PolicyDataSubscriptionsCollectionApi.
+			CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPost(context.TODO(),
+				policyDataChangeNotificationUrl, &req)
+
+		if err != nil {
+			logger.SBILog.Errorln(err.Error())
+		} else if rsp == nil {
+			logger.SBILog.Errorln("Empty CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPost response")
+		}
 	}
 }
 
 func SendInfluenceDataUpdateNotification(resUri string, original, modified *models.TrafficInfluData) {
 	udrSelf := udr_context.GetSelf()
 
-	configuration := Nudr_DataRepository.NewConfiguration()
-	client := Nudr_DataRepository.NewAPIClient(configuration)
+	configuration := DataRepository.NewConfiguration()
+	client := DataRepository.NewAPIClient(configuration)
 
 	var trafficInfluDataNotif models.TrafficInfluDataNotif
 	trafficInfluDataNotif.ResUri = resUri
@@ -171,40 +167,39 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 		if checkInfluenceDataSubscription(modified, influenceDataSubscription) {
 			logger.HttpLog.Tracef("Send notification about update of influence data")
 			trafficInfluDataNotif.TrafficInfluData = modified
-			httpResponse, err := client.InfluenceDataUpdateNotifyCallbackDocumentApi.InfluenceDataChangeNotify(context.TODO(),
-				influenceDataChangeNotificationUrl, []models.TrafficInfluDataNotif{trafficInfluDataNotif})
+
+			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPostRequest{
+				RequestBody: []interface{}{trafficInfluDataNotif},
+			}
+
+			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
+				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
+					context.TODO(), influenceDataChangeNotificationUrl, &req)
+
 			if err != nil {
-				logger.HttpLog.Errorln(err.Error())
-			} else if httpResponse == nil {
-				logger.HttpLog.Errorln("Empty HTTP response")
-			} else {
-				defer func() {
-					if httpResponse.Body != nil {
-						if err := httpResponse.Body.Close(); err != nil {
-							logger.HttpLog.Errorln("Failed to close response body:", err)
-						}
-					}
-				}()
+				logger.SBILog.Errorln(err.Error())
+			} else if rsp == nil {
+				logger.SBILog.Errorln(
+					"Empty CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost response")
 			}
 		} else if checkInfluenceDataSubscription(original, influenceDataSubscription) {
 			// If the modified data is not subscribed or nil, check if the original data is subscribed
 			// If positive, send notification about the removal
 			logger.HttpLog.Tracef("Send notification about removal of influence data")
 			trafficInfluDataNotif.TrafficInfluData = nil
-			httpResponse, err := client.InfluenceDataUpdateNotifyCallbackDocumentApi.InfluenceDataChangeNotify(context.TODO(),
-				influenceDataChangeNotificationUrl, []models.TrafficInfluDataNotif{trafficInfluDataNotif})
+			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPostRequest{
+				RequestBody: []interface{}{trafficInfluDataNotif},
+			}
+
+			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
+				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
+					context.TODO(), influenceDataChangeNotificationUrl, &req)
+
 			if err != nil {
-				logger.HttpLog.Errorln(err.Error())
-			} else if httpResponse == nil {
-				logger.HttpLog.Errorln("Empty HTTP response")
-			} else {
-				defer func() {
-					if httpResponse.Body != nil {
-						if err := httpResponse.Body.Close(); err != nil {
-							logger.HttpLog.Errorln("Failed to close response body:", err)
-						}
-					}
-				}()
+				logger.SBILog.Errorln(err.Error())
+			} else if rsp == nil {
+				logger.SBILog.Errorln(
+					"Empty CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost response")
 			}
 		}
 		return true

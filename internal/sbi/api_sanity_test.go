@@ -89,7 +89,7 @@ func getInfluData(supi string) *models.TrafficInfluData {
 			FlowId:           1,
 			FlowDescriptions: []string{"permit out ip from 60.60.0.1 8080 to any"},
 		}},
-		TrafficRoutes: []models.RouteToLocation{{
+		TrafficRoutes: []*models.RouteToLocation{{
 			Dnai: "edge1", RouteProfId: "1",
 		}, {
 			Dnai: "edge2", RouteProfId: "2",
