@@ -396,6 +396,13 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			s.HandleQueryeesubscriptions,
 		},
 
+		{
+			"Patcheesubscriptions",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
+			s.HandlePatcheesubscriptions,
+		},
+
 		/* eeRoutes */
 		{
 			"RemoveeeSubscriptions",
@@ -423,13 +430,6 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			http.MethodDelete,
 			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
 			s.HandleRemoveEeGroupSubscriptions,
-		},
-
-		{
-			"PatchAuthenticationSubscription",
-			http.MethodPatch,
-			"/subscription-data/:ueId/authentication-data/authentication-subscription",
-			s.HandlePatchAuthenticationSubscription,
 		},
 
 		{
@@ -612,20 +612,6 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			http.MethodPatch,
 			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId/hss-sdm-subscriptions",
 			s.HandlePatchHssSdmSubscriptionInfo,
-		},
-
-		{
-			"GetIndividualEsSubscription",
-			http.MethodGet,
-			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
-			s.HandleGetIndividualEsSubscription,
-		},
-
-		{
-			"CreateIndividualEsSubscription",
-			http.MethodPost,
-			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
-			s.HandleCreateIndividualEsSubscription,
 		},
 
 		{
@@ -1218,76 +1204,6 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 			http.MethodPost,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPost,
-		},
-
-		{
-			"GetPFDData",
-			http.MethodGet,
-			"/application-data/pfds",
-			s.HandleGetPFDData,
-		},
-
-		{
-			"GetIndividualPFDData",
-			http.MethodGet,
-			"/application-data/pfds/:appId",
-			s.HandleGetIndividualPFDData,
-		},
-
-		{
-			"DeleteIndividualPFDData",
-			http.MethodDelete,
-			"/application-data/pfds/:appId",
-			s.HandleDeleteIndividualPFDData,
-		},
-
-		{
-			"UpdateIndividualPFDData",
-			http.MethodPut,
-			"/application-data/pfds/:appId",
-			s.HandleUpdateIndividualPFDData,
-		},
-
-		{
-			"GetInfluenceData",
-			http.MethodGet,
-			"/application-data/influenceData",
-			s.HandleGetInfluenceData,
-		},
-
-		{
-			"UpdateIndividualInfluenceData",
-			http.MethodPut,
-			"/application-data/influenceData/:influenceId",
-			s.HandleUpdateIndividualInfluenceData,
-		},
-
-		{
-			"PatchIndividualInfluenceData",
-			http.MethodPatch,
-			"/application-data/influenceData/:influenceId",
-			s.HandlePatchIndividualInfluenceData,
-		},
-
-		{
-			"DeleteIndividualInfluenceData",
-			http.MethodDelete,
-			"/application-data/influenceData/:influenceId",
-			s.HandleDeleteIndividualInfluenceData,
-		},
-
-		{
-			"CreateInfluenceDataSubscription",
-			http.MethodPost,
-			"/application-data/influenceData/subs-to-notify",
-			s.HandleCreateInfluenceDataSubscription,
-		},
-
-		{
-			"GetInfluenceDataSubscription",
-			http.MethodGet,
-			"/application-data/influenceData/subs-to-notify",
-			s.HandleGetInfluenceDataSubscription,
 		},
 
 		{
@@ -3832,10 +3748,6 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPost(c *gin.Contex
 }
 
 // R17 subscription data
-func (s *Server) HandlePatchAuthenticationSubscription(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
 func (s *Server) HandleUpdateAuthenticationUPU(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{})
 }
@@ -3940,11 +3852,7 @@ func (s *Server) HandlePatchHssSdmSubscriptionInfo(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
-func (s *Server) HandleGetIndividualEsSubscription(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleCreateIndividualEsSubscription(c *gin.Context) {
+func (s *Server) HandlePatcheesubscriptions(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{})
 }
 
@@ -4225,46 +4133,6 @@ func (s *Server) HandleGetPp5gMbsGroupProfileData(c *gin.Context) {
 }
 
 // R17 application data
-func (s *Server) HandleGetPFDData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleGetIndividualPFDData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleDeleteIndividualPFDData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleUpdateIndividualPFDData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleGetInfluenceData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleUpdateIndividualInfluenceData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandlePatchIndividualInfluenceData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleDeleteIndividualInfluenceData(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleCreateInfluenceDataSubscription(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
-func (s *Server) HandleGetInfluenceDataSubscription(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{})
-}
-
 func (s *Server) HandleGetIndividualInfluenceDataSubscription(c *gin.Context) {
 	c.JSON(http.StatusNotImplemented, gin.H{})
 }
