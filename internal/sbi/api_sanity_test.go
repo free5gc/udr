@@ -268,7 +268,7 @@ func TestUDR_InfluData_GetBeforeCreateing(t *testing.T) {
 	t.Run("UDR influ-data Get before Create",
 		func(t *testing.T) {
 			require.Equal(t, http.StatusOK, rsp.Code)
-			require.Equal(t, "[1]", rsp.Body.String())
+			require.Equal(t, "[]", rsp.Body.String())
 		})
 }
 
