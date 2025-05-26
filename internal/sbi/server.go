@@ -3,11 +3,14 @@ package sbi
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+    "github.com/sirupsen/logrus"
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
@@ -38,14 +41,22 @@ func NewServer(udr UDR, tlsKeyLogPath string) *Server {
 		UDR: udr,
 	}
 
-	s.router = newRouter(s)
-	server, err := bindRouter(udr, s.router, tlsKeyLogPath)
-	s.httpServer = server
 
-	if err != nil {
-		logger.SBILog.Errorf("bind Router Error: %+v", err)
+	s.router = newRouter(s)
+	
+	addr := s.Context().RegisterIP
+	port := uint16(s.Context().SBIPort)
+
+	bind := netip.AddrPortFrom(addr, port).String()
+	bindAddr := fmt.Sprintf("%s", bind)
+
+	logger.SBILog.Infof("Binding addr: [%s]", bindAddr)
+	var err error
+	if s.httpServer, err = httpwrapper.NewHttp2Server(bindAddr, tlsKeyLogPath, s.router); err != nil {
+		logger.InitLog.Errorf("Initialize HTTP server failed: %v", err)
 		panic("Server initialization failed")
 	}
+	s.httpServer.ErrorLog = log.New(logger.SBILog.WriterLevel(logrus.ErrorLevel), "HTTP2: ", 0)
 
 	return s
 }
@@ -83,13 +94,6 @@ func (s *Server) shutdownHttpServer() {
 	if err != nil {
 		logger.SBILog.Errorf("HTTP server shutdown failed: %+v", err)
 	}
-}
-
-func bindRouter(udr app.App, router *gin.Engine, tlsKeyLogPath string) (*http.Server, error) {
-	sbiConfig := udr.Config().Configuration.Sbi
-	bindAddr := fmt.Sprintf("%s:%d", sbiConfig.BindingIPv4, sbiConfig.Port)
-
-	return httpwrapper.NewHttp2Server(bindAddr, tlsKeyLogPath, router)
 }
 
 func newRouter(s *Server) *gin.Engine {
