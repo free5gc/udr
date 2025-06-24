@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) QueryTraceDataProcedure(c *gin.Context, collName string, ueId string,
@@ -25,6 +26,7 @@ func (p *Processor) QueryTraceDataProcedure(c *gin.Context, collName string, ueI
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryTraceDataProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

@@ -18,6 +18,7 @@ import (
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) ModifyPpDataProcedure(c *gin.Context, collName string, ueId string, patchItem []models.PatchItem) {
@@ -27,6 +28,7 @@ func (p *Processor) ModifyPpDataProcedure(c *gin.Context, collName string, ueId 
 	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("ModifyPpDataProcedure err: %+v", err)
 		pd := util.ProblemDetailsModifyNotAllowed("")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
