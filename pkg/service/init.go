@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 
 	"github.com/free5gc/openapi"
@@ -19,6 +20,8 @@ import (
 	"github.com/free5gc/udr/internal/sbi/processor"
 	"github.com/free5gc/udr/pkg/app"
 	"github.com/free5gc/udr/pkg/factory"
+	"github.com/free5gc/util/metrics"
+	"github.com/free5gc/util/metrics/utils"
 	"github.com/free5gc/util/mongoapi"
 )
 
@@ -29,10 +32,11 @@ type UdrApp struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	wg        sync.WaitGroup
-	sbiServer *sbi.Server
-	processor *processor.Processor
-	consumer  *consumer.Consumer
+	wg            sync.WaitGroup
+	sbiServer     *sbi.Server
+	metricsServer *metrics.Server
+	processor     *processor.Processor
+	consumer      *consumer.Consumer
 }
 
 var _ app.App = &UdrApp{}
@@ -59,7 +63,36 @@ func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*Ud
 
 	udr.sbiServer = sbi.NewServer(udr, tlsKeyLogPath)
 
+	features := map[utils.MetricTypeEnabled]bool{}
+	customMetrics := make(map[utils.MetricTypeEnabled][]prometheus.Collector)
+	if cfg.AreMetricsEnabled() {
+		var err error
+		if udr.metricsServer, err = metrics.NewServer(
+			getInitMetrics(cfg, features, customMetrics), tlsKeyLogPath, logger.InitLog); err != nil {
+			return nil, err
+		}
+	}
+
 	return udr, nil
+}
+
+func getInitMetrics(
+	cfg *factory.Config,
+	features map[utils.MetricTypeEnabled]bool,
+	customMetrics map[utils.MetricTypeEnabled][]prometheus.Collector,
+) metrics.InitMetrics {
+	metricsInfo := metrics.Metrics{
+		BindingIPv4: cfg.GetMetricsBindingAddr(),
+		Scheme:      cfg.GetMetricsScheme(),
+		Namespace:   cfg.GetMetricsNamespace(),
+		Port:        cfg.GetMetricsPort(),
+		Tls: metrics.Tls{
+			Key: cfg.GetMetricsCertKeyPath(),
+			Pem: cfg.GetMetricsCertPemPath(),
+		},
+	}
+
+	return metrics.NewInitMetrics(metricsInfo, "udr", features, customMetrics)
 }
 
 func (a *UdrApp) Consumer() *consumer.Consumer {
@@ -179,10 +212,16 @@ func (a *UdrApp) Start() {
 		}
 	}()
 
+	a.sbiServer.Run(&a.wg)
+	if a.cfg.AreMetricsEnabled() && a.metricsServer != nil {
+		go func() {
+			a.metricsServer.Run(&a.wg)
+		}()
+	}
+
 	a.wg.Add(1)
 	go a.listenShutdown(a.ctx)
 
-	a.sbiServer.Run(&a.wg)
 	a.WaitRoutineStopped()
 }
 
@@ -206,6 +245,11 @@ func (a *UdrApp) terminateProcedure() {
 func (a *UdrApp) CallServerStop() {
 	if a.sbiServer != nil {
 		a.sbiServer.Shutdown()
+	}
+
+	if a.metricsServer != nil {
+		a.metricsServer.Stop()
+		logger.MainLog.Infof("UDR Metrics Server terminated")
 	}
 }
 
