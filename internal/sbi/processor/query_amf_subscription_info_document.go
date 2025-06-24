@@ -17,6 +17,7 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) GetAmfSubscriptionInfoProcedure(c *gin.Context, subsId string, ueId string) {
@@ -26,6 +27,7 @@ func (p *Processor) GetAmfSubscriptionInfoProcedure(c *gin.Context, subsId strin
 	if !ok {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
 		logger.DataRepoLog.Errorf("GetAmfSubscriptionInfoProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -36,6 +38,7 @@ func (p *Processor) GetAmfSubscriptionInfoProcedure(c *gin.Context, subsId strin
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		logger.DataRepoLog.Errorf("GetAmfSubscriptionInfoProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -43,6 +46,7 @@ func (p *Processor) GetAmfSubscriptionInfoProcedure(c *gin.Context, subsId strin
 	if UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos == nil {
 		pd := util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
 		logger.DataRepoLog.Errorf("GetAmfSubscriptionInfoProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

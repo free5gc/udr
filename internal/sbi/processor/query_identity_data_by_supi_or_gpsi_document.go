@@ -17,6 +17,7 @@ import (
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) GetIdentityDataProcedure(c *gin.Context, collName string, ueId string) {
@@ -31,6 +32,7 @@ func (p *Processor) GetIdentityDataProcedure(c *gin.Context, collName string, ue
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("GetIdentityDataProcedure err: %+v", pd)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

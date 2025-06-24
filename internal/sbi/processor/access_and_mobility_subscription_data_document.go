@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) QueryAmDataProcedure(c *gin.Context, collName string, ueId string, servingPlmnId string) {
@@ -24,6 +25,7 @@ func (p *Processor) QueryAmDataProcedure(c *gin.Context, collName string, ueId s
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

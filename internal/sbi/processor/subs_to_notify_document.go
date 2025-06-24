@@ -17,6 +17,7 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) RemovesubscriptionDataSubscriptionsProcedure(c *gin.Context, subsId string) {
@@ -25,6 +26,7 @@ func (p *Processor) RemovesubscriptionDataSubscriptionsProcedure(c *gin.Context,
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		logger.DataRepoLog.Errorf("RemovesubscriptionDataSubscriptionsProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

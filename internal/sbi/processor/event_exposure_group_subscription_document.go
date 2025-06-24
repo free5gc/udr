@@ -17,6 +17,7 @@ import (
 	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) RemoveEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupId string, subsId string) {
@@ -24,6 +25,7 @@ func (p *Processor) RemoveEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
 	if !ok {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -33,6 +35,7 @@ func (p *Processor) RemoveEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -48,6 +51,7 @@ func (p *Processor) UpdateEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
 	if !ok {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -57,6 +61,7 @@ func (p *Processor) UpdateEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
