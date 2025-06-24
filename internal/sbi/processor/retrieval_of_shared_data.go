@@ -17,6 +17,7 @@ import (
 
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) GetSharedDataProcedure(c *gin.Context, collName string, sharedDataIds []string) {
@@ -26,6 +27,7 @@ func (p *Processor) GetSharedDataProcedure(c *gin.Context, collName string, shar
 		sharedData, pd := p.GetDataFromDB(collName, filter)
 		if pd != nil && pd.Status == http.StatusInternalServerError {
 			logger.DataRepoLog.Errorf("GetSharedDataProcedure err: %s", pd.Detail)
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 			c.JSON(int(pd.Status), pd)
 			return
 		}
@@ -37,6 +39,7 @@ func (p *Processor) GetSharedDataProcedure(c *gin.Context, collName string, shar
 	if sharedDataArray == nil {
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 		logger.DataRepoLog.Errorf("GetSharedDataProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
