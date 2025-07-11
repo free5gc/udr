@@ -18,6 +18,7 @@ import (
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) ModifyAuthenticationProcedure(
@@ -30,7 +31,9 @@ func (p *Processor) ModifyAuthenticationProcedure(
 	filter := bson.M{"ueId": ueId}
 	if origValue, newValue, err = p.PatchDataToDBAndNotify(collName, ueId, patchItem, filter); err != nil {
 		logger.DataRepoLog.Errorf("ModifyAuthenticationProcedure err: %+v", err)
-		c.JSON(http.StatusInternalServerError, util.ProblemDetailsModifyNotAllowed(""))
+		problemDetails := util.ProblemDetailsModifyNotAllowed("")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetails.Cause)
+		c.JSON(http.StatusInternalServerError, problemDetails)
 		return
 	}
 	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
@@ -46,6 +49,7 @@ func (p *Processor) QueryAuthSubsDataProcedure(c *gin.Context, collName string, 
 		} else {
 			logger.DataRepoLog.Errorf("QueryAuthSubsDataProcedure err: %s", pd.Detail)
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

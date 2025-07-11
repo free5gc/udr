@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) GetOdbDataProcedure(c *gin.Context, collName string, ueId string) {
@@ -23,6 +24,7 @@ func (p *Processor) GetOdbDataProcedure(c *gin.Context, collName string, ueId st
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("GetOdbDataProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
