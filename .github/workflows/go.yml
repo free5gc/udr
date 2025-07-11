@@ -9,9 +9,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+
     strategy:
       matrix:
         go: ['1.21']
+
     steps:
     - uses: actions/checkout@v4
 
@@ -24,4 +31,4 @@ jobs:
       run: go build -v ./...
 
     - name: Test
-      run: go test -v -short ./...
+      run: go test -v ./...
