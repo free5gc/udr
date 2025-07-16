@@ -17,6 +17,7 @@ import (
 	"github.com/free5gc/udr/pkg/factory"
 	"github.com/free5gc/util/httpwrapper"
 	logger_util "github.com/free5gc/util/logger"
+	"github.com/free5gc/util/metrics"
 )
 
 type Server struct {
@@ -93,6 +94,7 @@ func bindRouter(udr app.App, router *gin.Engine, tlsKeyLogPath string) (*http.Se
 
 func newRouter(s *Server) *gin.Engine {
 	router := logger_util.NewGinWithLogrus(logger.GinLog)
+	router.Use(metrics.InboundMetrics())
 
 	dataRepositoryGroup := router.Group(factory.UdrDrResUriPrefix)
 	dataRepositoryGroup.Use(func(c *gin.Context) {

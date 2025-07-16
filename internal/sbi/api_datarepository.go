@@ -24,6 +24,7 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (s *Server) getDataRepositoryRoutes() []Route {
@@ -765,6 +766,7 @@ func (s *Server) HandleAmfContext3gpp(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -778,6 +780,7 @@ func (s *Server) HandleAmfContext3gpp(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -806,6 +809,7 @@ func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -819,6 +823,7 @@ func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -867,6 +872,7 @@ func (s *Server) HandleAmfContextNon3gpp(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -880,6 +886,7 @@ func (s *Server) HandleAmfContextNon3gpp(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -909,6 +916,7 @@ func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -922,6 +930,7 @@ func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -978,6 +987,7 @@ func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -991,6 +1001,7 @@ func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1035,6 +1046,7 @@ func (s *Server) HandleModifyAuthentication(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1048,6 +1060,7 @@ func (s *Server) HandleModifyAuthentication(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1091,6 +1104,7 @@ func (s *Server) HandleCreateAuthenticationSoR(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1104,6 +1118,7 @@ func (s *Server) HandleCreateAuthenticationSoR(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1234,6 +1249,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1249,6 +1265,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1264,6 +1281,7 @@ func getDataFromRequestBody(c *gin.Context, data interface{}) error {
 	if err != nil {
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
 		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(http.StatusInternalServerError, pd)
 		return err
 	}
@@ -1272,6 +1290,7 @@ func getDataFromRequestBody(c *gin.Context, data interface{}) error {
 	if err != nil {
 		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
 		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(http.StatusBadRequest, pd)
 		return err
 	}
@@ -1406,6 +1425,7 @@ func (s *Server) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
 	if err != nil {
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
 		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(http.StatusInternalServerError, pd)
 	}
 
@@ -1413,6 +1433,7 @@ func (s *Server) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
 	if err != nil {
 		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
 		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(http.StatusBadRequest, pd)
 	}
 
@@ -1436,6 +1457,7 @@ func (s *Server) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
 	if err != nil {
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
 		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(http.StatusInternalServerError, pd)
 	}
 
@@ -1443,6 +1465,7 @@ func (s *Server) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
 	if err != nil {
 		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
 		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(http.StatusBadRequest, pd)
 	}
 
@@ -1688,6 +1711,7 @@ func (s *Server) HandleUpdatesdmsubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1701,6 +1725,7 @@ func (s *Server) HandleUpdatesdmsubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1730,6 +1755,7 @@ func (s *Server) HandleCreateSdmSubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1743,6 +1769,7 @@ func (s *Server) HandleCreateSdmSubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1785,6 +1812,7 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1798,6 +1826,7 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1888,6 +1917,7 @@ func (s *Server) HandleCreateSmsfContext3gpp(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1901,6 +1931,7 @@ func (s *Server) HandleCreateSmsfContext3gpp(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -1958,6 +1989,7 @@ func (s *Server) HandleCreateSmsfContextNon3gpp(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -1971,6 +2003,7 @@ func (s *Server) HandleCreateSmsfContextNon3gpp(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2094,6 +2127,7 @@ func (s *Server) HandleCreateAMFSubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2107,6 +2141,7 @@ func (s *Server) HandleCreateAMFSubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2150,6 +2185,7 @@ func (s *Server) HandleModifyAmfSubscriptionInfo(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2163,6 +2199,7 @@ func (s *Server) HandleModifyAmfSubscriptionInfo(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2223,6 +2260,7 @@ func (s *Server) HandlePostSubscriptionDataSubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2236,6 +2274,7 @@ func (s *Server) HandlePostSubscriptionDataSubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2277,6 +2316,7 @@ func (s *Server) HandlePatchOperSpecData(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2290,6 +2330,7 @@ func (s *Server) HandlePatchOperSpecData(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2347,6 +2388,7 @@ func (s *Server) HandleModifyPpData(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2360,6 +2402,7 @@ func (s *Server) HandleModifyPpData(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2413,6 +2456,7 @@ func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2426,6 +2470,7 @@ func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2443,6 +2488,7 @@ func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
 			Cause:  "INVALID_PARAMETER",
 		}
 		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
 	}
@@ -2468,6 +2514,7 @@ func (s *Server) HandleQueryEeGroupSubscriptions(c *gin.Context) {
 			Cause:  "INVALID_PARAMETER",
 		}
 		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
 	}
@@ -2491,6 +2538,7 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2504,6 +2552,7 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2527,6 +2576,7 @@ func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
 			Cause:  "INVALID_PARAMETER",
 		}
 		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
 	}
@@ -2558,6 +2608,7 @@ func (s *Server) HandleQueryeesubscriptions(c *gin.Context) {
 			Cause:  "INVALID_PARAMETER",
 		}
 		logger.DataRepoLog.Errorf("Invalid ueId: %s", ueId)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
 	}
@@ -2596,6 +2647,7 @@ func (s *Server) HandleUpdateEesubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2609,6 +2661,7 @@ func (s *Server) HandleUpdateEesubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2647,6 +2700,7 @@ func (s *Server) HandleUpdateEeGroupSubscriptions(c *gin.Context) {
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2660,6 +2714,7 @@ func (s *Server) HandleUpdateEeGroupSubscriptions(c *gin.Context) {
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2721,6 +2776,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Contex
 				Status: http.StatusBadRequest,
 				Detail: err.Error(),
 			}
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 			c.JSON(http.StatusBadRequest, problemDetails)
 		}
 	}
@@ -2730,6 +2786,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Contex
 			Status: http.StatusBadRequest,
 			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 		c.JSON(http.StatusBadRequest, problemDetails)
 	}
 
@@ -2748,6 +2805,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Conte
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2763,6 +2821,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Conte
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
@@ -2799,6 +2858,7 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context
 			Cause:  "SYSTEM_FAILURE",
 		}
 		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusInternalServerError, problemDetail)
 		return
 	}
@@ -2814,6 +2874,7 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context
 			Detail: problemDetail,
 		}
 		logger.DataRepoLog.Errorln(problemDetail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(rsp.Status)))
 		c.JSON(http.StatusBadRequest, rsp)
 		return
 	}
