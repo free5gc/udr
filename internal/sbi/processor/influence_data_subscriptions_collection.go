@@ -112,14 +112,14 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(
 		original = new(models.TrafficInfluData)
 		byteData, err := json.Marshal(mapData)
 		if err != nil {
-			logger.DataRepoLog.Errorf(err.Error())
+			logger.DataRepoLog.Error(err.Error())
 			pd := util.ProblemDetailsUpspecified(err.Error())
 			c.JSON(int(pd.Status), pd)
 			return
 		}
 		err = json.Unmarshal(byteData, &original)
 		if err != nil {
-			logger.DataRepoLog.Errorf(err.Error())
+			logger.DataRepoLog.Error(err.Error())
 			pd := util.ProblemDetailsUpspecified(err.Error())
 			c.JSON(int(pd.Status), pd)
 			return
