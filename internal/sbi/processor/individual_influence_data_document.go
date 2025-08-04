@@ -22,6 +22,7 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 	"github.com/free5gc/util/mongoapi"
 )
 
@@ -40,6 +41,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
 			Status: http.StatusInternalServerError,
 			Detail: err.Error(),
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 		c.JSON(int(problemDetails.Status), problemDetails)
 		return
 	} else {
@@ -52,6 +54,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
 					Status: http.StatusInternalServerError,
 					Detail: err.Error(),
 				}
+				c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 				c.JSON(int(problemDetails.Status), problemDetails)
 				return
 			}
@@ -62,6 +65,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
 					Status: http.StatusInternalServerError,
 					Detail: err.Error(),
 				}
+				c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 				c.JSON(int(problemDetails.Status), problemDetails)
 				return
 			}
@@ -75,6 +79,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
 			Status: http.StatusInternalServerError,
 			Detail: err.Error(),
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 		c.JSON(int(problemDetails.Status), problemDetails)
 		return
 	}
@@ -99,5 +104,6 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
 func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPostProcedure(
 	c *gin.Context,
 ) {
+	c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(http.StatusMethodNotAllowed))
 	c.Status(http.StatusMethodNotAllowed)
 }

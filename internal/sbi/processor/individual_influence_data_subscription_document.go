@@ -18,6 +18,7 @@ import (
 	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDeleteProcedure(
@@ -35,6 +36,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetPro
 		c.JSON(http.StatusOK, subscription)
 	} else {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 }
@@ -50,6 +52,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutPro
 			Status: http.StatusBadRequest,
 			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(pd.Status)))
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -59,6 +62,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutPro
 			Status: http.StatusBadRequest,
 			Detail: "Notification URI shall be provided",
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(pd.Status)))
 		c.JSON(int(pd.Status), pd)
 		return
 	}

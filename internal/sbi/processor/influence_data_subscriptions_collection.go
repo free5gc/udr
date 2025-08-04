@@ -22,6 +22,7 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 	"github.com/free5gc/util/mongoapi"
 )
 
@@ -64,6 +65,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostPr
 			Status: http.StatusBadRequest,
 			Detail: "At least one of DNNs, S-NSSAIs, Internal Group IDs or SUPIs shall be provided",
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(pd.Status)))
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -73,6 +75,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostPr
 			Status: http.StatusBadRequest,
 			Detail: "Notification URI shall be provided",
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(pd.Status)))
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -83,6 +86,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostPr
 			Status: http.StatusForbidden,
 			Cause:  "UNSPECIFIED",
 		}
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	} else {
 		udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, request)
@@ -104,6 +108,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(
 	if err != nil {
 		logger.DataRepoLog.Errorf("ApplicationDataInfluenceDataInfluenceIdDeleteProcedure err: %+v", err)
 		pd := util.ProblemDetailsUpspecified("")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -114,6 +119,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(
 		if err != nil {
 			logger.DataRepoLog.Error(err.Error())
 			pd := util.ProblemDetailsUpspecified(err.Error())
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 			c.JSON(int(pd.Status), pd)
 			return
 		}
@@ -121,6 +127,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(
 		if err != nil {
 			logger.DataRepoLog.Error(err.Error())
 			pd := util.ProblemDetailsUpspecified(err.Error())
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 			c.JSON(int(pd.Status), pd)
 			return
 		}
@@ -129,6 +136,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(
 	if err := mongoapi.RestfulAPIDeleteOne(collName, filter); err != nil {
 		logger.DataRepoLog.Errorf("InfluIdDelProcedure: %+v", err)
 		pd := util.ProblemDetailsUpspecified(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

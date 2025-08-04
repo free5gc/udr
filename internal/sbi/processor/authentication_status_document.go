@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/util/metrics/sbi"
 	"github.com/free5gc/util/mongoapi"
 )
 
@@ -36,6 +37,7 @@ func (p *Processor) QueryAuthenticationStatusProcedure(c *gin.Context, collName 
 
 	if pd != nil {
 		logger.DataRepoLog.Errorf("QueryAuthenticationStatusProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

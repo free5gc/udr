@@ -18,6 +18,7 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) CreateAMFSubscriptionsProcedure(c *gin.Context, subsId string, ueId string,
@@ -28,6 +29,7 @@ func (p *Processor) CreateAMFSubscriptionsProcedure(c *gin.Context, subsId strin
 	if !ok {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
 		logger.DataRepoLog.Errorf("CreateAMFSubscriptionsProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -37,6 +39,7 @@ func (p *Processor) CreateAMFSubscriptionsProcedure(c *gin.Context, subsId strin
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		logger.DataRepoLog.Errorf("CreateAMFSubscriptionsProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -69,6 +72,7 @@ func (p *Processor) RemoveAmfSubscriptionsInfoProcedure(c *gin.Context, subsId s
 
 	if pd != nil {
 		logger.DataRepoLog.Errorf("RemoveAmfSubscriptionsInfoProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

@@ -26,6 +26,7 @@ import (
 	db "github.com/free5gc/udr/internal/database"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 	"github.com/free5gc/util/mongoapi"
 )
 
@@ -40,6 +41,7 @@ func (p *Processor) GetApplicationDataIndividualPfdFromDBProcedure(c *gin.Contex
 	data, pd := p.GetDataFromDB(db.APPDATA_PFD_DB_COLLECTION_NAME, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("getApplicationDataIndividualPfdFromDB err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 	c.JSON(http.StatusOK, data)
@@ -54,7 +56,9 @@ func (p *Processor) PutApplicationDataIndividualPfdToDBProcedure(
 	existed, err := mongoapi.RestfulAPIPutOne(db.APPDATA_PFD_DB_COLLECTION_NAME, filter, data)
 	if err != nil {
 		logger.DataRepoLog.Errorf("putApplicationDataIndividualPfdToDB err: %+v", err)
-		c.JSON(http.StatusInternalServerError, nil)
+		statusCode := http.StatusInternalServerError
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(statusCode))
+		c.JSON(statusCode, nil)
 		return
 	}
 
@@ -103,6 +107,7 @@ func (p *Processor) PolicyDataBdtDataBdtReferenceIdGetProcedure(
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataBdtDataBdtReferenceIdGetProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -120,6 +125,7 @@ func (p *Processor) PolicyDataBdtDataBdtReferenceIdPutProcedure(
 	if err != nil {
 		logger.DataRepoLog.Errorf("putApplicationDataIndividualPfdToDB err: %+v", err)
 		pd := util.ProblemDetailsUpspecified(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -145,6 +151,7 @@ func (p *Processor) PolicyDataPlmnsPlmnIdUePolicySetGetProcedure(c *gin.Context,
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataPlmnsPlmnIdUePolicySetGetProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -158,6 +165,7 @@ func (p *Processor) PolicyDataSponsorConnectivityDataSponsorIdGetProcedure(c *gi
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataSponsorConnectivityDataSponsorIdGetProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -187,6 +195,7 @@ func (p *Processor) PolicyDataSubsToNotifySubsIdDeleteProcedure(c *gin.Context, 
 	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 	delete(udrSelf.PolicyDataSubscriptions, subsId)
@@ -200,6 +209,7 @@ func (p *Processor) PolicyDataSubsToNotifySubsIdPutProcedure(c *gin.Context, sub
 	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 
@@ -214,6 +224,7 @@ func (p *Processor) PolicyDataUesUeIdAmDataGetProcedure(c *gin.Context, collName
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdAmDataGetProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 	c.JSON(http.StatusOK, data)
@@ -226,6 +237,7 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataGetProcedure(c *gin.Con
 	data, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataGetProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 	operatorSpecificDataContainerMap := data["operatorSpecificDataContainerMap"]
@@ -241,6 +253,7 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c *gin.C
 	if err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataPatchProcedure err: %+v", err)
 		pd := util.ProblemDetailsModifyNotAllowed("")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 
@@ -248,6 +261,7 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c *gin.C
 		"operatorSpecificDataContainerMap"); err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataPatchProcedure err: %+v", err)
 		pd := util.ProblemDetailsModifyNotAllowed("")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 	}
 	c.Status(http.StatusNoContent)
@@ -276,6 +290,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 
 	smPolicyData, pd := p.GetDataFromDBWithArg(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if pd != nil {
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -285,6 +300,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 	smPolicySnssaiDatas, ok := smPolicyData["smPolicySnssaiData"].(map[string]interface{})
 	if !ok {
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -314,6 +330,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 	}
 	if !found {
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -370,6 +387,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 			usageMonDataBsonM, pd := p.GetDataFromDB(collName, filter)
 			if pd != nil && pd.Status == http.StatusInternalServerError {
 				logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataPatchProcedure err: %s", pd.Detail)
+				c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 				c.JSON(int(pd.Status), pd)
 				return
 			}
@@ -384,6 +402,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 		smPolicyDataBsonM, pd := p.GetDataFromDB(collName, filter)
 		if pd != nil {
 			logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataPatchProcedure err: %s", pd.Detail)
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 			c.JSON(int(pd.Status), pd)
 			return
 		}
@@ -413,6 +432,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 		c.Status(http.StatusNoContent)
 	}
 	pd := util.ProblemDetailsModifyNotAllowed("")
+	c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 	c.JSON(int(pd.Status), pd)
 }
 
@@ -432,6 +452,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c *gin.Context
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataUsageMonIdGetProcedure err: %s", pd.Detail)
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -451,6 +472,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(
 	if err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataUsageMonIdPutProcedure err: %+v", err)
 		pd := util.ProblemDetailsUpspecified("")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -463,6 +485,7 @@ func (p *Processor) PolicyDataUesUeIdUePolicySetGetProcedure(c *gin.Context, col
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetGetProcedure err: %s", pd.Detail)
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -479,6 +502,7 @@ func (p *Processor) PolicyDataUesUeIdUePolicySetPatchProcedure(c *gin.Context, c
 	if err := mongoapi.RestfulAPIMergePatch(collName, filter, patchData); err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %+v", err)
 		pd := util.ProblemDetailsModifyNotAllowed("")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -487,12 +511,14 @@ func (p *Processor) PolicyDataUesUeIdUePolicySetPatchProcedure(c *gin.Context, c
 	uePolicySetBsonM, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %s", pd.Detail)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
 	if err := json.Unmarshal(util.MapToByte(uePolicySetBsonM), &uePolicySet); err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %+v", err)
 		pd := openapi.ProblemDetailsSystemFailure(err.Error())
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}

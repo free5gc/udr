@@ -20,6 +20,7 @@ import (
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
 )
 
 func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId string, subsId string,
@@ -29,6 +30,7 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
 	if !ok {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -38,12 +40,14 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
 
 	if UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos == nil {
 		pd := util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
@@ -57,6 +61,7 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 	if patchtemp, err := jsonpatch.DecodePatch(patchJSON); err != nil {
 		logger.DataRepoLog.Errorln(err)
 		pd := util.ProblemDetailsModifyNotAllowed("PatchItem attributes are invalid")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	} else {
@@ -70,6 +75,7 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 	modified, err := patch.Apply(original)
 	if err != nil {
 		pd := util.ProblemDetailsModifyNotAllowed("Occur error when applying PatchItem")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
