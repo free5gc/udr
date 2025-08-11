@@ -20,7 +20,7 @@ const (
 	UdrDefaultCertPemPath      = "./cert/udr.pem"
 	UdrDefaultPrivateKeyPath   = "./cert/udr.key"
 	UdrDefaultConfigPath       = "./config/udrcfg.yaml"
-	UdrSbiDefaultIPv4          = "127.0.0.9"
+	UdrSbiDefaultIP            = "127.0.0.9"
 	UdrSbiDefaultPort          = 8000
 	UdrSbiDefaultScheme        = "https"
 	UdrMetricsDefaultEnabled   = false
@@ -59,7 +59,7 @@ type Info struct {
 }
 
 const (
-	UDR_DEFAULT_IPV4     = "127.0.0.4"
+	UDR_DEFAULT_IP       = "127.0.0.4"
 	UDR_DEFAULT_PORT     = "8000"
 	UDR_DEFAULT_PORT_INT = 8000
 )
@@ -84,15 +84,21 @@ func (c *Configuration) validate() (bool, error) {
 		return str == "https" || str == "http"
 	})
 
+	if c.Sbi != nil {
+		if _, err := c.Sbi.validate(); err != nil {
+			return false, err
+		}
+	}
+
 	if c.Metrics != nil {
 		if _, err := c.Metrics.validate(); err != nil {
 			return false, err
 		}
 
-		if c.Sbi != nil && c.Metrics.Port == c.Sbi.Port && c.Sbi.BindingIPv4 == c.Metrics.BindingIPv4 {
+		if c.Metrics.Port == c.Sbi.Port && c.Sbi.BindingIP == c.Metrics.BindingIP {
 			var errs govalidator.Errors
-			err := fmt.Errorf("sbi and metrics bindings IPv4: %s and port: %d cannot be the same, "+
-				"please provide at least another port for the metrics", c.Sbi.BindingIPv4, c.Sbi.Port)
+			err := fmt.Errorf("sbi and metrics bindings: %s and port: %d cannot be the same, "+
+				"please provide at least another port for the metrics", c.Sbi.BindingIP, c.Sbi.Port)
 			errs = append(errs, err)
 			return false, error(errs)
 		}
@@ -103,12 +109,54 @@ func (c *Configuration) validate() (bool, error) {
 }
 
 type Sbi struct {
-	Scheme       string `yaml:"scheme" valid:"scheme,required"`
+	Scheme       string `yaml:"scheme" valid:"in(http|https),optional"`
 	RegisterIPv4 string `yaml:"registerIPv4,omitempty" valid:"host,optional"` // IP that is registered at NRF.
-	// IPv6Addr string `yaml:"ipv6Addr,omitempty"`
-	BindingIPv4 string `yaml:"bindingIPv4,omitempty" valid:"host,optional"` // IP used to run the server in the node.
-	Port        int    `yaml:"port" valid:"port,required"`
-	Tls         *Tls   `yaml:"tls,omitempty" valid:"optional"`
+	RegisterIP   string `yaml:"registerIP,omitempty" valid:"host,optional"`   // IP that is registered at NRF.
+	BindingIPv4  string `yaml:"bindingIPv4,omitempty" valid:"host,optional"`  // IP used to run the server in the node.
+	BindingIP    string `yaml:"bindingIP,omitempty" valid:"host,optional"`    // IP used to run the server in the node.
+	Port         int    `yaml:"port,omitempty" valid:"port,optional"`
+	Tls          *Tls   `yaml:"tls,omitempty" valid:"optional"`
+}
+
+func (s *Sbi) validate() (bool, error) {
+	// Set a default Schme if the Configuration does not provides one
+	if s.Scheme == "" {
+		s.Scheme = UdrSbiDefaultScheme
+	}
+
+	// Set BindingIP/RegisterIP from deprecated BindingIPv4/RegisterIPv4
+	if s.BindingIP == "" && s.BindingIPv4 != "" {
+		s.BindingIP = s.BindingIPv4
+	}
+	if s.RegisterIP == "" && s.RegisterIPv4 != "" {
+		s.RegisterIP = s.RegisterIPv4
+	}
+
+	// Set a default BindingIP/RegisterIP if the Configuration does not provides them
+	if s.BindingIP == "" && s.RegisterIP == "" {
+		s.BindingIP = UdrSbiDefaultIP
+		s.RegisterIP = UdrSbiDefaultIP
+	} else {
+		// Complete any missing BindingIP/RegisterIP from RegisterIP/BindingIP
+		if s.BindingIP == "" {
+			s.BindingIP = s.RegisterIP
+		} else if s.RegisterIP == "" {
+			s.RegisterIP = s.BindingIP
+		}
+	}
+
+	// Set a default Port if the Configuration does not provides one
+	if s.Port == 0 {
+		s.Port = UdrSbiDefaultPort
+	}
+
+	if tls := s.Tls; tls != nil {
+		if result, err := tls.validate(); err != nil {
+			return result, err
+		}
+	}
+
+	return govalidator.ValidateStruct(s)
 }
 
 type Tls struct {
