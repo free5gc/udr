@@ -43,7 +43,7 @@ func Init() {
 	serviceName := []models.ServiceName{
 		models.ServiceName_NUDR_DR,
 	}
-	udrContext.NrfUri = fmt.Sprintf("%s", udrContext.GetIPUriWithPort(29510))
+	udrContext.NrfUri = udrContext.GetIPUriWithPort(29510)
 	initUdrContext()
 
 	config := factory.UdrConfig
@@ -133,20 +133,20 @@ func initUdrContext() {
 
 	sbi := configuration.Sbi
 
-    udrContext.SBIPort = sbi.Port
+	udrContext.SBIPort = sbi.Port
 
-    udrContext.UriScheme = models.UriScheme(sbi.Scheme)
+	udrContext.UriScheme = models.UriScheme(sbi.Scheme)
 
-    if bindingIP := os.Getenv(sbi.BindingIP); bindingIP != "" {
-            logger.UtilLog.Info("Parsing BindingIP address from ENV Variable.")
-            sbi.BindingIP = bindingIP
-    }
-    if registerIP := os.Getenv(sbi.RegisterIP); registerIP != "" {
-            logger.UtilLog.Info("Parsing RegisterIP address from ENV Variable.")
-            sbi.RegisterIP = registerIP
-    }
-    udrContext.BindingIP = resolveIP(sbi.BindingIP)
-    udrContext.RegisterIP = resolveIP(sbi.RegisterIP)
+	if bindingIP := os.Getenv(sbi.BindingIP); bindingIP != "" {
+		logger.UtilLog.Info("Parsing BindingIP address from ENV Variable.")
+		sbi.BindingIP = bindingIP
+	}
+	if registerIP := os.Getenv(sbi.RegisterIP); registerIP != "" {
+		logger.UtilLog.Info("Parsing RegisterIP address from ENV Variable.")
+		sbi.RegisterIP = registerIP
+	}
+	udrContext.BindingIP = resolveIP(sbi.BindingIP)
+	udrContext.RegisterIP = resolveIP(sbi.RegisterIP)
 
 	if configuration.NrfUri != "" {
 		udrContext.NrfUri = configuration.NrfUri
@@ -158,43 +158,43 @@ func initUdrContext() {
 }
 
 func resolveIP(ip string) netip.Addr {
-    resolvedIPs, err := net.DefaultResolver.LookupNetIP(context.Background(), "ip", ip)
-    if err != nil {
-        logger.InitLog.Errorf("Lookup failed with %s: %+v", ip, err)
-    }
-    resolvedIP := resolvedIPs[0].Unmap()
-    if resolvedIP := resolvedIP.String(); resolvedIP != ip {
-        logger.UtilLog.Infof("Lookup revolved %s into %s", ip, resolvedIP)
-    }
-    return resolvedIP
+	resolvedIPs, err := net.DefaultResolver.LookupNetIP(context.Background(), "ip", ip)
+	if err != nil {
+		logger.InitLog.Errorf("Lookup failed with %s: %+v", ip, err)
+	}
+	resolvedIP := resolvedIPs[0].Unmap()
+	if resolvedIP := resolvedIP.String(); resolvedIP != ip {
+		logger.UtilLog.Infof("Lookup revolved %s into %s", ip, resolvedIP)
+	}
+	return resolvedIP
 }
 
 func (c *UDRContext) GetIPUri() string {
-       addr := c.RegisterIP
-       port := c.SBIPort
+	addr := c.RegisterIP
+	port := c.SBIPort
 
-       return fmt.Sprintf("%s://%s", c.UriScheme, netip.AddrPortFrom(addr, uint16(port)).String())
+	return fmt.Sprintf("%s://%s", c.UriScheme, netip.AddrPortFrom(addr, uint16(port)).String())
 }
 
 func (c *UDRContext) GetIpEndPoint() []models.IpEndPoint {
-       if c.RegisterIP.Is6() {
-               return []models.IpEndPoint{
-                       {
-                               Ipv6Address: c.RegisterIP.String(),
-                               Transport:   models.NrfNfManagementTransportProtocol_TCP,
-                               Port:        int32(c.SBIPort),
-                       },
-               }
-       } else if c.RegisterIP.Is4() {
-               return []models.IpEndPoint{
-                       {
-                               Ipv4Address: c.RegisterIP.String(),
-                               Transport:   models.NrfNfManagementTransportProtocol_TCP,
-                               Port:        int32(c.SBIPort),
-                       },
-               }
-       }
-       return nil
+	if c.RegisterIP.Is6() {
+		return []models.IpEndPoint{
+			{
+				Ipv6Address: c.RegisterIP.String(),
+				Transport:   models.NrfNfManagementTransportProtocol_TCP,
+				Port:        int32(c.SBIPort),
+			},
+		}
+	} else if c.RegisterIP.Is4() {
+		return []models.IpEndPoint{
+			{
+				Ipv4Address: c.RegisterIP.String(),
+				Transport:   models.NrfNfManagementTransportProtocol_TCP,
+				Port:        int32(c.SBIPort),
+			},
+		}
+	}
+	return nil
 }
 
 func initNfService(serviceName []models.ServiceName, version string) (
@@ -214,8 +214,8 @@ func initNfService(serviceName []models.ServiceName, version string) (
 			},
 			Scheme:          udrContext.UriScheme,
 			NfServiceStatus: models.NfServiceStatus_REGISTERED,
-			ApiPrefix:         udrContext.GetIPUri(),
-            IpEndPoints:       udrContext.GetIpEndPoint(),
+			ApiPrefix:       udrContext.GetIPUri(),
+			IpEndPoints:     udrContext.GetIpEndPoint(),
 		}
 	}
 
@@ -223,9 +223,9 @@ func initNfService(serviceName []models.ServiceName, version string) (
 }
 
 func (context *UDRContext) GetIPUriWithPort(port int) string {
-       addr := context.RegisterIP
+	addr := context.RegisterIP
 
-       return fmt.Sprintf("%s://%s", context.UriScheme, netip.AddrPortFrom(addr, uint16(port)).String())
+	return fmt.Sprintf("%s://%s", context.UriScheme, netip.AddrPortFrom(addr, uint16(port)).String())
 }
 
 func (context *UDRContext) GetIPv4GroupUri(udrServiceType UDRServiceType) string {

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-    "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/udr/internal/logger"
@@ -41,18 +41,14 @@ func NewServer(udr UDR, tlsKeyLogPath string) *Server {
 		UDR: udr,
 	}
 
-
 	s.router = newRouter(s)
-	
 	addr := s.Context().RegisterIP
 	port := uint16(s.Context().SBIPort)
-
 	bind := netip.AddrPortFrom(addr, port).String()
-	bindAddr := fmt.Sprintf("%s", bind)
 
-	logger.SBILog.Infof("Binding addr: [%s]", bindAddr)
+	logger.SBILog.Infof("Binding addr: [%s]", bind)
 	var err error
-	if s.httpServer, err = httpwrapper.NewHttp2Server(bindAddr, tlsKeyLogPath, s.router); err != nil {
+	if s.httpServer, err = httpwrapper.NewHttp2Server(bind, tlsKeyLogPath, s.router); err != nil {
 		logger.InitLog.Errorf("Initialize HTTP server failed: %v", err)
 		panic("Server initialization failed")
 	}

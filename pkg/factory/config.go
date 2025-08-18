@@ -95,7 +95,7 @@ func (c *Configuration) validate() (bool, error) {
 			return false, err
 		}
 
-		if c.Metrics.Port == c.Sbi.Port && c.Sbi.BindingIP == c.Metrics.BindingIP {
+		if c.Metrics.Port == c.Sbi.Port && c.Sbi.BindingIP == c.Metrics.BindingIPv4 {
 			var errs govalidator.Errors
 			err := fmt.Errorf("sbi and metrics bindings: %s and port: %d cannot be the same, "+
 				"please provide at least another port for the metrics", c.Sbi.BindingIP, c.Sbi.Port)

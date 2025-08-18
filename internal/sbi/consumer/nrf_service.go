@@ -48,9 +48,9 @@ func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.Nr
 	// config := factory.UdrConfig
 
 	profile := models.NrfNfManagementNfProfile{
-		NfInstanceId:  context.NfId,
-		NfType:        models.NrfNfManagementNfType_UDR,
-		NfStatus:      models.NrfNfManagementNfStatus_REGISTERED,
+		NfInstanceId: context.NfId,
+		NfType:       models.NrfNfManagementNfType_UDR,
+		NfStatus:     models.NrfNfManagementNfStatus_REGISTERED,
 		UdrInfo: &models.UdrInfo{
 			SupportedDataSets: []models.DataSetId{
 				// models.DataSetId_APPLICATION,

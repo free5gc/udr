@@ -21,22 +21,22 @@ func InitUdrContext(context *udr_context.UDRContext) {
 	configuration := config.Configuration
 	context.NfId = uuid.New().String()
 
-    sbi := configuration.Sbi
+	sbi := configuration.Sbi
 
-    context.SBIPort = sbi.Port
+	context.SBIPort = sbi.Port
 
-    context.UriScheme = models.UriScheme(sbi.Scheme)
+	context.UriScheme = models.UriScheme(sbi.Scheme)
 
-    if bindingIP := os.Getenv(sbi.BindingIP); bindingIP != "" {
-            logger.UtilLog.Info("Parsing BindingIP address from ENV Variable.")
-            sbi.BindingIP = bindingIP
-    }
-    if registerIP := os.Getenv(sbi.RegisterIP); registerIP != "" {
-            logger.UtilLog.Info("Parsing RegisterIP address from ENV Variable.")
-            sbi.RegisterIP = registerIP
-    }
-    context.BindingIP = resolveIP(sbi.BindingIP)
-    context.RegisterIP = resolveIP(sbi.RegisterIP)
+	if bindingIP := os.Getenv(sbi.BindingIP); bindingIP != "" {
+		logger.UtilLog.Info("Parsing BindingIP address from ENV Variable.")
+		sbi.BindingIP = bindingIP
+	}
+	if registerIP := os.Getenv(sbi.RegisterIP); registerIP != "" {
+		logger.UtilLog.Info("Parsing RegisterIP address from ENV Variable.")
+		sbi.RegisterIP = registerIP
+	}
+	context.BindingIP = resolveIP(sbi.BindingIP)
+	context.RegisterIP = resolveIP(sbi.RegisterIP)
 
 	if configuration.NrfUri != "" {
 		context.NrfUri = configuration.NrfUri
