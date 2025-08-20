@@ -133,7 +133,7 @@ func (p *Processor) PolicyDataBdtDataBdtReferenceIdPutProcedure(
 	if existed {
 		PreHandlePolicyDataChangeNotification("", bdtReferenceId, bdtData)
 	}
-	c.JSON(http.StatusOK, putData)
+	c.JSON(http.StatusCreated, putData)
 }
 
 func (p *Processor) PolicyDataBdtDataGetProcedure(c *gin.Context, collName string) {
