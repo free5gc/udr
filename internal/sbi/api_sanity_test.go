@@ -228,7 +228,7 @@ func TestUDR_GetSubs2Notify_CreateThenGet(t *testing.T) {
 		require.Equal(t, http.StatusCreated, rsp.Code)
 		require.Equal(t, string(bjson), rsp.Body.String())
 		// require.True(t, strings.Contains(location, baseUri+"/"))
-		// require.True(t, strings.HasPrefix(location, udr_context.GetSelf().GetIPv4Uri()+baseUri+"/"))
+		// require.True(t, strings.HasPrefix(location, udr_context.GetSelf().GetIPUri()+baseUri+"/"))
 	})
 
 	// Get success
