@@ -11,26 +11,28 @@ import (
 	"sync"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/google/uuid"
 
 	"github.com/free5gc/udr/internal/logger"
 )
 
 const (
-	UdrDefaultTLSKeyLogPath    = "./log/udrsslkey.log"
-	UdrDefaultCertPemPath      = "./cert/udr.pem"
-	UdrDefaultPrivateKeyPath   = "./cert/udr.key"
-	UdrDefaultConfigPath       = "./config/udrcfg.yaml"
-	UdrSbiDefaultIPv4          = "127.0.0.9"
-	UdrSbiDefaultPort          = 8000
-	UdrSbiDefaultScheme        = "https"
-	UdrMetricsDefaultEnabled   = false
-	UdrMetricsDefaultPort      = 9091
-	UdrMetricsDefaultScheme    = "https"
-	UdrMetricsDefaultNamespace = "free5gc"
-	UdrDefaultNrfUri           = "https://127.0.0.10:8000"
-	UdrDrResUriPrefix          = "/nudr-dr/v2"
-	UdrGroupIdResUriPrefix     = "/nudr-group-id-map/v1"
-	HSSIsmSDMUriPrefix         = "/nhss-ims-sdm/v1"
+	UdrDefaultTLSKeyLogPath      = "./log/udrsslkey.log"
+	UdrDefaultCertPemPath        = "./cert/udr.pem"
+	UdrDefaultPrivateKeyPath     = "./cert/udr.key"
+	UdrDefaultConfigPath         = "./config/udrcfg.yaml"
+	UdrDefaultNfInstanceIdEnvVar = "UDR_NF_INSTANCE_ID"
+	UdrSbiDefaultIPv4            = "127.0.0.9"
+	UdrSbiDefaultPort            = 8000
+	UdrSbiDefaultScheme          = "https"
+	UdrMetricsDefaultEnabled     = false
+	UdrMetricsDefaultPort        = 9091
+	UdrMetricsDefaultScheme      = "https"
+	UdrMetricsDefaultNamespace   = "free5gc"
+	UdrDefaultNrfUri             = "https://127.0.0.10:8000"
+	UdrDrResUriPrefix            = "/nudr-dr/v2"
+	UdrGroupIdResUriPrefix       = "/nudr-group-id-map/v1"
+	HSSIsmSDMUriPrefix           = "/nhss-ims-sdm/v1"
 )
 
 type DbType string
@@ -65,6 +67,7 @@ const (
 )
 
 type Configuration struct {
+	NfInstanceId    string   `yaml:"nfInstanceId,omitempty" valid:"optional,uuidv4"`
 	Sbi             *Sbi     `yaml:"sbi" valid:"required"`
 	Metrics         *Metrics `yaml:"metrics,omitempty" valid:"optional"`
 	DbConnectorType DbType   `yaml:"dbConnectorType" valid:"required,in(mongodb)"`
@@ -80,6 +83,10 @@ type Logger struct {
 }
 
 func (c *Configuration) validate() (bool, error) {
+	if c.NfInstanceId == "" {
+		c.NfInstanceId = uuid.New().String()
+	}
+
 	govalidator.TagMap["scheme"] = govalidator.Validator(func(str string) bool {
 		return str == "https" || str == "http"
 	})
@@ -100,6 +107,31 @@ func (c *Configuration) validate() (bool, error) {
 
 	result, err := govalidator.ValidateStruct(c)
 	return result, appendInvalid(err)
+}
+
+func (c *Config) GetNfInstanceId() string {
+	c.RLock()
+	defer c.RUnlock()
+
+	var nfInstanceId string
+
+	logger.CfgLog.Debugf("Fetching nfInstanceId from env var \"%s\"", UdrDefaultNfInstanceIdEnvVar)
+
+	if nfInstanceId = os.Getenv(UdrDefaultNfInstanceIdEnvVar); nfInstanceId == "" {
+		logger.CfgLog.Debugf("No value found for \"%s\" env, fallback on config nfInstanceId : %s",
+			UdrDefaultNfInstanceIdEnvVar, c.Configuration.NfInstanceId)
+		return c.Configuration.NfInstanceId
+	}
+
+	if err := uuid.Validate(nfInstanceId); err != nil {
+		logger.CfgLog.Errorf("Env var \"%s\" is not a valid uuid, "+
+			"fallback on configuration nfInstanceId : %s", UdrDefaultNfInstanceIdEnvVar, c.Configuration.NfInstanceId)
+		return c.Configuration.NfInstanceId
+	}
+
+	logger.CfgLog.Debugf("nfInstanceId from %s : %s", UdrDefaultNfInstanceIdEnvVar, nfInstanceId)
+
+	return nfInstanceId
 }
 
 type Sbi struct {
