@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/free5gc/openapi/models"
 	"github.com/free5gc/openapi/oauth"
 	"github.com/free5gc/udr/internal/logger"
@@ -127,7 +125,7 @@ func initUdrContext() {
 	config := factory.UdrConfig
 	logger.UtilLog.Infof("udrconfig Info: Version[%s] Description[%s]", config.Info.Version, config.Info.Description)
 	configuration := config.Configuration
-	udrContext.NfId = uuid.New().String()
+	udrContext.NfId = config.GetNfInstanceId()
 	udrContext.RegisterIPv4 = factory.UDR_DEFAULT_IPV4 // default localhost
 	udrContext.SBIPort = factory.UDR_DEFAULT_PORT_INT  // default port
 	if sbi := configuration.Sbi; sbi != nil {
