@@ -43,6 +43,7 @@ func (p *Processor) GetApplicationDataIndividualPfdFromDBProcedure(c *gin.Contex
 		logger.DataRepoLog.Errorf("getApplicationDataIndividualPfdFromDB err: %s", pd.Detail)
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }
@@ -64,6 +65,7 @@ func (p *Processor) PutApplicationDataIndividualPfdToDBProcedure(
 
 	if existed {
 		c.JSON(http.StatusOK, data)
+		return
 	}
 	c.JSON(http.StatusCreated, data)
 }
@@ -142,6 +144,7 @@ func (p *Processor) PolicyDataBdtDataGetProcedure(c *gin.Context, collName strin
 	if err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataBdtDataGetProcedure err: %+v", err)
 		c.JSON(http.StatusOK, nil)
+		return
 	}
 	c.JSON(http.StatusOK, bdtDataArray)
 }
@@ -197,6 +200,7 @@ func (p *Processor) PolicyDataSubsToNotifySubsIdDeleteProcedure(c *gin.Context, 
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 	delete(udrSelf.PolicyDataSubscriptions, subsId)
 	c.Status(http.StatusNoContent)
@@ -211,6 +215,7 @@ func (p *Processor) PolicyDataSubsToNotifySubsIdPutProcedure(c *gin.Context, sub
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 
 	udrSelf.PolicyDataSubscriptions[subsId] = &policyDataSubscription
@@ -226,6 +231,7 @@ func (p *Processor) PolicyDataUesUeIdAmDataGetProcedure(c *gin.Context, collName
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdAmDataGetProcedure err: %s", pd.Detail)
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }
@@ -239,6 +245,7 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataGetProcedure(c *gin.Con
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdOperatorSpecificDataGetProcedure err: %s", pd.Detail)
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 	operatorSpecificDataContainerMap := data["operatorSpecificDataContainerMap"]
 	c.JSON(http.StatusOK, operatorSpecificDataContainerMap)
@@ -255,6 +262,7 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c *gin.C
 		pd := util.ProblemDetailsModifyNotAllowed("")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 
 	if err := mongoapi.RestfulAPIJSONPatchExtend(collName, filter, patchJSON,
@@ -263,6 +271,7 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c *gin.C
 		pd := util.ProblemDetailsModifyNotAllowed("")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 	c.Status(http.StatusNoContent)
 }
