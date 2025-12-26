@@ -33,6 +33,7 @@ func (p *Processor) AmfContextNon3gppProcedure(
 		pd := util.ProblemDetailsSystemFailure(err.Error())
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
 	c.Status(http.StatusNoContent)

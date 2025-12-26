@@ -33,6 +33,7 @@ func (p *Processor) AmfContext3gppProcedure(
 		problemDetails := util.ProblemDetailsModifyNotAllowed("")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetails.Cause)
 		c.JSON(int(problemDetails.Status), problemDetails)
+		return
 	}
 
 	PreHandleOnDataChangeNotify(ueId, CurrentResourceUri, patchItem, origValue, newValue)
@@ -59,6 +60,7 @@ func (p *Processor) QueryAmfContext3gppProcedure(c *gin.Context, collName string
 		logger.DataRepoLog.Errorf("QueryAmfContext3gppProcedure err: %s", pd.Detail)
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
+		return
 	}
 	c.JSON(http.StatusOK, data)
 }
