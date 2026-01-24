@@ -38,98 +38,1069 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"AmfContext3gpp",
-			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleAmfContext3gpp,
 		},
 
 		{
 			"CreateAmfContext3gpp",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleCreateAmfContext3gpp,
 		},
 
 		{
 			"QueryAmfContext3gpp",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-3gpp-access",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/amf-3gpp-access",
 			s.HandleQueryAmfContext3gpp,
 		},
 
 		{
 			"AmfContextNon3gpp",
-			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleAmfContextNon3gpp,
 		},
 
 		{
 			"CreateAmfContextNon3gpp",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleCreateAmfContextNon3gpp,
 		},
 
 		{
 			"QueryAmfContextNon3gpp",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/amf-non-3gpp-access",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/amf-non-3gpp-access",
 			s.HandleQueryAmfContextNon3gpp,
 		},
 
 		{
 			"QueryAmData",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/am-data",
 			s.HandleQueryAmData,
 		},
 
 		{
 			"QueryAuthenticationStatus",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
+			http.MethodGet,
+			"/subscription-data/:ueId/authentication-data/authentication-status",
 			s.HandleQueryAuthenticationStatus,
 		},
 
 		{
 			"CreateAuthenticationStatus",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-status",
+			http.MethodPut,
+			"/subscription-data/:ueId/authentication-data/authentication-status",
 			s.HandleCreateAuthenticationStatus,
 		},
 
 		{
 			"ModifyAuthentication",
-			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
+			http.MethodPatch,
+			"/subscription-data/:ueId/authentication-data/authentication-subscription",
 			s.HandleModifyAuthentication,
 		},
 
 		{
 			"QueryAuthSubsData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/authentication-subscription",
+			http.MethodGet,
+			"/subscription-data/:ueId/authentication-data/authentication-subscription",
 			s.HandleQueryAuthSubsData,
 		},
 
 		{
 			"CreateAuthenticationSoR",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/sor-data",
+			http.MethodPut,
+			"/subscription-data/:ueId/ue-update-confirmation-data/sor-data",
 			s.HandleCreateAuthenticationSoR,
 		},
 
 		{
 			"QueryAuthSoR",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/sor-data",
+			http.MethodGet,
+			"/subscription-data/:ueId/ue-update-confirmation-data/sor-data",
 			s.HandleQueryAuthSoR,
 		},
 
 		{
+			"QueryProvisionedData",
+			http.MethodGet,
+			"/subscription-data/:ueId/:servingPlmnId/provisioned-data",
+			s.HandleQueryProvisionedData,
+		},
+
+		{
+			"RemovesdmSubscriptions",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
+			s.HandleRemovesdmSubscriptions,
+		},
+
+		{
+			"Updatesdmsubscriptions",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
+			s.HandleUpdatesdmsubscriptions,
+		},
+
+		{
+			"CreateSdmSubscriptions",
+			http.MethodPost,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions",
+			s.HandleCreateSdmSubscriptions,
+		},
+
+		{
+			"Querysdmsubscriptions",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions",
+			s.HandleQuerysdmsubscriptions,
+		},
+
+		{
+			"CreateSmfContextNon3gpp",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
+			s.HandleCreateSmfContextNon3gpp,
+		},
+
+		{
+			"DeleteSmfContext",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
+			s.HandleDeleteSmfContext,
+		},
+
+		{
+			"QuerySmfRegistration",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
+			s.HandleQuerySmfRegistration,
+		},
+
+		{
+			"QuerySmfRegList",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/smf-registrations",
+			s.HandleQuerySmfRegList,
+		},
+
+		{
+			"QuerySmfSelectData",
+			http.MethodGet,
+			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/smf-selection-subscription-data",
+			s.HandleQuerySmfSelectData,
+		},
+
+		{
+			"CreateSmsfContext3gpp",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
+			s.HandleCreateSmsfContext3gpp,
+		},
+
+		{
+			"DeleteSmsfContext3gpp",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
+			s.HandleDeleteSmsfContext3gpp,
+		},
+
+		{
+			"QuerySmsfContext3gpp",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/smsf-3gpp-access",
+			s.HandleQuerySmsfContext3gpp,
+		},
+
+		{
+			"CreateSmsfContextNon3gpp",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
+			s.HandleCreateSmsfContextNon3gpp,
+		},
+
+		{
+			"DeleteSmsfContextNon3gpp",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
+			s.HandleDeleteSmsfContextNon3gpp,
+		},
+
+		{
+			"QuerySmsfContextNon3gpp",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/smsf-non-3gpp-access",
+			s.HandleQuerySmsfContextNon3gpp,
+		},
+
+		{
+			"QuerySmsMngData",
+			http.MethodGet,
+			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-mng-data",
+			s.HandleQuerySmsMngData,
+		},
+
+		{
+			"QuerySmsData",
+			http.MethodGet,
+			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-data",
+			s.HandleQuerySmsData,
+		},
+
+		{
+			"QuerySmData",
+			http.MethodGet,
+			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sm-data",
+			s.HandleQuerySmData,
+		},
+
+		{
+			"QueryTraceData",
+			http.MethodGet,
+			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/trace-data",
+			s.HandleQueryTraceData,
+		},
+
+		{
+			"CreateAMFSubscriptions",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandleCreateAMFSubscriptions,
+		},
+
+		{
+			"ModifyAmfSubscriptionInfo",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandleModifyAmfSubscriptionInfo,
+		},
+
+		{
+			"RemoveAmfSubscriptionsInfo",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandleRemoveAmfSubscriptionsInfo,
+		},
+
+		{
+			"GetAmfSubscriptionInfo",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandleGetAmfSubscriptionInfo,
+		},
+
+		/* subShortRoutes */
+		{
+			"GetSharedData",
+			http.MethodGet,
+			"/subscription-data/shared-data",
+			s.HandleGetSharedData,
+		},
+
+		{
+			"PostSubscriptionDataSubscriptions",
+			http.MethodPost,
+			"/subscription-data/subs-to-notify",
+			s.HandlePostSubscriptionDataSubscriptions,
+		},
+
+		/* subRoutes */
+		// Special case -- should be added before than the general case
+		{
+			"RemovesubscriptionDataSubscriptions",
+			http.MethodDelete,
+			"/subscription-data/subs-to-notify/:subsId",
+			s.HandleRemovesubscriptionDataSubscriptions,
+		},
+
+		{
+			"QueryEEData",
+			http.MethodGet,
+			"/subscription-data/:ueId/ee-profile-data",
+			s.HandleQueryEEData,
+		},
+
+		{
+			"PatchOperSpecData",
+			http.MethodPatch,
+			"/subscription-data/:ueId/operator-specific-data",
+			s.HandlePatchOperSpecData,
+		},
+
+		{
+			"QueryOperSpecData",
+			http.MethodGet,
+			"/subscription-data/:ueId/operator-specific-data",
+			s.HandleQueryOperSpecData,
+		},
+
+		{
+			"GetppData",
+			http.MethodGet,
+			"/subscription-data/:ueId/pp-data",
+			s.HandleGetppData,
+		},
+
+		{
+			"ModifyPpData",
+			http.MethodPatch,
+			"/subscription-data/:ueId/pp-data",
+			s.HandleModifyPpData,
+		},
+
+		{
+			"GetIdentityData",
+			http.MethodGet,
+			"/subscription-data/:ueId/identity-data",
+			s.HandleGetIdentityData,
+		},
+
+		{
+			"GetOdbData",
+			http.MethodGet,
+			"/subscription-data/:ueId/operator-determined-barring-data",
+			s.HandleGetOdbData,
+		},
+
+		/* eeShortRoutes */
+		{
+			"CreateEeGroupSubscriptions",
+			http.MethodPost,
+			"/subscription-data/:ueId/context-data/ee-subscriptions",
+			s.HandleCreateEeGroupSubscriptions,
+		},
+
+		{
+			"QueryEeGroupSubscriptions",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/ee-subscriptions",
+			s.HandleQueryEeGroupSubscriptions,
+		},
+
+		{
+			"CreateEeSubscriptions",
+			http.MethodPost,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
+			s.HandleCreateEeSubscriptions,
+		},
+
+		{
+			"Queryeesubscriptions",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
+			s.HandleQueryeesubscriptions,
+		},
+
+		{
+			"Patcheesubscriptions",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
+			s.HandlePatcheesubscriptions,
+		},
+
+		/* eeRoutes */
+		{
+			"RemoveeeSubscriptions",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
+			s.HandleRemoveeeSubscriptions,
+		},
+
+		{
+			"UpdateEesubscriptions",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
+			s.HandleUpdateEesubscriptions,
+		},
+
+		{
+			"UpdateEeGroupSubscriptions",
+			http.MethodPut,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
+			s.HandleUpdateEeGroupSubscriptions,
+		},
+
+		{
+			"RemoveEeGroupSubscriptions",
+			http.MethodDelete,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
+			s.HandleRemoveEeGroupSubscriptions,
+		},
+
+		{
+			"UpdateAuthenticationUPU",
+			http.MethodPut,
+			"/subscription-data/:ueId/ue-update-confirmation-data/upu-data",
+			s.HandleUpdateAuthenticationUPU,
+		},
+
+		{
+			"GetAuthenticationUPU",
+			http.MethodGet,
+			"/subscription-data/:ueId/ue-update-confirmation-data/upu-data",
+			s.HandleGetAuthenticationUPU,
+		},
+
+		{
+			"UpdateSubscribedSNSSAIs",
+			http.MethodPut,
+			"/subscription-data/:ueId/ue-update-confirmation-data/subscribed-snssais",
+			s.HandleUpdateSubscribedSNSSAIs,
+		},
+
+		{
+			"GetSubscribedSNSSAIs",
+			http.MethodGet,
+			"/subscription-data/:ueId/ue-update-confirmation-data/subscribed-snssais",
+			s.HandleGetSubscribedSNSSAIs,
+		},
+
+		{
+			"DeleteAuthenticationStatus",
+			http.MethodDelete,
+			"/subscription-data/:ueId/authentication-data/authentication-status",
+			s.HandleDeleteAuthenticationStatus,
+		},
+
+		{
+			"UpdateIndividualAuthenticationStatus",
+			http.MethodPut,
+			"/subscription-data/:ueId/authentication-data/authentication-status/:servingNetworkName",
+			s.HandleUpdateIndividualAuthenticationStatus,
+		},
+
+		{
+			"GetIndividualAuthenticationStatus",
+			http.MethodGet,
+			"/subscription-data/:ueId/authentication-data/authentication-status/:servingNetworkName",
+			s.HandleGetIndividualAuthenticationStatus,
+		},
+
+		{
+			"DeleteIndividualAuthenticationStatus",
+			http.MethodDelete,
+			"/subscription-data/:ueId/authentication-data/authentication-status/:servingNetworkName",
+			s.HandleDeleteIndividualAuthenticationStatus,
+		},
+
+		{
+			"GetContextData",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data",
+			s.HandleGetContextData,
+		},
+
+		{
+			"PatchIndividualSmfRegistration",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/smf-registrations/:pduSessionId",
+			s.HandlePatchIndividualSmfRegistration,
+		},
+
+		{
+			"UpdateOperatorSpecificData",
+			http.MethodPut,
+			"/subscription-data/:ueId/operator-specific-data",
+			s.HandleUpdateOperatorSpecificData,
+		},
+
+		{
+			"DeleteSubscriptionDataOperatorSpecificData",
+			http.MethodDelete,
+			"/subscription-data/:ueId/operator-specific-data",
+			s.HandleDeleteSubscriptionDataOperatorSpecificData,
+		},
+
+		{
+			"UpdateIpSmGwRegistration",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/ip-sm-gw",
+			s.HandleUpdateIpSmGwRegistration,
+		},
+
+		{
+			"DeleteIpSmGwRegistration",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/ip-sm-gw",
+			s.HandleDeleteIpSmGwRegistration,
+		},
+
+		{
+			"PatchIpSmGwRegistration",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/ip-sm-gw",
+			s.HandlePatchIpSmGwRegistration,
+		},
+
+		{
+			"GetIpSmGwRegistration",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/ip-sm-gw",
+			s.HandleGetIpSmGwRegistration,
+		},
+
+		{
+			"UpdateSmsMessageWaitingData",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/mwd",
+			s.HandleUpdateSmsMessageWaitingData,
+		},
+
+		{
+			"DeleteSmsMessageWaitingData",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/mwd",
+			s.HandleDeleteSmsMessageWaitingData,
+		},
+
+		{
+			"PatchSmsMessageWaitingData",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/mwd",
+			s.HandlePatchSmsMessageWaitingData,
+		},
+
+		{
+			"GetSmsMessageWaitingData",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/mwd",
+			s.HandleGetSmsMessageWaitingData,
+		},
+
+		{
+			"PatchIndividualSdmSubscription",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
+			s.HandlePatchIndividualSdmSubscription,
+		},
+
+		{
+			"GetIndividualSdmSubscription",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId",
+			s.HandleGetIndividualSdmSubscription,
+		},
+
+		{
+			"UpdateHssSdmSubscriptionInfo",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId/hss-sdm-subscriptions",
+			s.HandleUpdateHssSdmSubscriptionInfo,
+		},
+
+		{
+			"DeleteHssSdmSubscriptionInfo",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId/hss-sdm-subscriptions",
+			s.HandleDeleteHssSdmSubscriptionInfo,
+		},
+
+		{
+			"GetHssSdmSubscriptionInfo",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId/hss-sdm-subscriptions",
+			s.HandleGetHssSdmSubscriptionInfo,
+		},
+
+		{
+			"PatchHssSdmSubscriptionInfo",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/sdm-subscriptions/:subsId/hss-sdm-subscriptions",
+			s.HandlePatchHssSdmSubscriptionInfo,
+		},
+
+		{
+			"UpdateSmfSubscriptionInfo",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandleUpdateSmfSubscriptionInfo,
+		},
+
+		{
+			"DeleteSmfSubscriptionInfo",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandleDeleteSmfSubscriptionInfo,
+		},
+
+		{
+			"GetSmfSubscriptionInfo",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandleGetSmfSubscriptionInfo,
+		},
+
+		{
+			"PatchSmfSubscriptionInfo",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandlePatchSmfSubscriptionInfo,
+		},
+
+		{
+			"UpdateHssSubscriptionInfo",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandleUpdateHssSubscriptionInfo,
+		},
+
+		{
+			"DeleteHssSubscriptionInfo",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandleDeleteHssSubscriptionInfo,
+		},
+
+		{
+			"GetHssSubscriptionInfo",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandleGetHssSubscriptionInfo,
+		},
+
+		{
+			"PatchHssSubscriptionInfo",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandlePatchHssSubscriptionInfo,
+		},
+
+		{
+			"GetPPProfileData",
+			http.MethodGet,
+			"/subscription-data/:ueId/pp-profile-data",
+			s.HandleGetPPProfileData,
+		},
+
+		{
+			"GetProvisionedParameterDataEntries",
+			http.MethodGet,
+			"/subscription-data/:ueId/pp-data-store",
+			s.HandleGetProvisionedParameterDataEntries,
+		},
+
+		{
+			"UpdateProvisionedParameterDataEntry",
+			http.MethodPut,
+			"/subscription-data/:ueId/pp-data-store/:afInstanceId",
+			s.HandleUpdateProvisionedParameterDataEntry,
+		},
+
+		{
+			"DeleteProvisionedParameterDataEntry",
+			http.MethodDelete,
+			"/subscription-data/:ueId/pp-data-store/:afInstanceId",
+			s.HandleDeleteProvisionedParameterDataEntry,
+		},
+
+		{
+			"GetProvisionedParameterDataEntry",
+			http.MethodGet,
+			"/subscription-data/:ueId/pp-data-store/:afInstanceId",
+			s.HandleGetProvisionedParameterDataEntry,
+		},
+
+		{
+			"GetSubscriptionDataSubscriptions",
+			http.MethodGet,
+			"/subscription-data/subs-to-notify",
+			s.HandleGetSubscriptionDataSubscriptions,
+		},
+
+		{
+			"PatchIndividualSubscriptionDataSubscription",
+			http.MethodPatch,
+			"/subscription-data/subs-to-notify/:subsId",
+			s.HandlePatchIndividualSubscriptionDataSubscription,
+		},
+
+		{
+			"GetIndividualSubscriptionDataSubscription",
+			http.MethodGet,
+			"/subscription-data/subs-to-notify/:subsId",
+			s.HandleGetIndividualSubscriptionDataSubscription,
+		},
+
+		{
+			"UpdateAmfGroupSubscriptionInfo",
+			http.MethodPut,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandleUpdateAmfGroupSubscriptionInfo,
+		},
+
+		{
+			"DeleteAmfGroupSubscriptionInfo",
+			http.MethodDelete,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandleDeleteAmfGroupSubscriptionInfo,
+		},
+
+		{
+			"GetAmfGroupSubscriptionInfo",
+			http.MethodGet,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandleGetAmfGroupSubscriptionInfo,
+		},
+
+		{
+			"PatchAmfGroupSubscriptionInfo",
+			http.MethodPatch,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/amf-subscriptions",
+			s.HandlePatchAmfGroupSubscriptionInfo,
+		},
+
+		{
+			"UpdateSmfGroupSubscriptionInfo",
+			http.MethodPut,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandleUpdateSmfGroupSubscriptionInfo,
+		},
+
+		{
+			"DeleteSmfGroupSubscriptionInfo",
+			http.MethodDelete,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandleDeleteSmfGroupSubscriptionInfo,
+		},
+
+		{
+			"GetSmfGroupSubscriptionInfo",
+			http.MethodGet,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandleGetSmfGroupSubscriptionInfo,
+		},
+
+		{
+			"PatchSmfGroupSubscriptionInfo",
+			http.MethodPatch,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/smf-subscriptions",
+			s.HandlePatchSmfGroupSubscriptionInfo,
+		},
+
+		{
+			"UpdateHssGroupSubscriptionInfo",
+			http.MethodPut,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandleUpdateHssGroupSubscriptionInfo,
+		},
+
+		{
+			"DeleteHssGroupSubscriptionInfo",
+			http.MethodDelete,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandleDeleteHssGroupSubscriptionInfo,
+		},
+
+		{
+			"GetHssGroupSubscriptionInfo",
+			http.MethodGet,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandleGetHssGroupSubscriptionInfo,
+		},
+
+		{
+			"PatchHssGroupSubscriptionInfo",
+			http.MethodPatch,
+			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId/hss-subscriptions",
+			s.HandlePatchHssGroupSubscriptionInfo,
+		},
+
+		{
+			"GetEeGroupProfileData",
+			http.MethodGet,
+			"/subscription-data/group-data/:ueGroupId/ee-profile-data",
+			s.HandleGetEeGroupProfileData,
+		},
+
+		{
+			"GetIndividualSharedData",
+			http.MethodGet,
+			"/subscription-data/shared-data/:sharedDataId",
+			s.HandleGetIndividualSharedData,
+		},
+
+		{
+			"GetGroupIdentifiers",
+			http.MethodGet,
+			"/subscription-data/group-data/group-identifiers",
+			s.HandleGetGroupIdentifiers,
+		},
+
+		{
+			"Get5GvnGroups",
+			http.MethodGet,
+			"/subscription-data/group-data/5g-vn-groups",
+			s.HandleGet5GvnGroups,
+		},
+
+		{
+			"UpdateIndividual5GvnGroup",
+			http.MethodPut,
+			"/subscription-data/group-data/5g-vn-groups/:externalGroupId",
+			s.HandleUpdateIndividual5GvnGroup,
+		},
+
+		{
+			"PatchIndividual5GvnGroup",
+			http.MethodPatch,
+			"/subscription-data/group-data/5g-vn-groups/:externalGroupId",
+			s.HandlePatchIndividual5GvnGroup,
+		},
+
+		{
+			"DeleteIndividual5GvnGroup",
+			http.MethodDelete,
+			"/subscription-data/group-data/5g-vn-groups/:externalGroupId",
+			s.HandleDeleteIndividual5GvnGroup,
+		},
+
+		{
+			"GetIndividual5GvnGroup",
+			http.MethodGet,
+			"/subscription-data/group-data/5g-vn-groups/:externalGroupId",
+			s.HandleGetIndividual5GvnGroup,
+		},
+
+		{
+			"Get5GVnGroupshternal",
+			http.MethodGet,
+			"/subscription-data/group-data/5g-vn-groups/internal",
+			s.HandleGet5GVnGroupshternal,
+		},
+
+		{
+			"GetPp5gVnGroupProfileData",
+			http.MethodGet,
+			"/subscription-data/group-data/5g-vn-groups/pp-profile-data",
+			s.HandleGetPp5gVnGroupProfileData,
+		},
+
+		{
+			"GetLcsPrivacySubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/lcs-privacy-data",
+			s.HandleGetLcsPrivacySubscriptionData,
+		},
+
+		{
+			"GetLcsMobileOriginatedSubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/lcs-mo-data",
+			s.HandleGetLcsMobileOriginatedSubscriptionData,
+		},
+
+		{
+			"GetNiddAuthorizationData",
+			http.MethodGet,
+			"/subscription-data/:ueId/nidd-authorization-data",
+			s.HandleGetNiddAuthorizationData,
+		},
+
+		{
+			"GetServiceSpecificAuthorizationData",
+			http.MethodGet,
+			"/subscription-data/:ueId/service-specific-authorization-data/:serviceType",
+			s.HandleGetServiceSpecificAuthorizationData,
+		},
+
+		{
+			"GetCoverageRestrictionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/coverage-restriction-data",
+			s.HandleGetCoverageRestrictionData,
+		},
+
+		{
+			"GetLocation",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/location",
+			s.HandleGetLocation,
+		},
+
+		{
+			"GetV2xSubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/v2x-data",
+			s.HandleGetV2xSubscriptionData,
+		},
+
+		{
+			"GetProseSubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/prose-data",
+			s.HandleGetProseSubscriptionData,
+		},
+
+		{
+			"Get5MBSSubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/5mbs-data",
+			s.HandleGet5MBSSubscriptionData,
+		},
+
+		{
+			"GetUcSubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/uc-data",
+			s.HandleGetUcSubscriptionData,
+		},
+
+		{
+			"GetLcsBroadcastAssistanceSubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/lcs-bca-data",
+			s.HandleGetLcsBroadcastAssistanceSubscriptionData,
+		},
+
+		{
+			"UpdateNiddAuthorizations",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/nidd-authorizations",
+			s.HandleUpdateNiddAuthorizations,
+		},
+
+		{
+			"DeleteNiddAuthorizations",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/nidd-authorizations",
+			s.HandleDeleteNiddAuthorizations,
+		},
+
+		{
+			"GetNiddAuthorizations",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/nidd-authorizations",
+			s.HandleGetNiddAuthorizations,
+		},
+
+		{
+			"PatchNiddAuthorizations",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/nidd-authorizations",
+			s.HandlePatchNiddAuthorizations,
+		},
+
+		{
+			"GetUeSubscriptionData",
+			http.MethodGet,
+			"/subscription-data/:ueId",
+			s.HandleGetUeSubscriptionData,
+		},
+
+		{
+			"UpdateSpecificServiceAuthorizations",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/service-specific-authorizations/:serviceType",
+			s.HandleUpdateSpecificServiceAuthorizations,
+		},
+
+		{
+			"DeleteSpecificServiceAuthorizations",
+			http.MethodDelete,
+			"/subscription-data/:ueId/context-data/service-specific-authorizations/:serviceType",
+			s.HandleDeleteSpecificServiceAuthorizations,
+		},
+
+		{
+			"GetSpecificServiceAuthorizations",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/service-specific-authorizations/:serviceType",
+			s.HandleGetSpecificServiceAuthorizations,
+		},
+
+		{
+			"PatchSpecificServiceAuthorizations",
+			http.MethodPatch,
+			"/subscription-data/:ueId/context-data/service-specific-authorizations/:serviceType",
+			s.HandlePatchSpecificServiceAuthorizations,
+		},
+
+		{
+			"GetRoamingInfo",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/roaming-information",
+			s.HandleGetRoamingInfo,
+		},
+
+		{
+			"UpdateRoamingInfo",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/roaming-information",
+			s.HandleUpdateRoamingInfo,
+		},
+
+		{
+			"GetPelinfo",
+			http.MethodGet,
+			"/subscription-data/:ueId/context-data/pei-info",
+			s.HandleGetPelinfo,
+		},
+
+		{
+			"UpdatePelinfo",
+			http.MethodPut,
+			"/subscription-data/:ueId/context-data/pei-info",
+			s.HandleUpdatePelinfo,
+		},
+
+		{
+			"Get5GMbsGroup",
+			http.MethodGet,
+			"/subscription-data/group-data/mbs-group-membership",
+			s.HandleGet5GMbsGroup,
+		},
+
+		{
+			"UpdateIndividual5GmbsGroup",
+			http.MethodPut,
+			"/subscription-data/group-data/mbs-group-membership/:externalGroupId",
+			s.HandleUpdateIndividual5GmbsGroup,
+		},
+
+		{
+			"PatchIndividual5GmbsGroup",
+			http.MethodPatch,
+			"/subscription-data/group-data/mbs-group-membership/:externalGroupId",
+			s.HandlePatchIndividual5GmbsGroup,
+		},
+
+		{
+			"DeleteIndividual5GmbsGroup",
+			http.MethodDelete,
+			"/subscription-data/group-data/mbs-group-membership/:externalGroupId",
+			s.HandleDeleteIndividual5GmbsGroup,
+		},
+
+		{
+			"GetIndividual5GmbsGroup",
+			http.MethodGet,
+			"/subscription-data/group-data/mbs-group-membership/:externalGroupId",
+			s.HandleGetIndividual5GmbsGroup,
+		},
+
+		{
+			"Get5GMbsGroupshaternal",
+			http.MethodGet,
+			"/subscription-data/group-data/mbs-group-membership/internal",
+			s.HandleGet5GMbsGroupshaternal,
+		},
+
+		{
+			"GetPp5gMbsGroupProfileData",
+			http.MethodGet,
+			"/subscription-data/group-data/mbs-group-membership/pp-profile-data",
+			s.HandleGetPp5gMbsGroupProfileData,
+		},
+
+		{
 			"ApplicationDataInfluenceDataGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/influenceData",
 			s.HandleApplicationDataInfluenceDataGet,
 		},
@@ -143,7 +1114,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 		 */
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/application-data/influenceData/:influenceId/:subscriptionId",
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete,
@@ -151,7 +1122,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/influenceData/:influenceId/:subscriptionId",
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet,
@@ -159,7 +1130,7 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/application-data/influenceData/:influenceId/:subscriptionId",
 			s.HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
 			// ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut,
@@ -167,583 +1138,530 @@ func (s *Server) getDataRepositoryRoutes() []Route {
 
 		{
 			"ApplicationDataPfdsAppIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdDelete,
 		},
 
 		{
 			"ApplicationDataPfdsAppIdGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdGet,
 		},
 
 		{
 			"ApplicationDataPfdsAppIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/application-data/pfds/:appId",
 			s.HandleApplicationDataPfdsAppIdPut,
 		},
 
 		{
 			"ApplicationDataPfdsGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/pfds",
 			s.HandleApplicationDataPfdsGet,
-		},
-
-		{
-			"PolicyDataBdtDataBdtReferenceIdDelete",
-			strings.ToUpper("Delete"),
-			"/policy-data/bdt-data/:bdtReferenceId",
-			s.HandlePolicyDataBdtDataBdtReferenceIdDelete,
-		},
-
-		{
-			"PolicyDataBdtDataBdtReferenceIdGet",
-			strings.ToUpper("Get"),
-			"/policy-data/bdt-data/:bdtReferenceId",
-			s.HandlePolicyDataBdtDataBdtReferenceIdGet,
-		},
-
-		{
-			"PolicyDataBdtDataBdtReferenceIdPut",
-			strings.ToUpper("Put"),
-			"/policy-data/bdt-data/:bdtReferenceId",
-			s.HandlePolicyDataBdtDataBdtReferenceIdPut,
-		},
-
-		{
-			"PolicyDataBdtDataGet",
-			strings.ToUpper("Get"),
-			"/policy-data/bdt-data",
-			s.HandlePolicyDataBdtDataGet,
-		},
-
-		{
-			"PolicyDataPlmnsPlmnIdUePolicySetGet",
-			strings.ToUpper("Get"),
-			"/policy-data/plmns/:plmnId/ue-policy-set",
-			s.HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
-		},
-
-		{
-			"PolicyDataSponsorConnectivityDataSponsorIdGet",
-			strings.ToUpper("Get"),
-			"/policy-data/sponsor-connectivity-data/:sponsorId",
-			s.HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
-		},
-
-		{
-			"PolicyDataSubsToNotifyPost",
-			strings.ToUpper("Post"),
-			"/policy-data/subs-to-notify",
-			s.HandlePolicyDataSubsToNotifyPost,
-		},
-
-		{
-			"PolicyDataSubsToNotifySubsIdDelete",
-			strings.ToUpper("Delete"),
-			"/policy-data/subs-to-notify/:subsId",
-			s.HandlePolicyDataSubsToNotifySubsIdDelete,
-		},
-
-		{
-			"PolicyDataSubsToNotifySubsIdPut",
-			strings.ToUpper("Put"),
-			"/policy-data/subs-to-notify/:subsId",
-			s.HandlePolicyDataSubsToNotifySubsIdPut,
-		},
-
-		{
-			"PolicyDataUesUeIdAmDataGet",
-			strings.ToUpper("Get"),
-			"/policy-data/ues/:ueId/am-data",
-			s.HandlePolicyDataUesUeIdAmDataGet,
-		},
-
-		{
-			"PolicyDataUesUeIdOperatorSpecificDataGet",
-			strings.ToUpper("Get"),
-			"/policy-data/ues/:ueId/operator-specific-data",
-			s.HandlePolicyDataUesUeIdOperatorSpecificDataGet,
-		},
-
-		{
-			"PolicyDataUesUeIdOperatorSpecificDataPatch",
-			strings.ToUpper("Patch"),
-			"/policy-data/ues/:ueId/operator-specific-data",
-			s.HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
-		},
-
-		{
-			"PolicyDataUesUeIdOperatorSpecificDataPut",
-			strings.ToUpper("Put"),
-			"/policy-data/ues/:ueId/operator-specific-data",
-			s.HandlePolicyDataUesUeIdOperatorSpecificDataPut,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataGet",
-			strings.ToUpper("Get"),
-			"/policy-data/ues/:ueId/sm-data",
-			s.HandlePolicyDataUesUeIdSmDataGet,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataPatch",
-			strings.ToUpper("Patch"),
-			"/policy-data/ues/:ueId/sm-data",
-			s.HandlePolicyDataUesUeIdSmDataPatch,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataUsageMonIdDelete",
-			strings.ToUpper("Delete"),
-			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataUsageMonIdGet",
-			strings.ToUpper("Get"),
-			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
-		},
-
-		{
-			"PolicyDataUesUeIdSmDataUsageMonIdPut",
-			strings.ToUpper("Put"),
-			"/policy-data/ues/:ueId/sm-data/:usageMonId",
-			s.HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
-		},
-
-		{
-			"PolicyDataUesUeIdUePolicySetGet",
-			strings.ToUpper("Get"),
-			"/policy-data/ues/:ueId/ue-policy-set",
-			s.HandlePolicyDataUesUeIdUePolicySetGet,
-		},
-
-		{
-			"PolicyDataUesUeIdUePolicySetPatch",
-			strings.ToUpper("Patch"),
-			"/policy-data/ues/:ueId/ue-policy-set",
-			s.HandlePolicyDataUesUeIdUePolicySetPatch,
-		},
-
-		{
-			"PolicyDataUesUeIdUePolicySetPut",
-			strings.ToUpper("Put"),
-			"/policy-data/ues/:ueId/ue-policy-set",
-			s.HandlePolicyDataUesUeIdUePolicySetPut,
-		},
-
-		{
-			"QueryProvisionedData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/provisioned-data",
-			s.HandleQueryProvisionedData,
-		},
-
-		{
-			"RemovesdmSubscriptions",
-			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
-			s.HandleRemovesdmSubscriptions,
-		},
-
-		{
-			"Updatesdmsubscriptions",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions/:subsId",
-			s.HandleUpdatesdmsubscriptions,
-		},
-
-		{
-			"CreateSdmSubscriptions",
-			strings.ToUpper("Post"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
-			s.HandleCreateSdmSubscriptions,
-		},
-
-		{
-			"Querysdmsubscriptions",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/sdm-subscriptions",
-			s.HandleQuerysdmsubscriptions,
-		},
-
-		{
-			"CreateSmfContextNon3gpp",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
-			s.HandleCreateSmfContextNon3gpp,
-		},
-
-		{
-			"DeleteSmfContext",
-			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
-			s.HandleDeleteSmfContext,
-		},
-
-		{
-			"QuerySmfRegistration",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations/:pduSessionId",
-			s.HandleQuerySmfRegistration,
-		},
-
-		{
-			"QuerySmfRegList",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smf-registrations",
-			s.HandleQuerySmfRegList,
-		},
-
-		{
-			"QuerySmfSelectData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/smf-selection-subscription-data",
-			s.HandleQuerySmfSelectData,
-		},
-
-		{
-			"CreateSmsfContext3gpp",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
-			s.HandleCreateSmsfContext3gpp,
-		},
-
-		{
-			"DeleteSmsfContext3gpp",
-			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
-			s.HandleDeleteSmsfContext3gpp,
-		},
-
-		{
-			"QuerySmsfContext3gpp",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-3gpp-access",
-			s.HandleQuerySmsfContext3gpp,
-		},
-
-		{
-			"CreateSmsfContextNon3gpp",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
-			s.HandleCreateSmsfContextNon3gpp,
-		},
-
-		{
-			"DeleteSmsfContextNon3gpp",
-			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
-			s.HandleDeleteSmsfContextNon3gpp,
-		},
-
-		{
-			"QuerySmsfContextNon3gpp",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/smsf-non-3gpp-access",
-			s.HandleQuerySmsfContextNon3gpp,
-		},
-
-		{
-			"QuerySmsMngData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-mng-data",
-			s.HandleQuerySmsMngData,
-		},
-
-		{
-			"QuerySmsData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sms-data",
-			s.HandleQuerySmsData,
-		},
-
-		{
-			"QuerySmData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/sm-data",
-			s.HandleQuerySmData,
-		},
-
-		{
-			"QueryTraceData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/provisioned-data/trace-data",
-			s.HandleQueryTraceData,
-		},
-
-		{
-			"CreateAMFSubscriptions",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.HandleCreateAMFSubscriptions,
-		},
-
-		{
-			"ModifyAmfSubscriptionInfo",
-			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.HandleModifyAmfSubscriptionInfo,
-		},
-
-		{
-			"RemoveAmfSubscriptionsInfo",
-			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.HandleRemoveAmfSubscriptionsInfo,
-		},
-
-		{
-			"GetAmfSubscriptionInfo",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/:servingPlmnId/ee-subscriptions/:subsId/amf-subscriptions",
-			s.HandleGetAmfSubscriptionInfo,
-		},
-
-		/* subShortRoutes */
-		{
-			"GetSharedData",
-			strings.ToUpper("Get"),
-			"/subscription-data/shared-data",
-			s.HandleGetSharedData,
-		},
-
-		{
-			"PostSubscriptionDataSubscriptions",
-			strings.ToUpper("Post"),
-			"/subscription-data/subs-to-notify",
-			s.HandlePostSubscriptionDataSubscriptions,
-		},
-
-		/* subRoutes */
-		// Special case -- should be added before than the general case
-		{
-			"RemovesubscriptionDataSubscriptions",
-			strings.ToUpper("Delete"),
-			"/subscription-data/subs-to-notify/:subsId",
-			s.HandleRemovesubscriptionDataSubscriptions,
-		},
-
-		{
-			"QueryEEData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/ee-profile-data",
-			s.HandleQueryEEData,
-		},
-
-		{
-			"PatchOperSpecData",
-			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/operator-specific-data",
-			s.HandlePatchOperSpecData,
-		},
-
-		{
-			"QueryOperSpecData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/operator-specific-data",
-			s.HandleQueryOperSpecData,
-		},
-
-		{
-			"GetppData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/pp-data",
-			s.HandleGetppData,
-		},
-
-		{
-			"ModifyPpData",
-			strings.ToUpper("Patch"),
-			"/subscription-data/:ueId/pp-data",
-			s.HandleModifyPpData,
-		},
-
-		{
-			"GetIdentityData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/identity-data",
-			s.HandleGetIdentityData,
-		},
-
-		{
-			"GetOdbData",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/operator-determined-barring-data",
-			s.HandleGetOdbData,
-		},
-
-		/* eeShortRoutes */
-		{
-			"CreateEeGroupSubscriptions",
-			strings.ToUpper("Post"),
-			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
-			s.HandleCreateEeGroupSubscriptions,
-		},
-
-		{
-			"QueryEeGroupSubscriptions",
-			strings.ToUpper("Get"),
-			"/subscription-data/group-data/:ueGroupId/ee-subscriptions",
-			s.HandleQueryEeGroupSubscriptions,
-		},
-
-		{
-			"CreateEeSubscriptions",
-			strings.ToUpper("Post"),
-			"/subscription-data/:ueId/context-data/ee-subscriptions",
-			s.HandleCreateEeSubscriptions,
-		},
-
-		{
-			"Queryeesubscriptions",
-			strings.ToUpper("Get"),
-			"/subscription-data/:ueId/context-data/ee-subscriptions",
-			s.HandleQueryeesubscriptions,
-		},
-
-		/* eeRoutes */
-		{
-			"RemoveeeSubscriptions",
-			strings.ToUpper("Delete"),
-			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
-			s.HandleRemoveeeSubscriptions,
-		},
-
-		{
-			"UpdateEesubscriptions",
-			strings.ToUpper("Put"),
-			"/subscription-data/:ueId/context-data/ee-subscriptions/:subsId",
-			s.HandleUpdateEesubscriptions,
-		},
-
-		{
-			"UpdateEeGroupSubscriptions",
-			strings.ToUpper("Put"),
-			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
-			s.HandleUpdateEeGroupSubscriptions,
-		},
-
-		{
-			"RemoveEeGroupSubscriptions",
-			strings.ToUpper("Delete"),
-			"/subscription-data/group-data/:ueGroupId/ee-subscriptions/:subsId",
-			s.HandleRemoveEeGroupSubscriptions,
-		},
-
-		/* expoRoutes */
-		{
-			"CreateSessionManagementData",
-			strings.ToUpper("Put"),
-			"/exposure-data/:ueId/session-management-data/:pduSessionId",
-			s.HandleCreateSessionManagementData,
-		},
-
-		{
-			"DeleteSessionManagementData",
-			strings.ToUpper("Delete"),
-			"/exposure-data/:ueId/session-management-data/:pduSessionId",
-			s.HandleDeleteSessionManagementData,
-		},
-
-		{
-			"QuerySessionManagementData",
-			strings.ToUpper("Get"),
-			"/exposure-data/:ueId/session-management-data/:pduSessionId",
-			s.HandleQuerySessionManagementData,
-		},
-
-		{
-			"CreateAccessAndMobilityData",
-			strings.ToUpper("Put"),
-			"/exposure-data/:ueId/access-and-mobility-data",
-			s.HandleCreateAccessAndMobilityData,
-		},
-
-		{
-			"DeleteAccessAndMobilityData",
-			strings.ToUpper("Delete"),
-			"/exposure-data/:ueId/access-and-mobility-data",
-			s.HandleDeleteAccessAndMobilityData,
-		},
-
-		{
-			"QueryAccessAndMobilityData",
-			strings.ToUpper("Get"),
-			"/exposure-data/:ueId/access-and-mobility-data",
-			s.HandleQueryAccessAndMobilityData,
-		},
-
-		{
-			"ExposureDataSubsToNotifyPost",
-			strings.ToUpper("Post"),
-			"/exposure-data/subs-to-notify",
-			s.HandleExposureDataSubsToNotifyPost,
-		},
-
-		{
-			"ExposureDataSubsToNotifySubIdDelete",
-			strings.ToUpper("Delete"),
-			"/exposure-data/subs-to-notify/:subId",
-			s.HandleExposureDataSubsToNotifySubIdDelete,
-		},
-
-		{
-			"ExposureDataSubsToNotifySubIdPut",
-			strings.ToUpper("Put"),
-			"/exposure-data/subs-to-notify/:subId",
-			s.HandleExposureDataSubsToNotifySubIdPut,
 		},
 
 		/* appRoutes */
 		{
 			"ApplicationDataInfluenceDataSubsToNotifyGet",
-			strings.ToUpper("Get"),
+			http.MethodGet,
 			"/application-data/influenceData/subs-to-notify",
 			s.HandleApplicationDataInfluenceDataSubsToNotifyGet,
 		},
 
 		{
 			"ApplicationDataInfluenceDataSubsToNotifyPost",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/application-data/influenceData/subs-to-notify",
 			s.HandleApplicationDataInfluenceDataSubsToNotifyPost,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdDelete",
-			strings.ToUpper("Delete"),
+			http.MethodDelete,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdDelete,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPatch",
-			strings.ToUpper("Patch"),
+			http.MethodPatch,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPatch,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPut",
-			strings.ToUpper("Put"),
+			http.MethodPut,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPut,
 		},
 
 		{
 			"ApplicationDataInfluenceDataInfluenceIdPut",
-			strings.ToUpper("Post"),
+			http.MethodPost,
 			"/application-data/influenceData/:influenceId",
 			s.HandleApplicationDataInfluenceDataInfluenceIdPost,
+		},
+
+		{
+			"GetIndividualInfluenceDataSubscription",
+			http.MethodGet,
+			"/application-data/influenceData/subs-to-notify/:subscriptionId",
+			s.HandleGetIndividualInfluenceDataSubscription,
+		},
+
+		{
+			"UpdateIndividualInfluenceDataSubscription",
+			http.MethodPut,
+			"/application-data/influenceData/subs-to-notify/:subscriptionId",
+			s.HandleUpdateIndividualInfluenceDataSubscription,
+		},
+
+		{
+			"DeleteIndividualInfluenceDataSubscription",
+			http.MethodDelete,
+			"/application-data/influenceData/subs-to-notify/:subscriptionId",
+			s.HandleDeleteIndividualInfluenceDataSubscription,
+		},
+
+		{
+			"GetAppliedBDTPolicyData",
+			http.MethodGet,
+			"/application-data/bdtPolicyData",
+			s.HandleGetAppliedBDTPolicyData,
+		},
+
+		{
+			"UpdateIndividualAppliedBDTPolicyData",
+			http.MethodPut,
+			"/application-data/bdtPolicyData/:bdtPolicyId",
+			s.HandleUpdateIndividualAppliedBDTPolicyData,
+		},
+
+		{
+			"PatchIndividualAppliedBDTPolicyData",
+			http.MethodPatch,
+			"/application-data/bdtPolicyData/:bdtPolicyId",
+			s.HandlePatchIndividualAppliedBDTPolicyData,
+		},
+
+		{
+			"DeleteIndividualAppliedBDTPolicyData",
+			http.MethodDelete,
+			"/application-data/bdtPolicyData/:bdtPolicyId",
+			s.HandleDeleteIndividualAppliedBDTPolicyData,
+		},
+
+		{
+			"GetIPTVConfigurations",
+			http.MethodGet,
+			"/application-data/iptvConfigData",
+			s.HandleGetIPTVConfigurations,
+		},
+
+		{
+			"UpdateIndividualIPTVConfiguration",
+			http.MethodPut,
+			"/application-data/iptvConfigData/:configurationId",
+			s.HandleUpdateIndividualIPTVConfiguration,
+		},
+
+		{
+			"PatchIndividualIPTVConfiguration",
+			http.MethodPatch,
+			"/application-data/iptvConfigData/:configurationId",
+			s.HandlePatchIndividualIPTVConfiguration,
+		},
+
+		{
+			"DeleteIndividualIPTVConfiguration",
+			http.MethodDelete,
+			"/application-data/iptvConfigData/:configurationId",
+			s.HandleDeleteIndividualIPTVConfiguration,
+		},
+
+		{
+			"GetServiceParameterData",
+			http.MethodGet,
+			"/application-data/serviceParamData",
+			s.HandleGetServiceParameterData,
+		},
+
+		{
+			"UpdateIndividualServiceParameterData",
+			http.MethodPut,
+			"/application-data/serviceParamData/:serviceParamId",
+			s.HandleUpdateIndividualServiceParameterData,
+		},
+
+		{
+			"PatchIndividualServiceParameterData",
+			http.MethodPatch,
+			"/application-data/serviceParamData/:serviceParamId",
+			s.HandlePatchIndividualServiceParameterData,
+		},
+
+		{
+			"DeleteIndividualServiceParameterData",
+			http.MethodDelete,
+			"/application-data/serviceParamData/:serviceParamId",
+			s.HandleDeleteIndividualServiceParameterData,
+		},
+
+		{
+			"GetAMInfluenceData",
+			http.MethodGet,
+			"/application-data/am-influence-data",
+			s.HandleGetAMInfluenceData,
+		},
+
+		{
+			"UpdateIndividualAMInfluenceData",
+			http.MethodPut,
+			"/application-data/am-influence-data/:amInfluenceId",
+			s.HandleUpdateIndividualAMInfluenceData,
+		},
+
+		{
+			"PatchIndividualAMInfluenceData",
+			http.MethodPatch,
+			"/application-data/am-influence-data/:amInfluenceId",
+			s.HandlePatchIndividualAMInfluenceData,
+		},
+
+		{
+			"DeleteIndividualAMInfluenceData",
+			http.MethodDelete,
+			"/application-data/am-influence-data/:amInfluenceId",
+			s.HandleDeleteIndividualAMInfluenceData,
+		},
+
+		{
+			"CreateApplicationDataSubscription",
+			http.MethodPost,
+			"/application-data/subs-to-notify",
+			s.HandleCreateApplicationDataSubscription,
+		},
+
+		{
+			"GetApplicationDataSubscription",
+			http.MethodGet,
+			"/application-data/subs-to-notify",
+			s.HandleGetApplicationDataSubscription,
+		},
+
+		{
+			"UpdateIndividualApplicationDataSubscription",
+			http.MethodPut,
+			"/application-data/subs-to-notify/:subsId",
+			s.HandleUpdateIndividualApplicationDataSubscription,
+		},
+
+		{
+			"DeleteIndividualApplicationDataSubscription",
+			http.MethodDelete,
+			"/application-data/subs-to-notify/:subsId",
+			s.HandleDeleteIndividualApplicationDataSubscription,
+		},
+
+		{
+			"GetIndividualApplicationDataSubscription",
+			http.MethodGet,
+			"/application-data/subs-to-notify/:subsId",
+			s.HandleGetIndividualApplicationDataSubscription,
+		},
+
+		{
+			"GetEASDeploymentInformationData",
+			http.MethodGet,
+			"/application-data/eas-deploy-data",
+			s.HandleGetEASDeploymentInformationData,
+		},
+
+		{
+			"GetIndividualEASDeploymentInformationData",
+			http.MethodGet,
+			"/application-data/eas-deploy-data/:easDeployInfoId",
+			s.HandleGetIndividualEASDeploymentInformationData,
+		},
+
+		{
+			"UpdateIndividualEASDeploymentInformationData",
+			http.MethodPut,
+			"/application-data/eas-deploy-data/:easDeployInfoId",
+			s.HandleUpdateIndividualEASDeploymentInformationData,
+		},
+
+		{
+			"DeleteIndividualEASDeploymentInformationData",
+			http.MethodDelete,
+			"/application-data/eas-deploy-data/:easDeployInfoId",
+			s.HandleDeleteIndividualEASDeploymentInformationData,
+		},
+
+		/* Policy-data */
+		{
+			"PolicyDataBdtDataBdtReferenceIdDelete",
+			http.MethodDelete,
+			"/policy-data/bdt-data/:bdtReferenceId",
+			s.HandlePolicyDataBdtDataBdtReferenceIdDelete,
+		},
+
+		{
+			"PolicyDataBdtDataBdtReferenceIdGet",
+			http.MethodGet,
+			"/policy-data/bdt-data/:bdtReferenceId",
+			s.HandlePolicyDataBdtDataBdtReferenceIdGet,
+		},
+
+		{
+			"PolicyDataBdtDataBdtReferenceIdPut",
+			http.MethodPut,
+			"/policy-data/bdt-data/:bdtReferenceId",
+			s.HandlePolicyDataBdtDataBdtReferenceIdPut,
+		},
+
+		{
+			"PolicyDataBdtDataGet",
+			http.MethodGet,
+			"/policy-data/bdt-data",
+			s.HandlePolicyDataBdtDataGet,
+		},
+
+		{
+			"PolicyDataPlmnsPlmnIdUePolicySetGet",
+			http.MethodGet,
+			"/policy-data/plmns/:plmnId/ue-policy-set",
+			s.HandlePolicyDataPlmnsPlmnIdUePolicySetGet,
+		},
+
+		{
+			"PolicyDataSponsorConnectivityDataSponsorIdGet",
+			http.MethodGet,
+			"/policy-data/sponsor-connectivity-data/:sponsorId",
+			s.HandlePolicyDataSponsorConnectivityDataSponsorIdGet,
+		},
+
+		{
+			"PolicyDataSubsToNotifyPost",
+			http.MethodPost,
+			"/policy-data/subs-to-notify",
+			s.HandlePolicyDataSubsToNotifyPost,
+		},
+
+		{
+			"PolicyDataSubsToNotifySubsIdDelete",
+			http.MethodDelete,
+			"/policy-data/subs-to-notify/:subsId",
+			s.HandlePolicyDataSubsToNotifySubsIdDelete,
+		},
+
+		{
+			"PolicyDataSubsToNotifySubsIdPut",
+			http.MethodPut,
+			"/policy-data/subs-to-notify/:subsId",
+			s.HandlePolicyDataSubsToNotifySubsIdPut,
+		},
+
+		{
+			"PolicyDataUesUeIdAmDataGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/am-data",
+			s.HandlePolicyDataUesUeIdAmDataGet,
+		},
+
+		{
+			"PolicyDataUesUeIdOperatorSpecificDataGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/operator-specific-data",
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataGet,
+		},
+
+		{
+			"PolicyDataUesUeIdOperatorSpecificDataPatch",
+			http.MethodPatch,
+			"/policy-data/ues/:ueId/operator-specific-data",
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataPatch,
+		},
+
+		{
+			"PolicyDataUesUeIdOperatorSpecificDataPut",
+			http.MethodPut,
+			"/policy-data/ues/:ueId/operator-specific-data",
+			s.HandlePolicyDataUesUeIdOperatorSpecificDataPut,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/sm-data",
+			s.HandlePolicyDataUesUeIdSmDataGet,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataPatch",
+			http.MethodPatch,
+			"/policy-data/ues/:ueId/sm-data",
+			s.HandlePolicyDataUesUeIdSmDataPatch,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataUsageMonIdDelete",
+			http.MethodDelete,
+			"/policy-data/ues/:ueId/sm-data/:usageMonId",
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdDelete,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataUsageMonIdGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/sm-data/:usageMonId",
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdGet,
+		},
+
+		{
+			"PolicyDataUesUeIdSmDataUsageMonIdPut",
+			http.MethodPut,
+			"/policy-data/ues/:ueId/sm-data/:usageMonId",
+			s.HandlePolicyDataUesUeIdSmDataUsageMonIdPut,
+		},
+
+		{
+			"PolicyDataUesUeIdUePolicySetGet",
+			http.MethodGet,
+			"/policy-data/ues/:ueId/ue-policy-set",
+			s.HandlePolicyDataUesUeIdUePolicySetGet,
+		},
+
+		{
+			"PolicyDataUesUeIdUePolicySetPatch",
+			http.MethodPatch,
+			"/policy-data/ues/:ueId/ue-policy-set",
+			s.HandlePolicyDataUesUeIdUePolicySetPatch,
+		},
+
+		{
+			"PolicyDataUesUeIdUePolicySetPut",
+			http.MethodPut,
+			"/policy-data/ues/:ueId/ue-policy-set",
+			s.HandlePolicyDataUesUeIdUePolicySetPut,
+		},
+
+		{
+			"GetPolicyDataForIndividualUe",
+			http.MethodGet,
+			"/policy-data/:ueId",
+			s.HandleGetPolicyDataForIndividualUe,
+		},
+
+		{
+			"DeletePolicyDataOperatorSpecificData",
+			http.MethodDelete,
+			"/policy-data/ues/:ueId/operator-specific-data",
+			s.HandleDeletePolicyDataOperatorSpecificData,
+		},
+
+		{
+			"PatchIndividualBdtData",
+			http.MethodPatch,
+			"/policy-data/bdt-data/:bdtReferenceId",
+			s.HandlePatchIndividualBdtData,
+		},
+
+		{
+			"GetSlicePolicyControlData",
+			http.MethodGet,
+			"/policy-data/slice-control-data/:snssai",
+			s.HandleGetSlicePolicyControlData,
+		},
+
+		{
+			"PatchSlicePolicyControlData",
+			http.MethodPatch,
+			"/policy-data/slice-control-data/:snssai",
+			s.HandlePatchSlicePolicyControlData,
+		},
+
+		{
+			"GetMBSSessionPolicyControlData",
+			http.MethodGet,
+			"/policy-data/mbs-session-pol-data/:polSessionId",
+			s.HandleGetMBSSessionPolicyControlData,
+		},
+
+		/* expoRoutes */
+		{
+			"CreateSessionManagementData",
+			http.MethodPut,
+			"/exposure-data/:ueId/session-management-data/:pduSessionId",
+			s.HandleCreateSessionManagementData,
+		},
+
+		{
+			"DeleteSessionManagementData",
+			http.MethodDelete,
+			"/exposure-data/:ueId/session-management-data/:pduSessionId",
+			s.HandleDeleteSessionManagementData,
+		},
+
+		{
+			"QuerySessionManagementData",
+			http.MethodGet,
+			"/exposure-data/:ueId/session-management-data/:pduSessionId",
+			s.HandleQuerySessionManagementData,
+		},
+
+		{
+			"CreateAccessAndMobilityData",
+			http.MethodPut,
+			"/exposure-data/:ueId/access-and-mobility-data",
+			s.HandleCreateAccessAndMobilityData,
+		},
+
+		{
+			"DeleteAccessAndMobilityData",
+			http.MethodDelete,
+			"/exposure-data/:ueId/access-and-mobility-data",
+			s.HandleDeleteAccessAndMobilityData,
+		},
+
+		{
+			"QueryAccessAndMobilityData",
+			http.MethodGet,
+			"/exposure-data/:ueId/access-and-mobility-data",
+			s.HandleQueryAccessAndMobilityData,
+		},
+
+		{
+			"ExposureDataSubsToNotifyPost",
+			http.MethodPost,
+			"/exposure-data/subs-to-notify",
+			s.HandleExposureDataSubsToNotifyPost,
+		},
+
+		{
+			"ExposureDataSubsToNotifySubIdDelete",
+			http.MethodDelete,
+			"/exposure-data/subs-to-notify/:subId",
+			s.HandleExposureDataSubsToNotifySubIdDelete,
+		},
+
+		{
+			"ExposureDataSubsToNotifySubIdPut",
+			http.MethodPut,
+			"/exposure-data/subs-to-notify/:subId",
+			s.HandleExposureDataSubsToNotifySubIdPut,
+		},
+
+		{
+			"PatchAccessAndMobilityData",
+			http.MethodPatch,
+			"/exposure-data/:ueId/access-and-mobility-data",
+			s.HandlePatchAccessAndMobilityData,
 		},
 	}
 }
@@ -2888,4 +3806,532 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context
 
 func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPost(c *gin.Context) {
 	s.Processor().ApplicationDataInfluenceDataInfluenceIdPostProcedure(c)
+}
+
+// R17 subscription data
+func (s *Server) HandleUpdateAuthenticationUPU(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetAuthenticationUPU(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateSubscribedSNSSAIs(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetSubscribedSNSSAIs(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteAuthenticationStatus(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualAuthenticationStatus(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividualAuthenticationStatus(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualAuthenticationStatus(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetContextData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualSmfRegistration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateOperatorSpecificData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteSubscriptionDataOperatorSpecificData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIpSmGwRegistration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIpSmGwRegistration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIpSmGwRegistration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIpSmGwRegistration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateSmsMessageWaitingData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteSmsMessageWaitingData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchSmsMessageWaitingData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetSmsMessageWaitingData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualSdmSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividualSdmSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateHssSdmSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteHssSdmSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetHssSdmSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchHssSdmSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatcheesubscriptions(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateSmfSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteSmfSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetSmfSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchSmfSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateHssSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteHssSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetHssSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchHssSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetPPProfileData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetProvisionedParameterDataEntries(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateProvisionedParameterDataEntry(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteProvisionedParameterDataEntry(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetProvisionedParameterDataEntry(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetSubscriptionDataSubscriptions(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualSubscriptionDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividualSubscriptionDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateAmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteAmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetAmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchAmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateSmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteSmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetSmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchSmfGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateHssGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteHssGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetHssGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchHssGroupSubscriptionInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetEeGroupProfileData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividualSharedData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetGroupIdentifiers(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGet5GvnGroups(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividual5GvnGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividual5GvnGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividual5GvnGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividual5GvnGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGet5GVnGroupshternal(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetPp5gVnGroupProfileData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetLcsPrivacySubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetLcsMobileOriginatedSubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetNiddAuthorizationData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetServiceSpecificAuthorizationData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetCoverageRestrictionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetLocation(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetV2xSubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetProseSubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGet5MBSSubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetUcSubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetLcsBroadcastAssistanceSubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateNiddAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteNiddAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetNiddAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchNiddAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetUeSubscriptionData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateSpecificServiceAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteSpecificServiceAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetSpecificServiceAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchSpecificServiceAuthorizations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetRoamingInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateRoamingInfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetPelinfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdatePelinfo(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGet5GMbsGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividual5GmbsGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividual5GmbsGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividual5GmbsGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividual5GmbsGroup(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGet5GMbsGroupshaternal(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetPp5gMbsGroupProfileData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+// R17 application data
+func (s *Server) HandleGetIndividualInfluenceDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualInfluenceDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualInfluenceDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetAppliedBDTPolicyData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualAppliedBDTPolicyData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualAppliedBDTPolicyData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualAppliedBDTPolicyData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIPTVConfigurations(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualIPTVConfiguration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualIPTVConfiguration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualIPTVConfiguration(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetServiceParameterData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualServiceParameterData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualServiceParameterData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualServiceParameterData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetAMInfluenceData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualAMInfluenceData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualAMInfluenceData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualAMInfluenceData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleCreateApplicationDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetApplicationDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualApplicationDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualApplicationDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividualApplicationDataSubscription(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetEASDeploymentInformationData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetIndividualEASDeploymentInformationData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleUpdateIndividualEASDeploymentInformationData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeleteIndividualEASDeploymentInformationData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+// R17 policy data
+func (s *Server) HandleGetPolicyDataForIndividualUe(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleDeletePolicyDataOperatorSpecificData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchIndividualBdtData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetSlicePolicyControlData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandlePatchSlicePolicyControlData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+func (s *Server) HandleGetMBSSessionPolicyControlData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
+}
+
+// R17 exposure data
+func (s *Server) HandlePatchAccessAndMobilityData(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{})
 }
