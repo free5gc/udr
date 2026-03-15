@@ -1,7 +1,6 @@
 package processor
 
 import (
-	"context"
 	"fmt"
 	"runtime/debug"
 
@@ -100,8 +99,13 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 				subscriptionDataSubscription.OriginalCallbackReference,
 			}
 			dataChangeReq.DataChangeNotify.NotifyItems = notifyItems
+			ctx, pd, err := callbackRequestContext(onDataChangeNotifyUrl)
+			if err != nil {
+				logger.SBILog.Warnf("Get token for on-data-change callback failed: %+v", pd)
+				continue
+			}
 			rsp, err := client.SubsToNotifyCollectionApi.SubscriptionDataSubscriptionsOnDataChangePost(
-				context.TODO(), onDataChangeNotifyUrl, &dataChangeReq)
+				ctx, onDataChangeNotifyUrl, &dataChangeReq)
 
 			if err != nil {
 				logger.SBILog.Errorln(err.Error())
@@ -133,9 +137,14 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 				policyDataChangeNotification,
 			},
 		}
+		ctx, pd, err := callbackRequestContext(policyDataChangeNotificationUrl)
+		if err != nil {
+			logger.SBILog.Warnf("Get token for policy-data-change callback failed: %+v", pd)
+			continue
+		}
 
 		rsp, err := client.PolicyDataSubscriptionsCollectionApi.
-			CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPost(context.TODO(),
+			CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPost(ctx,
 				policyDataChangeNotificationUrl, &req)
 
 		if err != nil {
@@ -171,10 +180,15 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPostRequest{
 				RequestBody: []interface{}{trafficInfluDataNotif},
 			}
+			ctx, pd, err := callbackRequestContext(influenceDataChangeNotificationUrl)
+			if err != nil {
+				logger.SBILog.Warnf("Get token for influence-data-update callback failed: %+v", pd)
+				return true
+			}
 
 			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
 				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
-					context.TODO(), influenceDataChangeNotificationUrl, &req)
+					ctx, influenceDataChangeNotificationUrl, &req)
 
 			if err != nil {
 				logger.SBILog.Errorln(err.Error())
@@ -190,10 +204,15 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPostRequest{
 				RequestBody: []interface{}{trafficInfluDataNotif},
 			}
+			ctx, pd, err := callbackRequestContext(influenceDataChangeNotificationUrl)
+			if err != nil {
+				logger.SBILog.Warnf("Get token for influence-data-removal callback failed: %+v", pd)
+				return true
+			}
 
 			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
 				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
-					context.TODO(), influenceDataChangeNotificationUrl, &req)
+					ctx, influenceDataChangeNotificationUrl, &req)
 
 			if err != nil {
 				logger.SBILog.Errorln(err.Error())
