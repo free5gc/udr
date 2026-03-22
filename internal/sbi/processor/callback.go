@@ -101,7 +101,7 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 			dataChangeReq.DataChangeNotify.NotifyItems = notifyItems
 			ctx, pd, err := callbackRequestContext(onDataChangeNotifyUrl)
 			if err != nil {
-				logger.SBILog.Warnf("Get token for on-data-change callback failed: %+v", pd)
+				logger.SBILog.Warnf("Get token for on-data-change callback failed: %+v, err: %v", pd, err)
 				continue
 			}
 			rsp, err := client.SubsToNotifyCollectionApi.SubscriptionDataSubscriptionsOnDataChangePost(
@@ -139,7 +139,7 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 		}
 		ctx, pd, err := callbackRequestContext(policyDataChangeNotificationUrl)
 		if err != nil {
-			logger.SBILog.Warnf("Get token for policy-data-change callback failed: %+v", pd)
+			logger.SBILog.Warnf("Get token for policy-data-change callback failed: %+v, err: %v", pd, err)
 			continue
 		}
 
@@ -182,7 +182,7 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			}
 			ctx, pd, err := callbackRequestContext(influenceDataChangeNotificationUrl)
 			if err != nil {
-				logger.SBILog.Warnf("Get token for influence-data-update callback failed: %+v", pd)
+				logger.SBILog.Warnf("Get token for influence-data-update callback failed: %+v, err: %v", pd, err)
 				return true
 			}
 
@@ -206,7 +206,7 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			}
 			ctx, pd, err := callbackRequestContext(influenceDataChangeNotificationUrl)
 			if err != nil {
-				logger.SBILog.Warnf("Get token for influence-data-removal callback failed: %+v", pd)
+				logger.SBILog.Warnf("Get token for influence-data-removal callback failed: %+v, err: %v", pd, err)
 				return true
 			}
 
