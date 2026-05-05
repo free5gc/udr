@@ -36,8 +36,15 @@ func TestCallbackServiceInfo(t *testing.T) {
 			wantOK:      true,
 		},
 		{
-			name:        "udm sdm callback without callback prefix",
-			callbackURI: "http://udm.free5gc.org:8000/imsi-001010000000001/sdm-subscriptions",
+			name:        "udm sdm subscription-data create callback",
+			callbackURI: "http://udm.free5gc.org:8000/subscription-data/imsi-001010000000001/00101/sdm-subscriptions",
+			wantService: models.ServiceName_NUDM_SDM,
+			wantTarget:  models.NrfNfManagementNfType_UDM,
+			wantOK:      true,
+		},
+		{
+			name:        "udm sdm context-data update callback",
+			callbackURI: "http://udm.free5gc.org:8000/subscription-data/imsi-001010000000001/context-data/sdm-subscriptions/subs-1",
 			wantService: models.ServiceName_NUDM_SDM,
 			wantTarget:  models.NrfNfManagementNfType_UDM,
 			wantOK:      true,
