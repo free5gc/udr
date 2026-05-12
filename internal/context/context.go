@@ -68,7 +68,7 @@ type UDRContext struct {
 	PolicyDataSubscriptions                 map[subsId]*models.PolicyDataSubscription
 	InfluenceDataSubscriptions              sync.Map
 	appDataInfluDataSubscriptionIdGenerator uint64
-	mtx                                     sync.RWMutex
+	mtx                                     sync.RWMutex // context-level lock for mutable UDRContext state
 	OAuth2Required                          bool
 }
 
