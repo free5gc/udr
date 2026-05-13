@@ -68,7 +68,7 @@ type UDRContext struct {
 	PolicyDataSubscriptions                 map[subsId]*models.PolicyDataSubscription
 	InfluenceDataSubscriptions              sync.Map
 	appDataInfluDataSubscriptionIdGenerator uint64
-	mtx                                     sync.RWMutex
+	mtx                                     sync.RWMutex // context-level lock for mutable UDRContext state
 	OAuth2Required                          bool
 }
 
@@ -215,6 +215,17 @@ func (context *UDRContext) NewAppDataInfluDataSubscriptionID() uint64 {
 	defer context.mtx.Unlock()
 	context.appDataInfluDataSubscriptionIdGenerator++
 	return context.appDataInfluDataSubscriptionIdGenerator
+}
+
+func (context *UDRContext) CreatePolicyDataSubscription(policyDataSubscription models.PolicyDataSubscription) string {
+	context.mtx.Lock()
+	defer context.mtx.Unlock()
+
+	newSubscriptionID := strconv.Itoa(context.PolicyDataSubscriptionIDGenerator)
+	context.PolicyDataSubscriptions[newSubscriptionID] = &policyDataSubscription
+	context.PolicyDataSubscriptionIDGenerator++
+
+	return newSubscriptionID
 }
 
 func NewInfluenceDataSubscriptionId() string {

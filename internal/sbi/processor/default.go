@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -180,9 +179,7 @@ func (p *Processor) PolicyDataSubsToNotifyPostProcedure(
 ) {
 	udrSelf := udr_context.GetSelf()
 
-	newSubscriptionID := strconv.Itoa(udrSelf.PolicyDataSubscriptionIDGenerator)
-	udrSelf.PolicyDataSubscriptions[newSubscriptionID] = &PolicyDataSubscription
-	udrSelf.PolicyDataSubscriptionIDGenerator++
+	newSubscriptionID := udrSelf.CreatePolicyDataSubscription(PolicyDataSubscription)
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/subscription-data/subs-to-notify/{subsId} */

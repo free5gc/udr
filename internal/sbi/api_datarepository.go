@@ -1421,20 +1421,8 @@ func (s *Server) HandlePolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Cont
 func (s *Server) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
 	var policyDataSubscription models.PolicyDataSubscription
 
-	reqBody, err := c.GetRawData()
-	if err != nil {
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		pd := openapi.ProblemDetailsSystemFailure(err.Error())
-		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-		c.JSON(http.StatusInternalServerError, pd)
-	}
-
-	err = openapi.Deserialize(policyDataSubscription, reqBody, "application/json")
-	if err != nil {
-		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
-		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
-		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-		c.JSON(http.StatusBadRequest, pd)
+	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
+		return
 	}
 
 	logger.DataRepoLog.Tracef("Handle PolicyDataSubsToNotifyPost")
@@ -1453,20 +1441,8 @@ func (s *Server) HandlePolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
 func (s *Server) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
 	var policyDataSubscription models.PolicyDataSubscription
 
-	reqBody, err := c.GetRawData()
-	if err != nil {
-		logger.DataRepoLog.Errorf("Get Request Body error: %+v", err)
-		pd := openapi.ProblemDetailsSystemFailure(err.Error())
-		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-		c.JSON(http.StatusInternalServerError, pd)
-	}
-
-	err = openapi.Deserialize(policyDataSubscription, reqBody, "application/json")
-	if err != nil {
-		logger.DataRepoLog.Errorf("Deserialize Request Body error: %+v", err)
-		pd := util.ProblemDetailsMalformedReqSyntax(err.Error())
-		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-		c.JSON(http.StatusBadRequest, pd)
+	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
+		return
 	}
 
 	logger.DataRepoLog.Tracef("Handle PolicyDataSubsToNotifySubsIdPut")
