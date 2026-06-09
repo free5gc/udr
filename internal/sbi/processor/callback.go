@@ -86,6 +86,12 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 	}()
 
 	udrSelf := udr_context.GetSelf()
+	ctx, pd, err := udrSelf.GetTokenCtx(models.ServiceName_NUDM_SDM, models.NrfNfManagementNfType_UDM)
+	if err != nil {
+		logger.SBILog.Errorf("SendOnDataChangeNotify get token failed: %+v", pd)
+		return
+	}
+
 	configuration := DataRepository.NewConfiguration()
 	client := DataRepository.NewAPIClient(configuration)
 
@@ -103,7 +109,7 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 				},
 			}
 			rsp, err := client.SubsToNotifyCollectionApi.SubscriptionDataSubscriptionsOnDataChangePost(
-				context.TODO(), onDataChangeNotifyUrl, &dataChangeReq)
+				ctx, onDataChangeNotifyUrl, &dataChangeReq)
 
 			if err != nil {
 				logger.SBILog.Errorln(err.Error())
