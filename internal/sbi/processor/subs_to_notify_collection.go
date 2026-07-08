@@ -26,7 +26,19 @@ func (p *Processor) PostSubscriptionDataSubscriptionsProcedure(
 	udrSelf := udr_context.GetSelf()
 
 	newSubscriptionID := strconv.Itoa(udrSelf.SubscriptionDataSubscriptionIDGenerator)
-	udrSelf.SubscriptionDataSubscriptions[newSubscriptionID] = &SubscriptionDataSubscriptions
+	target, ok := subscriptionCallbackTargetFromContext(
+		c,
+		models.ServiceName_NUDM_SDM,
+		models.NrfNfManagementNfType_UDM,
+	)
+	if !ok {
+		rejectUnresolvedCallbackTarget(c)
+		return
+	}
+	udrSelf.SubscriptionDataSubscriptions[newSubscriptionID] = &udr_context.SubscriptionDataSubscriptionRecord{
+		Subscription:   &SubscriptionDataSubscriptions,
+		CallbackTarget: target,
+	}
 	udrSelf.SubscriptionDataSubscriptionIDGenerator++
 
 	/* Contains the URI of the newly created resource, according
