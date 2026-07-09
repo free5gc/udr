@@ -33,11 +33,13 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
 
 	udrSelf := udr_context.GetSelf()
 	udrSelf.InfluenceDataSubscriptions.Range(func(key, value interface{}) bool {
-		subs, ok := value.(*models.TrafficInfluSub)
-		if !ok {
+		record, ok := value.(*udr_context.InfluenceDataSubscriptionRecord)
+		if !ok || record.Subscription == nil {
 			logger.DataRepoLog.Errorf("Failed to load influence Data subscription ID [%+v]", key)
 			return true
-		} else if dnn != "" && !util.Contain(dnn, subs.Dnns) {
+		}
+		subs := record.Subscription
+		if dnn != "" && !util.Contain(dnn, subs.Dnns) {
 			return true
 		} else if snssai != nil && !util.Contain(*snssai, subs.Snssais) {
 			return true
@@ -81,22 +83,41 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostPr
 	}
 
 	udrSelf := udr_context.GetSelf()
-	if subs, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok && reflect.DeepEqual(*request, subs) {
-		pd := &models.ProblemDetails{
-			Status: http.StatusForbidden,
-			Cause:  "UNSPECIFIED",
-		}
-		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-		c.JSON(int(pd.Status), pd)
-	} else {
-		udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, request)
-
-		locationHeader := fmt.Sprintf(
-			"%s/application-data/influenceData/subs-to-notify/%s",
-			udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), subscriptionId)
-		c.Header("Location", locationHeader)
-		c.JSON(http.StatusCreated, request)
+	target, ok := subscriptionCallbackTargetFromContext(
+		c,
+		models.ServiceName_NPCF_SMPOLICYCONTROL,
+		models.NrfNfManagementNfType_PCF,
+	)
+	if !ok {
+		rejectUnresolvedCallbackTarget(c)
+		return
 	}
+	if value, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok {
+		record, valid := value.(*udr_context.InfluenceDataSubscriptionRecord)
+		if valid {
+			target = record.CallbackTarget
+		}
+		if valid && record.Subscription != nil && reflect.DeepEqual(*request, *record.Subscription) {
+			pd := &models.ProblemDetails{
+				Status: http.StatusForbidden,
+				Cause:  "UNSPECIFIED",
+			}
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
+			c.JSON(int(pd.Status), pd)
+			return
+		}
+	}
+
+	udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, &udr_context.InfluenceDataSubscriptionRecord{
+		Subscription:   request,
+		CallbackTarget: target,
+	})
+
+	locationHeader := fmt.Sprintf(
+		"%s/application-data/influenceData/subs-to-notify/%s",
+		udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), subscriptionId)
+	c.Header("Location", locationHeader)
+	c.JSON(http.StatusCreated, request)
 }
 
 func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(

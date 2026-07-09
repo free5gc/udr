@@ -14,6 +14,26 @@ import (
 
 var CurrentResourceUri string
 
+func getCallbackTokenCtx(
+	serviceName models.ServiceName,
+	targetNF models.NrfNfManagementNfType,
+	operation string,
+) (context.Context, bool) {
+	ctx, pd, err := udr_context.GetSelf().GetTokenCtx(serviceName, targetNF)
+	if err != nil {
+		logger.SBILog.Errorf("%s get token failed: %v", operation, err)
+		if pd != nil {
+			logger.SBILog.Errorf("%s get token problem details: %+v", operation, pd)
+		}
+		return nil, false
+	}
+	if pd != nil {
+		logger.SBILog.Errorf("%s get token problem details: %+v", operation, pd)
+		return nil, false
+	}
+	return ctx, true
+}
+
 func PreHandleOnDataChangeNotify(ueId string, resourceId string, patchItems []models.PatchItem,
 	origValue map[string]interface{}, newValue map[string]interface{},
 ) {
@@ -86,17 +106,25 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 	}()
 
 	udrSelf := udr_context.GetSelf()
-	ctx, pd, err := udrSelf.GetTokenCtx(models.ServiceName_NUDM_SDM, models.NrfNfManagementNfType_UDM)
-	if err != nil {
-		logger.SBILog.Errorf("SendOnDataChangeNotify get token failed: %+v", pd)
-		return
-	}
-
 	configuration := DataRepository.NewConfiguration()
 	client := DataRepository.NewAPIClient(configuration)
 
-	for _, subscriptionDataSubscription := range udrSelf.SubscriptionDataSubscriptions {
+	for _, record := range udrSelf.SubscriptionDataSubscriptions {
+		if record == nil || record.Subscription == nil {
+			logger.SBILog.Errorln("Invalid subscription data subscription record")
+			continue
+		}
+		subscriptionDataSubscription := record.Subscription
 		if ueId == subscriptionDataSubscription.UeId {
+			ctx, ok := getCallbackTokenCtx(
+				record.CallbackTarget.ServiceName,
+				record.CallbackTarget.NfType,
+				"SendOnDataChangeNotify",
+			)
+			if !ok {
+				continue
+			}
+
 			onDataChangeNotifyUrl := subscriptionDataSubscription.CallbackReference
 
 			dataChangeReq := DataRepository.SubscriptionDataSubscriptionsOnDataChangePostRequest{
@@ -130,7 +158,21 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 
 	udrSelf := udr_context.GetSelf()
 
-	for _, policyDataSubscription := range udrSelf.PolicyDataSubscriptions {
+	for _, record := range udrSelf.PolicyDataSubscriptions {
+		if record == nil || record.Subscription == nil {
+			logger.SBILog.Errorln("Invalid policy data subscription record")
+			continue
+		}
+		ctx, ok := getCallbackTokenCtx(
+			record.CallbackTarget.ServiceName,
+			record.CallbackTarget.NfType,
+			"SendPolicyDataChangeNotification",
+		)
+		if !ok {
+			continue
+		}
+
+		policyDataSubscription := record.Subscription
 		policyDataChangeNotificationUrl := policyDataSubscription.NotificationUri
 
 		configuration := DataRepository.NewConfiguration()
@@ -142,7 +184,7 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 			},
 		}
 		rsp, err := client.PolicyDataSubscriptionsCollectionApi.
-			CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPost(context.TODO(),
+			CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPost(ctx,
 				policyDataChangeNotificationUrl, &req)
 
 		if err != nil {
@@ -162,9 +204,18 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 	var trafficInfluDataNotif models.TrafficInfluDataNotif
 	trafficInfluDataNotif.ResUri = resUri
 	udrSelf.InfluenceDataSubscriptions.Range(func(key, value interface{}) bool {
-		influenceDataSubscription, ok := value.(*models.TrafficInfluSub)
-		if !ok {
+		record, ok := value.(*udr_context.InfluenceDataSubscriptionRecord)
+		if !ok || record.Subscription == nil {
 			logger.HttpLog.Errorf("Failed to load influenceData subscription ID [%+v]", key)
+			return true
+		}
+		influenceDataSubscription := record.Subscription
+		ctx, ok := getCallbackTokenCtx(
+			record.CallbackTarget.ServiceName,
+			record.CallbackTarget.NfType,
+			"SendInfluenceDataUpdateNotification",
+		)
+		if !ok {
 			return true
 		}
 		influenceDataChangeNotificationUrl := influenceDataSubscription.NotificationUri
@@ -180,7 +231,7 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			}
 			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
 				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
-					context.TODO(), influenceDataChangeNotificationUrl, &req)
+					ctx, influenceDataChangeNotificationUrl, &req)
 
 			if err != nil {
 				logger.SBILog.Errorln(err.Error())
@@ -198,7 +249,7 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			}
 			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
 				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
-					context.TODO(), influenceDataChangeNotificationUrl, &req)
+					ctx, influenceDataChangeNotificationUrl, &req)
 
 			if err != nil {
 				logger.SBILog.Errorln(err.Error())

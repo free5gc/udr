@@ -32,8 +32,8 @@ func Init() {
 	udrContext.SdmSubscriptionIDGenerator = 1
 	udrContext.SubscriptionDataSubscriptionIDGenerator = 1
 	udrContext.PolicyDataSubscriptionIDGenerator = 1
-	udrContext.SubscriptionDataSubscriptions = make(map[subsId]*models.SubscriptionDataSubscriptions)
-	udrContext.PolicyDataSubscriptions = make(map[subsId]*models.PolicyDataSubscription)
+	udrContext.SubscriptionDataSubscriptions = make(map[subsId]*SubscriptionDataSubscriptionRecord)
+	udrContext.PolicyDataSubscriptions = make(map[subsId]*PolicyDataSubscriptionRecord)
 	udrContext.InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
 	serviceName := []models.ServiceName{
@@ -64,11 +64,11 @@ type UDRContext struct {
 	InfluenceDataSubscriptionIDGenerator    *rand.Rand
 	UESubsCollection                        sync.Map // map[ueId]*UESubsData
 	UEGroupCollection                       sync.Map // map[ueGroupId]*UEGroupSubsData
-	SubscriptionDataSubscriptions           map[subsId]*models.SubscriptionDataSubscriptions
-	PolicyDataSubscriptions                 map[subsId]*models.PolicyDataSubscription
+	SubscriptionDataSubscriptions           map[subsId]*SubscriptionDataSubscriptionRecord
+	PolicyDataSubscriptions                 map[subsId]*PolicyDataSubscriptionRecord
 	InfluenceDataSubscriptions              sync.Map
 	appDataInfluDataSubscriptionIdGenerator uint64
-	mtx                                     sync.RWMutex // context-level lock for mutable UDRContext state
+	mtx                                     sync.RWMutex
 	OAuth2Required                          bool
 }
 
@@ -84,6 +84,27 @@ type UEGroupSubsData struct {
 type EeSubscriptionCollection struct {
 	EeSubscriptions      *models.EeSubscription
 	AmfSubscriptionInfos []models.AmfSubscriptionInfo
+}
+
+type SubscriptionCallbackTarget struct {
+	ServiceName  models.ServiceName
+	NfType       models.NrfNfManagementNfType
+	NfInstanceID string
+}
+
+type SubscriptionDataSubscriptionRecord struct {
+	Subscription   *models.SubscriptionDataSubscriptions
+	CallbackTarget SubscriptionCallbackTarget
+}
+
+type PolicyDataSubscriptionRecord struct {
+	Subscription   *models.PolicyDataSubscription
+	CallbackTarget SubscriptionCallbackTarget
+}
+
+type InfluenceDataSubscriptionRecord struct {
+	Subscription   *models.TrafficInfluSub
+	CallbackTarget SubscriptionCallbackTarget
 }
 
 type NFContext interface {
@@ -217,17 +238,6 @@ func (context *UDRContext) NewAppDataInfluDataSubscriptionID() uint64 {
 	return context.appDataInfluDataSubscriptionIdGenerator
 }
 
-func (context *UDRContext) CreatePolicyDataSubscription(policyDataSubscription models.PolicyDataSubscription) string {
-	context.mtx.Lock()
-	defer context.mtx.Unlock()
-
-	newSubscriptionID := strconv.Itoa(context.PolicyDataSubscriptionIDGenerator)
-	context.PolicyDataSubscriptions[newSubscriptionID] = &policyDataSubscription
-	context.PolicyDataSubscriptionIDGenerator++
-
-	return newSubscriptionID
-}
-
 func NewInfluenceDataSubscriptionId() string {
 	if GetSelf().InfluenceDataSubscriptionIDGenerator == nil {
 		GetSelf().InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
@@ -243,6 +253,10 @@ func (c *UDRContext) GetTokenCtx(serviceName models.ServiceName, targetNF models
 	}
 	return oauth.GetTokenCtx(models.NrfNfManagementNfType_UDR, targetNF,
 		c.NfId, c.NrfUri, string(serviceName))
+}
+
+func (c *UDRContext) OAuth2Enabled() bool {
+	return c.OAuth2Required
 }
 
 func (c *UDRContext) AuthorizationCheck(token string, serviceName models.ServiceName) error {

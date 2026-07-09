@@ -32,8 +32,16 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetPro
 	c *gin.Context, subscriptionID string,
 ) {
 	udrSelf := udr_context.GetSelf()
-	if subscription, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionID); ok {
-		c.JSON(http.StatusOK, subscription)
+	if value, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionID); ok {
+		record, valid := value.(*udr_context.InfluenceDataSubscriptionRecord)
+		if valid && record.Subscription != nil {
+			c.JSON(http.StatusOK, record.Subscription)
+			return
+		}
+		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
+		c.JSON(int(pd.Status), pd)
+		return
 	} else {
 		pd := util.ProblemDetailsNotFound("USER_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
@@ -68,10 +76,28 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutPro
 	}
 
 	udrSelf := udr_context.GetSelf()
-	if subs, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok && reflect.DeepEqual(*request, subs) {
-		c.Status(http.StatusOK)
-	} else {
-		udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, request)
-		c.JSON(http.StatusOK, request)
+	target, ok := subscriptionCallbackTargetFromContext(
+		c,
+		models.ServiceName_NPCF_SMPOLICYCONTROL,
+		models.NrfNfManagementNfType_PCF,
+	)
+	if !ok {
+		rejectUnresolvedCallbackTarget(c)
+		return
 	}
+	if value, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok {
+		record, valid := value.(*udr_context.InfluenceDataSubscriptionRecord)
+		if valid {
+			target = record.CallbackTarget
+			if record.Subscription != nil && reflect.DeepEqual(*request, *record.Subscription) {
+				c.Status(http.StatusOK)
+				return
+			}
+		}
+	}
+	udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, &udr_context.InfluenceDataSubscriptionRecord{
+		Subscription:   request,
+		CallbackTarget: target,
+	})
+	c.JSON(http.StatusOK, request)
 }

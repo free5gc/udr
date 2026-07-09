@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -179,7 +180,21 @@ func (p *Processor) PolicyDataSubsToNotifyPostProcedure(
 ) {
 	udrSelf := udr_context.GetSelf()
 
-	newSubscriptionID := udrSelf.CreatePolicyDataSubscription(PolicyDataSubscription)
+	newSubscriptionID := strconv.Itoa(udrSelf.PolicyDataSubscriptionIDGenerator)
+	target, ok := subscriptionCallbackTargetFromContext(
+		c,
+		models.ServiceName_NPCF_SMPOLICYCONTROL,
+		models.NrfNfManagementNfType_PCF,
+	)
+	if !ok {
+		rejectUnresolvedCallbackTarget(c)
+		return
+	}
+	udrSelf.PolicyDataSubscriptions[newSubscriptionID] = &udr_context.PolicyDataSubscriptionRecord{
+		Subscription:   &PolicyDataSubscription,
+		CallbackTarget: target,
+	}
+	udrSelf.PolicyDataSubscriptionIDGenerator++
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/subscription-data/subs-to-notify/{subsId} */
@@ -215,7 +230,14 @@ func (p *Processor) PolicyDataSubsToNotifySubsIdPutProcedure(c *gin.Context, sub
 		return
 	}
 
-	udrSelf.PolicyDataSubscriptions[subsId] = &policyDataSubscription
+	record := udrSelf.PolicyDataSubscriptions[subsId]
+	if record == nil {
+		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	record.Subscription = &policyDataSubscription
 	c.JSON(http.StatusOK, policyDataSubscription)
 }
 
