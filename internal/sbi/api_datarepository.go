@@ -1211,6 +1211,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDel
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
 		c.String(http.StatusNotFound, "404 page not found")
+		return
 	}
 
 	subscriptionId := c.Params.ByName("subscriptionId")
@@ -1225,6 +1226,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
 		c.String(http.StatusNotFound, "404 page not found")
+		return
 	}
 
 	subscriptionId := c.Params.ByName("subscriptionId")
@@ -1237,6 +1239,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
 		c.String(http.StatusNotFound, "404 page not found")
+		return
 	}
 
 	// Get HTTP request body
@@ -1817,7 +1820,15 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 	}
 	pduSessionId, err := strconv.ParseInt(c.Param("pduSessionId"), 10, 64)
 	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: "[pduSessionId] " + err.Error(),
+		}
 		logger.DataRepoLog.Warnln(err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetail.Status)))
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
 	}
 
 	s.Processor().CreateSmfContextNon3gppProcedure(c, smfRegistration, collName, ueId, pduSessionId)
@@ -2066,9 +2077,19 @@ func (s *Server) HandleQuerySmData(c *gin.Context) {
 	servingPlmnId := c.Params.ByName("servingPlmnId")
 	singleNssai := models.Snssai{}
 	singleNssaiQuery := c.Query("single-nssai")
-	err := json.Unmarshal([]byte(singleNssaiQuery), &singleNssai)
-	if err != nil {
-		logger.DataRepoLog.Warnln(err)
+	if singleNssaiQuery != "" {
+		err := json.Unmarshal([]byte(singleNssaiQuery), &singleNssai)
+		if err != nil {
+			problemDetail := models.ProblemDetails{
+				Title:  "Malformed request syntax",
+				Status: http.StatusBadRequest,
+				Detail: "[single-nssai] " + err.Error(),
+			}
+			logger.DataRepoLog.Warnln(err)
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetail.Status)))
+			c.JSON(http.StatusBadRequest, problemDetail)
+			return
+		}
 	}
 
 	dnn := c.Query("dnn")
@@ -2754,6 +2775,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Contex
 			}
 			c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 			c.JSON(http.StatusBadRequest, problemDetails)
+			return
 		}
 	}
 
@@ -2764,6 +2786,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Contex
 		}
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 		c.JSON(http.StatusBadRequest, problemDetails)
+		return
 	}
 
 	s.Processor().ApplicationDataInfluenceDataSubsToNotifyGetProcedure(c, dnn, snssai, internalGroupId, supi)
