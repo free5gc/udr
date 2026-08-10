@@ -12,7 +12,6 @@ package processor
 import (
 	"encoding/json"
 	"net/http"
-	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,11 +24,11 @@ import (
 )
 
 func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId string, servingPlmnId string,
-	singleNssai models.Snssai, dnn string,
+	singleNssai *models.Snssai, dnn string,
 ) {
 	filter := bson.M{"ueId": ueId, "servingPlmnId": servingPlmnId}
 
-	if !reflect.DeepEqual(singleNssai, models.Snssai{}) {
+	if singleNssai != nil {
 		if singleNssai.Sd == "" {
 			filter["singleNssai.sst"] = singleNssai.Sst
 		} else {
