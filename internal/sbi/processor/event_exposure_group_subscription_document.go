@@ -45,7 +45,7 @@ func (p *Processor) RemoveEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 }
 
 func (p *Processor) UpdateEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupId string, subsId string,
-	EeSubscription models.EeSubscription,
+	EeSubscription models.Udr_DR_EeSubscription,
 ) {
 	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)

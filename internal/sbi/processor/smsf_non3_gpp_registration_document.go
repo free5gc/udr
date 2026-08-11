@@ -23,7 +23,7 @@ import (
 )
 
 func (p *Processor) CreateSmsfContextNon3gppProcedure(
-	c *gin.Context, SmsfRegistration models.SmsfRegistration, collName string, ueId string,
+	c *gin.Context, SmsfRegistration models.Udr_DR_SmsfRegistration, collName string, ueId string,
 ) {
 	putData := util.ToBsonM(SmsfRegistration)
 	putData["ueId"] = ueId

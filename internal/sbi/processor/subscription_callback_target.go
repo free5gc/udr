@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/openapi/nrf/NFManagement"
+	NFManagement "github.com/free5gc/openapi/nrf/NFMgmt"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	udr_util "github.com/free5gc/udr/internal/util"
@@ -14,22 +14,22 @@ import (
 )
 
 func callbackServiceNameForNfType(
-	nfType models.NrfNfManagementNfType,
-	defaultServiceName models.ServiceName,
-) models.ServiceName {
+	nfType models.Nrf_NFMgmt_NFType,
+	defaultServiceName models.Nrf_NFMgmt_ServiceName,
+) models.Nrf_NFMgmt_ServiceName {
 	switch nfType {
-	case models.NrfNfManagementNfType_UDM:
-		return models.ServiceName_NUDM_SDM
-	case models.NrfNfManagementNfType_PCF:
+	case models.Nrf_NFMgmt_NFType_UDM:
+		return models.Nrf_NFMgmt_ServiceName_NUDM_SDM
+	case models.Nrf_NFMgmt_NFType_PCF:
 		return defaultServiceName
-	case models.NrfNfManagementNfType_NEF:
-		return models.ServiceName_NNEF_EVENTEXPOSURE
+	case models.Nrf_NFMgmt_NFType_NEF:
+		return models.Nrf_NFMgmt_ServiceName_NNEF_EVENTEXPOSURE
 	default:
 		return defaultServiceName
 	}
 }
 
-func requesterNFTypeFromNRF(nfInstanceID string) (models.NrfNfManagementNfType, bool) {
+func requesterNFTypeFromNRF(nfInstanceID string) (models.Nrf_NFMgmt_NFType, bool) {
 	if nfInstanceID == "" {
 		return "", false
 	}
@@ -39,7 +39,7 @@ func requesterNFTypeFromNRF(nfInstanceID string) (models.NrfNfManagementNfType, 
 		return "", false
 	}
 
-	ctx, pd, err := udrSelf.GetTokenCtx(models.ServiceName_NNRF_NFM, models.NrfNfManagementNfType_NRF)
+	ctx, pd, err := udrSelf.GetTokenCtx(models.Nrf_NFMgmt_ServiceName_NNRF_NFM, models.Nrf_NFMgmt_NFType_NRF)
 	if err != nil {
 		logger.SBILog.Errorf("Get requester NF profile token failed: %v", err)
 		if pd != nil {
@@ -63,11 +63,11 @@ func requesterNFTypeFromNRF(nfInstanceID string) (models.NrfNfManagementNfType, 
 		logger.SBILog.Errorf("Get requester NF profile [%s] failed: %v", nfInstanceID, err)
 		return "", false
 	}
-	if rsp == nil || rsp.NrfNfManagementNfProfile.NfType == "" {
+	if rsp == nil || rsp.Nrf_NFMgmt_NFProfile == nil || rsp.Nrf_NFMgmt_NFProfile.NfType == "" {
 		logger.SBILog.Errorf("Get requester NF profile [%s] returned empty NF type", nfInstanceID)
 		return "", false
 	}
-	return rsp.NrfNfManagementNfProfile.NfType, true
+	return rsp.Nrf_NFMgmt_NFProfile.NfType, true
 }
 
 func rejectUnresolvedCallbackTarget(c *gin.Context) {
@@ -82,8 +82,7 @@ func rejectUnresolvedCallbackTarget(c *gin.Context) {
 
 func subscriptionCallbackTargetFromContext(
 	c *gin.Context,
-	defaultServiceName models.ServiceName,
-	defaultNfType models.NrfNfManagementNfType,
+	defaultServiceName models.Nrf_NFMgmt_ServiceName, defaultNfType models.Nrf_NFMgmt_NFType,
 ) (udr_context.SubscriptionCallbackTarget, bool) {
 	target := udr_context.SubscriptionCallbackTarget{
 		ServiceName: defaultServiceName,

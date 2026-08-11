@@ -78,23 +78,23 @@ func getUri(t *testing.T, baseUri, extUri string) *httptest.ResponseRecorder {
 	return rsp
 }
 
-func getInfluData(supi string) *models.TrafficInfluData {
-	return &models.TrafficInfluData{
+func getInfluData(supi string) *models.Udr_DR_TrafficInfluData {
+	return &models.Udr_DR_TrafficInfluData{
 		Dnn: "internet",
 		Snssai: &models.Snssai{
 			Sst: 1, Sd: "010203",
 		},
 		Supi: supi,
-		TrafficFilters: []models.FlowInfo{{
+		TrafficFilters: []models.Nef_FlowInfo{{
 			FlowId:           1,
 			FlowDescriptions: []string{"permit out ip from 60.60.0.1 8080 to any"},
 		}},
-		TrafficRoutes: []*models.RouteToLocation{{
+		TrafficRoutes: []models.RouteToLocation{{
 			Dnai: "edge1", RouteProfId: "1",
 		}, {
 			Dnai: "edge2", RouteProfId: "2",
 		}},
-		NwAreaInfo: &models.NetworkAreaInfo{
+		NwAreaInfo: &models.Pcf_BDTPolCtrl_NetworkAreaInfo{
 			Tais: []models.Tai{{
 				PlmnId: &models.PlmnId{
 					Mcc: "208", Mnc: "93",
@@ -105,7 +105,7 @@ func getInfluData(supi string) *models.TrafficInfluData {
 	}
 }
 
-func postPutInfluData(t *testing.T, method string, baseUri, extUri string, influData *models.TrafficInfluData) (
+func postPutInfluData(t *testing.T, method string, baseUri, extUri string, influData *models.Udr_DR_TrafficInfluData) (
 	*httptest.ResponseRecorder, []byte,
 ) {
 	server := setupHttpServer(t)
@@ -120,13 +120,13 @@ func postPutInfluData(t *testing.T, method string, baseUri, extUri string, influ
 	return rsp, bjson
 }
 
-func postInfluData(t *testing.T, baseUri, extUri string, influData *models.TrafficInfluData) (
+func postInfluData(t *testing.T, baseUri, extUri string, influData *models.Udr_DR_TrafficInfluData) (
 	*httptest.ResponseRecorder, []byte,
 ) {
 	return postPutInfluData(t, http.MethodPost, baseUri, extUri, influData)
 }
 
-func putInfluData(t *testing.T, baseUri, extUri string, influData *models.TrafficInfluData) (
+func putInfluData(t *testing.T, baseUri, extUri string, influData *models.Udr_DR_TrafficInfluData) (
 	*httptest.ResponseRecorder, []byte,
 ) {
 	return postPutInfluData(t, http.MethodPut, baseUri, extUri, influData)
@@ -185,7 +185,7 @@ func TestUDR_GetSubs2Notify_CreateThenGet(t *testing.T) {
 	baseUri := factory.UdrDrResUriPrefix + "/application-data/influenceData/subs-to-notify"
 	reqUri := baseUri
 
-	test := models.TrafficInfluSub{
+	test := models.Udr_DR_TrafficInfluSub{
 		Dnns: []string{"internet", "outernet"},
 		Snssais: []models.Snssai{{
 			Sst: 1, Sd: "010203",
@@ -322,7 +322,7 @@ func TestUDR_InfluData_CreateThenGet(t *testing.T) {
 
 	// Note: NOT WORING
 	// Patch - update existing one with some difference
-	// influData = &models.TrafficInfluData{
+	// influData = &models.Udr_DR_TrafficInfluData{
 	// 	Snssai: &models.Snssai{
 	// 		Sst: 1, Sd: "995995",
 	// 	}}
@@ -341,7 +341,7 @@ func TestUDR_InfluData_CreateThenGet(t *testing.T) {
 
 	// Get success
 	rsp = getUri(t, baseUri, "?dnns="+influData.Dnn)
-	testRsp := []models.TrafficInfluData{}
+	testRsp := []models.Udr_DR_TrafficInfluData{}
 	err := json.Unmarshal(rsp.Body.Bytes(), &testRsp)
 	require.Nil(t, err)
 	t.Run("UDR influ-data CreateThenGet - get",

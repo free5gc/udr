@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/free5gc/openapi"
-	"github.com/free5gc/openapi/nrf/NFManagement"
+	NFManagement "github.com/free5gc/openapi/nrf/NFMgmt"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/sbi"

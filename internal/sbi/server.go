@@ -98,21 +98,21 @@ func newRouter(s *Server) *gin.Engine {
 
 	dataRepositoryGroup := router.Group(factory.UdrDrResUriPrefix)
 	dataRepositoryGroup.Use(func(c *gin.Context) {
-		util.NewRouterAuthorizationCheck(models.ServiceName_NUDR_DR).Check(c, s.Context())
+		util.NewRouterAuthorizationCheck(models.Nrf_NFMgmt_ServiceName_NUDR_DR).Check(c, s.Context())
 	})
 	dataRepositoryRoutes := s.getDataRepositoryRoutes()
 	AddService(dataRepositoryGroup, dataRepositoryRoutes)
 
 	groupIdGroup := router.Group(factory.UdrGroupIdResUriPrefix)
 	groupIdGroup.Use(func(c *gin.Context) {
-		util.NewRouterAuthorizationCheck(models.ServiceName_NUDR_GROUP_ID_MAP).Check(c, s.Context())
+		util.NewRouterAuthorizationCheck(models.Nrf_NFMgmt_ServiceName_NUDR_GROUP_ID_MAP).Check(c, s.Context())
 	})
 	groupIdRoutes := s.getGroupIdMap()
 	AddService(groupIdGroup, groupIdRoutes)
 
 	imsSDM := router.Group(factory.HSSIsmSDMUriPrefix)
 	imsSDM.Use(func(c *gin.Context) {
-		util.NewRouterAuthorizationCheck(models.ServiceName_NHSS_IMS_SDM).Check(c, s.Context())
+		util.NewRouterAuthorizationCheck(models.Nrf_NFMgmt_ServiceName_NHSS_IMS_SDM).Check(c, s.Context())
 	})
 	imsSDMRoutes := s.getImsSDMRoutes()
 	AddService(imsSDM, imsSDMRoutes)

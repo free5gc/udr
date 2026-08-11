@@ -50,7 +50,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdGetPro
 }
 
 func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutProcedure(
-	c *gin.Context, subscriptionId string, request *models.TrafficInfluSub,
+	c *gin.Context, subscriptionId string, request *models.Udr_DR_TrafficInfluSub,
 ) {
 	if len(request.Dnns) == 0 &&
 		len(request.Snssais) == 0 &&
@@ -78,8 +78,8 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPutPro
 	udrSelf := udr_context.GetSelf()
 	target, ok := subscriptionCallbackTargetFromContext(
 		c,
-		models.ServiceName_NPCF_SMPOLICYCONTROL,
-		models.NrfNfManagementNfType_PCF,
+		models.Nrf_NFMgmt_ServiceName_NPCF_SMPOLICYCONTROL,
+		models.Nrf_NFMgmt_NFType_PCF,
 	)
 	if !ok {
 		rejectUnresolvedCallbackTarget(c)

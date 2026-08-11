@@ -45,7 +45,7 @@ func (p *Processor) RemovesdmSubscriptionsProcedure(c *gin.Context, ueId string,
 }
 
 func (p *Processor) UpdatesdmsubscriptionsProcedure(c *gin.Context, ueId string, subsId string,
-	SdmSubscription models.SdmSubscription,
+	SdmSubscription models.Udr_DR_SdmSubscription,
 ) {
 	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)

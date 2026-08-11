@@ -27,13 +27,13 @@ import (
 )
 
 func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
-	c *gin.Context, collName, influenceId string, request *models.TrafficInfluData,
+	c *gin.Context, collName, influenceId string, request *models.Udr_DR_TrafficInfluData,
 ) {
 	putData := util.ToBsonM(*request)
 	putData["influenceId"] = influenceId
 	filter := bson.M{"influenceId": influenceId}
 
-	var original *models.TrafficInfluData
+	var original *models.Udr_DR_TrafficInfluData
 
 	if mapData, err := mongoapi.RestfulAPIGetOne(collName, filter); err != nil {
 		logger.DataRepoLog.Error(err.Error())
@@ -46,7 +46,7 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdPutProcedure(
 		return
 	} else {
 		if len(mapData) != 0 {
-			original = new(models.TrafficInfluData)
+			original = new(models.Udr_DR_TrafficInfluData)
 			byteData, err := json.Marshal(mapData)
 			if err != nil {
 				logger.DataRepoLog.Error(err.Error())

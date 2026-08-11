@@ -37,7 +37,7 @@ func (p *Processor) GetIdentityDataProcedure(c *gin.Context, collName string, ue
 		return
 	}
 
-	res := models.IdentityData{}
+	res := models.Udr_DR_IdentityData{}
 	gpsi, ok := data["gpsi"]
 	if ok {
 		res.GpsiList = append(res.GpsiList, gpsi.(string))

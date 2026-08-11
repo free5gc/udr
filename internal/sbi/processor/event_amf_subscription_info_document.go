@@ -22,7 +22,7 @@ import (
 )
 
 func (p *Processor) CreateAMFSubscriptionsProcedure(c *gin.Context, subsId string, ueId string,
-	AmfSubscriptionInfo []models.AmfSubscriptionInfo,
+	AmfSubscriptionInfo []models.Udr_DR_AmfSubscriptionInfo,
 ) {
 	udrSelf := udr_context.GetSelf()
 	value, ok := udrSelf.UESubsCollection.Load(ueId)

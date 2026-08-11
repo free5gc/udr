@@ -24,7 +24,7 @@ import (
 )
 
 func (p *Processor) CreateEeGroupSubscriptionsProcedure(
-	c *gin.Context, ueGroupId string, EeSubscription models.EeSubscription,
+	c *gin.Context, ueGroupId string, EeSubscription models.Udr_DR_EeSubscription,
 ) {
 	udrSelf := udr_context.GetSelf()
 
@@ -35,7 +35,7 @@ func (p *Processor) CreateEeGroupSubscriptionsProcedure(
 	}
 	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
 	if UEGroupSubsData.EeSubscriptions == nil {
-		UEGroupSubsData.EeSubscriptions = make(map[string]*models.EeSubscription)
+		UEGroupSubsData.EeSubscriptions = make(map[string]*models.Udr_DR_EeSubscription)
 	}
 
 	newSubscriptionID := strconv.Itoa(udrSelf.EeSubscriptionIDGenerator)
@@ -63,7 +63,7 @@ func (p *Processor) QueryEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupId
 	}
 
 	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
-	var eeSubscriptionSlice []models.EeSubscription
+	var eeSubscriptionSlice []models.Udr_DR_EeSubscription
 
 	for _, v := range UEGroupSubsData.EeSubscriptions {
 		eeSubscriptionSlice = append(eeSubscriptionSlice, *v)
