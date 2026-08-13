@@ -24,13 +24,13 @@ import (
 )
 
 func (p *Processor) CreateSmfContextNon3gppProcedure(c *gin.Context, SmfRegistration models.SmfRegistration,
-	collName string, ueId string, pduSessionIdInt int64,
+	collName string, ueId string, pduSessionId int32,
 ) {
 	putData := util.ToBsonM(SmfRegistration)
 	putData["ueId"] = ueId
-	putData["pduSessionId"] = int32(pduSessionIdInt)
+	putData["pduSessionId"] = pduSessionId
 
-	filter := bson.M{"ueId": ueId, "pduSessionId": pduSessionIdInt}
+	filter := bson.M{"ueId": ueId, "pduSessionId": pduSessionId}
 	existed, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
 	if err != nil {
 		logger.DataRepoLog.Errorf("CreateSmfContextNon3gppProcedure err: %+v", err)
