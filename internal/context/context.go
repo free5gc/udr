@@ -15,6 +15,7 @@ import (
 	"github.com/free5gc/openapi/oauth"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/pkg/factory"
+	"github.com/google/uuid"
 )
 
 var udrContext = UDRContext{}
@@ -58,6 +59,7 @@ type UDRContext struct {
 	NfId                                    string
 	NrfUri                                  string
 	NrfCertPem                              string
+	NrfNfInstanceID                         string
 	EeSubscriptionIDGenerator               atomic.Uint64
 	SdmSubscriptionIDGenerator              atomic.Uint64
 	SubscriptionDataSubscriptionIDGenerator int
@@ -180,6 +182,7 @@ func initUdrContext() {
 		udrContext.NrfUri = fmt.Sprintf("%s://%s:%d", udrContext.UriScheme, "127.0.0.1", 29510)
 	}
 	udrContext.NrfCertPem = configuration.NrfCertPem
+	udrContext.NrfNfInstanceID = configuration.NrfNfInstanceId
 }
 
 func initNfService(serviceName []models.Nrf_NFMgmt_ServiceName, version string) (
@@ -370,8 +373,68 @@ func (c *UDRContext) GetTokenCtx(serviceName models.Nrf_NFMgmt_ServiceName, targ
 	if !c.OAuth2Required {
 		return context.TODO(), nil, nil
 	}
-	return oauth.GetTokenCtx(models.Nrf_NFMgmt_NFType_UDR, targetNF,
-		c.NfId, c.NrfUri, string(serviceName))
+	return oauth.GetTokenCtx(c.tokenRequest(serviceName, targetNF))
+}
+
+func (c *UDRContext) GetTokenCtxForNFInstance(serviceName models.Nrf_NFMgmt_ServiceName,
+	targetNF models.Nrf_NFMgmt_NFType, targetNFInstanceID string,
+) (context.Context, *models.ProblemDetails, error) {
+	if !c.OAuth2Required {
+		return context.TODO(), nil, nil
+	}
+	targetID, err := uuid.Parse(strings.TrimSpace(targetNFInstanceID))
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid target NF instance ID: %w", err)
+	}
+	if targetID.Version() != 4 {
+		return nil, nil, fmt.Errorf("invalid target NF instance ID: UUID must be version 4")
+	}
+	return oauth.GetTokenCtx(c.tokenRequestForNFInstance(serviceName, targetNF, targetNFInstanceID))
+}
+
+func (c *UDRContext) GetTokenCtxForNRF(serviceName models.Nrf_NFMgmt_ServiceName) (
+	context.Context, *models.ProblemDetails, error,
+) {
+	return c.GetTokenCtxForNFInstance(serviceName, models.Nrf_NFMgmt_NFType_NRF, c.NrfNfInstanceID)
+}
+
+func (c *UDRContext) tokenRequest(
+	serviceName models.Nrf_NFMgmt_ServiceName,
+	targetNF models.Nrf_NFMgmt_NFType,
+) oauth.TokenRequest {
+	return oauth.TokenRequest{
+		ConsumerNFType:       models.Nrf_NFMgmt_NFType_UDR,
+		ConsumerNFInstanceID: c.NfId,
+		TargetNFType:         targetNF,
+		NRFURI:               c.NrfUri,
+		Scope:                string(serviceName),
+	}
+}
+
+func (c *UDRContext) tokenRequestForNFInstance(serviceName models.Nrf_NFMgmt_ServiceName,
+	targetNF models.Nrf_NFMgmt_NFType, targetNFInstanceID string,
+) oauth.TokenRequest {
+	request := c.tokenRequest(serviceName, targetNF)
+	request.TargetNFInstanceID = targetNFInstanceID
+	return request
+}
+
+func (c *UDRContext) SetOAuth2Required(required bool) error {
+	if !required {
+		c.OAuth2Required = false
+		return nil
+	}
+	if strings.TrimSpace(c.NrfCertPem) == "" {
+		return fmt.Errorf("OAuth2 enabled but NRF certificate path is empty")
+	}
+	if strings.TrimSpace(c.NrfUri) == "" {
+		return fmt.Errorf("OAuth2 enabled but NRF URI is empty")
+	}
+	if err := uuid.Validate(c.NrfNfInstanceID); err != nil {
+		return fmt.Errorf("OAuth2 enabled but trusted NRF instance ID is invalid: %w", err)
+	}
+	c.OAuth2Required = true
+	return nil
 }
 
 func (c *UDRContext) OAuth2Enabled() bool {
@@ -385,5 +448,8 @@ func (c *UDRContext) AuthorizationCheck(token string, serviceName models.Nrf_NFM
 	}
 
 	logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: token[%s] serviceName[%s]\n", token, serviceName)
-	return oauth.VerifyOAuth(token, string(serviceName), c.NrfCertPem)
+	return oauth.VerifyOAuth(token, string(serviceName), oauth.AudiencePolicy{
+		NFInstanceID: c.NfId,
+		NFType:       models.Nrf_NFMgmt_NFType_UDR,
+	}, c.NrfNfInstanceID, c.NrfCertPem)
 }

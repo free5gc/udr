@@ -39,7 +39,7 @@ func requesterNFTypeFromNRF(nfInstanceID string) (models.Nrf_NFMgmt_NFType, bool
 		return "", false
 	}
 
-	ctx, pd, err := udrSelf.GetTokenCtx(models.Nrf_NFMgmt_ServiceName_NNRF_NFM, models.Nrf_NFMgmt_NFType_NRF)
+	ctx, pd, err := udrSelf.GetTokenCtxForNRF(models.Nrf_NFMgmt_ServiceName_NNRF_NFM)
 	if err != nil {
 		logger.SBILog.Errorf("Get requester NF profile token failed: %v", err)
 		if pd != nil {
