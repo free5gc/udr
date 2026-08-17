@@ -1211,6 +1211,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDel
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
 		c.String(http.StatusNotFound, "404 page not found")
+		return
 	}
 
 	subscriptionId := c.Params.ByName("subscriptionId")
@@ -1225,6 +1226,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
 		c.String(http.StatusNotFound, "404 page not found")
+		return
 	}
 
 	subscriptionId := c.Params.ByName("subscriptionId")
@@ -1237,6 +1239,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
 		c.String(http.StatusNotFound, "404 page not found")
+		return
 	}
 
 	// Get HTTP request body
@@ -1815,10 +1818,19 @@ func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
 		util.EmptyUeIdProblemJson(c)
 		return
 	}
-	pduSessionId, err := strconv.ParseInt(c.Param("pduSessionId"), 10, 64)
+	pduSessionIdUint, err := strconv.ParseUint(c.Param("pduSessionId"), 10, 8)
 	if err != nil {
+		problemDetail := models.ProblemDetails{
+			Title:  "Malformed request syntax",
+			Status: http.StatusBadRequest,
+			Detail: "[pduSessionId] " + err.Error(),
+		}
 		logger.DataRepoLog.Warnln(err)
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetail.Status)))
+		c.JSON(http.StatusBadRequest, problemDetail)
+		return
 	}
+	pduSessionId := int32(pduSessionIdUint)
 
 	s.Processor().CreateSmfContextNon3gppProcedure(c, smfRegistration, collName, ueId, pduSessionId)
 }
@@ -2064,11 +2076,48 @@ func (s *Server) HandleQuerySmData(c *gin.Context) {
 		return
 	}
 	servingPlmnId := c.Params.ByName("servingPlmnId")
-	singleNssai := models.Snssai{}
+	var singleNssai *models.Snssai
 	singleNssaiQuery := c.Query("single-nssai")
-	err := json.Unmarshal([]byte(singleNssaiQuery), &singleNssai)
-	if err != nil {
-		logger.DataRepoLog.Warnln(err)
+	if singleNssaiQuery != "" {
+		query := struct {
+			Sst *int32 `json:"sst"`
+			Sd  string `json:"sd,omitempty"`
+		}{}
+		err := json.Unmarshal([]byte(singleNssaiQuery), &query)
+		if err != nil {
+			problemDetail := models.ProblemDetails{
+				Title:  "Malformed request syntax",
+				Status: http.StatusBadRequest,
+				Detail: "[single-nssai] " + err.Error(),
+			}
+			logger.DataRepoLog.Warnln(err)
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetail.Status)))
+			c.JSON(http.StatusBadRequest, problemDetail)
+			return
+		}
+		if query.Sst == nil {
+			problemDetail := models.ProblemDetails{
+				Title:  "Malformed request syntax",
+				Status: http.StatusBadRequest,
+				Detail: "[single-nssai.sst] missing required field",
+			}
+			logger.DataRepoLog.Warnln(problemDetail.Detail)
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetail.Status)))
+			c.JSON(http.StatusBadRequest, problemDetail)
+			return
+		}
+		if *query.Sst < 0 || *query.Sst > 255 {
+			problemDetail := models.ProblemDetails{
+				Title:  "Malformed request syntax",
+				Status: http.StatusBadRequest,
+				Detail: "[single-nssai.sst] must be within the range 0 to 255",
+			}
+			logger.DataRepoLog.Warnln(problemDetail.Detail)
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetail.Status)))
+			c.JSON(http.StatusBadRequest, problemDetail)
+			return
+		}
+		singleNssai = &models.Snssai{Sst: *query.Sst, Sd: query.Sd}
 	}
 
 	dnn := c.Query("dnn")
@@ -2754,6 +2803,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Contex
 			}
 			c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 			c.JSON(http.StatusBadRequest, problemDetails)
+			return
 		}
 	}
 
@@ -2764,6 +2814,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyGet(c *gin.Contex
 		}
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, http.StatusText(int(problemDetails.Status)))
 		c.JSON(http.StatusBadRequest, problemDetails)
+		return
 	}
 
 	s.Processor().ApplicationDataInfluenceDataSubsToNotifyGetProcedure(c, dnn, snssai, internalGroupId, supi)
