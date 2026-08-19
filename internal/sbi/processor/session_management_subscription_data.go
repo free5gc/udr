@@ -41,7 +41,8 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 		dnnKey := util.EscapeDnn(dnn)
 		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
 	}
-	resp := models.Udr_DR_SmSubsData{}
+
+	resp := models.Udm_SDM_SmSubsData{}
 
 	sessionManagementSubscriptionDatas, err := mongoapi.
 		RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
