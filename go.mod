@@ -5,8 +5,8 @@ go 1.26.2
 require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/evanphx/json-patch v0.5.2
-	github.com/free5gc/openapi v1.2.5-0.20260811062155-dfddae693851
-	github.com/free5gc/util v1.3.3-0.20260806004242-cfe683dea97d
+	github.com/free5gc/openapi v1.3.0
+	github.com/free5gc/util v1.4.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/golang/mock v1.4.4
