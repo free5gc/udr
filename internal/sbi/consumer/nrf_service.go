@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/openapi/nrf/NFDiscovery"
-	"github.com/free5gc/openapi/nrf/NFManagement"
+	NFDiscovery "github.com/free5gc/openapi/nrf/NFDisc"
+	NFManagement "github.com/free5gc/openapi/nrf/NFMgmt"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	sbi_metrics "github.com/free5gc/util/metrics/sbi"
@@ -44,25 +44,22 @@ func (ns *NrfService) getNFManagementClient(uri string) *NFManagement.APIClient 
 	return client
 }
 
-func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.NrfNfManagementNfProfile, error) {
+func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.Nrf_NFMgmt_NFProfile, error) {
 	// config := factory.UdrConfig
 
-	profile := models.NrfNfManagementNfProfile{
+	profile := models.Nrf_NFMgmt_NFProfile{
 		NfInstanceId:  context.NfId,
-		NfType:        models.NrfNfManagementNfType_UDR,
-		NfStatus:      models.NrfNfManagementNfStatus_REGISTERED,
+		NfType:        models.Nrf_NFMgmt_NFType_UDR,
+		NfStatus:      models.Nrf_NFMgmt_NFStatus_REGISTERED,
 		Ipv4Addresses: []string{context.RegisterIPv4},
-		UdrInfo: &models.UdrInfo{
-			SupportedDataSets: []models.DataSetId{
-				// models.DataSetId_APPLICATION,
-				// models.DataSetId_EXPOSURE,
-				// models.DataSetId_POLICY,
-				models.DataSetId_SUBSCRIPTION,
+		UdrInfo: &models.Nrf_NFMgmt_UdrInfo{
+			SupportedDataSets: []models.Nrf_NFMgmt_DataSetId{
+				models.Nrf_NFMgmt_DataSetId_SUBSCRIPTION,
 			},
 		},
 	}
 
-	var services []models.NrfNfManagementNfService
+	var services []models.Nrf_NFMgmt_NFService
 	for _, nfService := range context.NfService {
 		services = append(services, nfService)
 	}
@@ -95,13 +92,13 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 			return "", "", fmt.Errorf("context done")
 		default:
 			registerReq := &NFManagement.RegisterNFInstanceRequest{
-				NfInstanceID:             &profile.NfInstanceId,
-				NrfNfManagementNfProfile: &profile,
+				NfInstanceID: &profile.NfInstanceId,
+				RequestBody:  &profile,
 			}
 			rsp, registerErr := client.NFInstanceIDDocumentApi.RegisterNFInstance(ctx, registerReq)
 			if registerErr != nil || rsp == nil {
 				// TODO : add log
-				logger.ConsumerLog.Errorf("UDR register to NRF Error[%s]", registerErr.Error())
+				logger.ConsumerLog.Errorf("UDR register to NRF Error[%v]", registerErr)
 				time.Sleep(2 * time.Second)
 				continue
 			}
@@ -112,9 +109,10 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 
 			oauth2 := false
 
-			if rsp.NrfNfManagementNfProfile.CustomInfo != nil {
-				v, ok := rsp.NrfNfManagementNfProfile.CustomInfo["oauth2"].(bool)
-				if ok {
+			if rsp.Nrf_NFMgmt_NFProfile != nil {
+				customInfo, ok := rsp.Nrf_NFMgmt_NFProfile.CustomInfo.(map[string]interface{})
+				v, isBool := customInfo["oauth2"].(bool)
+				if ok && isBool {
 					oauth2 = v
 					logger.MainLog.Infoln("OAuth2 setting receive from NRF:", oauth2)
 				}
@@ -132,7 +130,7 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 func (ns *NrfService) SendDeregisterNFInstance() (err error) {
 	logger.ConsumerLog.Infof("Send Deregister NFInstance")
 
-	ctx, pd, err := udr_context.GetSelf().GetTokenCtx(models.ServiceName_NNRF_NFM, models.NrfNfManagementNfType_NRF)
+	ctx, pd, err := udr_context.GetSelf().GetTokenCtx(models.Nrf_NFMgmt_ServiceName_NNRF_NFM, models.Nrf_NFMgmt_NFType_NRF)
 	if err != nil {
 		logger.ConsumerLog.Errorf("Get token context failed: problem details: %+v", pd)
 		return err
@@ -164,7 +162,7 @@ func (ns *NrfService) SendSearchNFInstances(nrfUri string,
 	configuration.SetMetrics(sbi_metrics.SbiMetricHook)
 	client := NFDiscovery.NewAPIClient(configuration)
 
-	ctx, _, err := udr_context.GetSelf().GetTokenCtx(models.ServiceName_NNRF_DISC, models.NrfNfManagementNfType_NRF)
+	ctx, _, err := udr_context.GetSelf().GetTokenCtx(models.Nrf_NFMgmt_ServiceName_NNRF_DISC, models.Nrf_NFMgmt_NFType_NRF)
 	if err != nil {
 		return nil, err
 	}

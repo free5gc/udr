@@ -22,7 +22,9 @@ import (
 	"github.com/free5gc/util/metrics/sbi"
 )
 
-func (p *Processor) CreateEeSubscriptionsProcedure(c *gin.Context, ueId string, EeSubscription models.EeSubscription) {
+func (p *Processor) CreateEeSubscriptionsProcedure(
+	c *gin.Context, ueId string, EeSubscription models.Udr_DR_EeSubscription,
+) {
 	udrSelf := udr_context.GetSelf()
 
 	value, ok := udrSelf.UESubsCollection.Load(ueId)
@@ -61,7 +63,7 @@ func (p *Processor) QueryeesubscriptionsProcedure(c *gin.Context, ueId string) {
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)
-	var eeSubscriptionSlice []models.EeSubscription
+	var eeSubscriptionSlice []models.Udr_DR_EeSubscription
 
 	for _, v := range UESubsData.EeSubscriptionCollection {
 		eeSubscriptionSlice = append(eeSubscriptionSlice, *v.EeSubscriptions)

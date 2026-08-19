@@ -21,15 +21,15 @@ import (
 )
 
 func (p *Processor) PostSubscriptionDataSubscriptionsProcedure(
-	c *gin.Context, SubscriptionDataSubscriptions models.SubscriptionDataSubscriptions,
+	c *gin.Context, SubscriptionDataSubscriptions models.Udr_DR_SubscriptionDataSubscriptions,
 ) {
 	udrSelf := udr_context.GetSelf()
 
 	newSubscriptionID := strconv.Itoa(udrSelf.SubscriptionDataSubscriptionIDGenerator)
 	target, ok := subscriptionCallbackTargetFromContext(
 		c,
-		models.ServiceName_NUDM_SDM,
-		models.NrfNfManagementNfType_UDM,
+		models.Nrf_NFMgmt_ServiceName_NUDM_SDM,
+		models.Nrf_NFMgmt_NFType_UDM,
 	)
 	if !ok {
 		rejectUnresolvedCallbackTarget(c)

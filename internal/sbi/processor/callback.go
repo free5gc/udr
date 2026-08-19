@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 
 	"github.com/free5gc/openapi/models"
-	"github.com/free5gc/openapi/udr/DataRepository"
+	DataRepository "github.com/free5gc/openapi/udr/DR"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
@@ -15,8 +15,7 @@ import (
 var CurrentResourceUri string
 
 func getCallbackTokenCtx(
-	serviceName models.ServiceName,
-	targetNF models.NrfNfManagementNfType,
+	serviceName models.Nrf_NFMgmt_ServiceName, targetNF models.Nrf_NFMgmt_NFType,
 	operation string,
 ) (context.Context, bool) {
 	ctx, pd, err := udr_context.GetSelf().GetTokenCtx(serviceName, targetNF)
@@ -62,26 +61,26 @@ func PreHandleOnDataChangeNotify(ueId string, resourceId string, patchItems []mo
 }
 
 func PreHandlePolicyDataChangeNotification(ueId string, dataId string, value interface{}) {
-	policyDataChangeNotification := models.PolicyDataChangeNotification{}
+	policyDataChangeNotification := models.Udr_DR_PolicyDataChangeNotification{}
 
 	if ueId != "" {
 		policyDataChangeNotification.UeId = ueId
 	}
 
 	switch v := value.(type) {
-	case models.AmPolicyData:
+	case models.Udr_DR_AmPolicyData:
 		policyDataChangeNotification.AmPolicyData = &v
-	case models.UePolicySet:
+	case models.Udr_DR_UePolicySet:
 		policyDataChangeNotification.UePolicySet = &v
-	case models.SmPolicyData:
+	case models.Udr_DR_SmPolicyData:
 		policyDataChangeNotification.SmPolicyData = &v
-	case models.UsageMonData:
+	case models.Udr_DR_UsageMonData:
 		policyDataChangeNotification.UsageMonId = dataId
 		policyDataChangeNotification.UsageMonData = &v
-	case models.SponsorConnectivityData:
+	case models.Udr_DR_SponsorConnectivityData:
 		policyDataChangeNotification.SponsorId = dataId
 		policyDataChangeNotification.SponsorConnectivityData = &v
-	case models.BdtData:
+	case models.Udr_DR_BdtData:
 		policyDataChangeNotification.BdtRefId = dataId
 		policyDataChangeNotification.BdtData = &v
 	default:
@@ -91,7 +90,7 @@ func PreHandlePolicyDataChangeNotification(ueId string, dataId string, value int
 	go SendPolicyDataChangeNotification(policyDataChangeNotification)
 }
 
-func PreHandleInfluenceDataUpdateNotification(influenceId string, original, modified *models.TrafficInfluData) {
+func PreHandleInfluenceDataUpdateNotification(influenceId string, original, modified *models.Udr_DR_TrafficInfluData) {
 	resUri := fmt.Sprintf("%s/application-data/influenceData/%s",
 		udr_context.GetSelf().GetIPv4GroupUri(udr_context.NUDR_DR), influenceId)
 
@@ -127,8 +126,8 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 
 			onDataChangeNotifyUrl := subscriptionDataSubscription.CallbackReference
 
-			dataChangeReq := DataRepository.SubscriptionDataSubscriptionsOnDataChangePostRequest{
-				DataChangeNotify: &models.DataChangeNotify{
+			dataChangeReq := DataRepository.SubscriptionDataSubscriptionsOnDataChangeRequest{
+				RequestBody: &models.Udr_DR_DataChangeNotify{
 					UeId: ueId,
 					OriginalCallbackReference: []string{
 						subscriptionDataSubscription.OriginalCallbackReference,
@@ -136,7 +135,7 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 					NotifyItems: notifyItems,
 				},
 			}
-			rsp, err := client.SubsToNotifyCollectionApi.SubscriptionDataSubscriptionsOnDataChangePost(
+			rsp, err := client.SubsToNotifyCollectionApi.SubscriptionDataSubscriptionsOnDataChange(
 				ctx, onDataChangeNotifyUrl, &dataChangeReq)
 
 			if err != nil {
@@ -148,7 +147,7 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 	}
 }
 
-func SendPolicyDataChangeNotification(policyDataChangeNotification models.PolicyDataChangeNotification) {
+func SendPolicyDataChangeNotification(policyDataChangeNotification models.Udr_DR_PolicyDataChangeNotification) {
 	defer func() {
 		if p := recover(); p != nil {
 			// Print stack for panic to log. Fatalf() will let program exit.
@@ -178,13 +177,13 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 		configuration := DataRepository.NewConfiguration()
 		client := DataRepository.NewAPIClient(configuration)
 
-		req := DataRepository.CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPostRequest{
-			PolicyDataChangeNotification: []models.PolicyDataChangeNotification{
+		req := DataRepository.CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationRequest{
+			RequestBody: []models.Udr_DR_PolicyDataChangeNotification{
 				policyDataChangeNotification,
 			},
 		}
 		rsp, err := client.PolicyDataSubscriptionsCollectionApi.
-			CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotificationPost(ctx,
+			CreateIndividualPolicyDataSubscriptionPolicyDataChangeNotification(ctx,
 				policyDataChangeNotificationUrl, &req)
 
 		if err != nil {
@@ -195,13 +194,13 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Policy
 	}
 }
 
-func SendInfluenceDataUpdateNotification(resUri string, original, modified *models.TrafficInfluData) {
+func SendInfluenceDataUpdateNotification(resUri string, original, modified *models.Udr_DR_TrafficInfluData) {
 	udrSelf := udr_context.GetSelf()
 
 	configuration := DataRepository.NewConfiguration()
 	client := DataRepository.NewAPIClient(configuration)
 
-	var trafficInfluDataNotif models.TrafficInfluDataNotif
+	var trafficInfluDataNotif models.Udr_DR_TrafficInfluDataNotif
 	trafficInfluDataNotif.ResUri = resUri
 	udrSelf.InfluenceDataSubscriptions.Range(func(key, value interface{}) bool {
 		record, ok := value.(*udr_context.InfluenceDataSubscriptionRecord)
@@ -226,11 +225,11 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			logger.HttpLog.Tracef("Send notification about update of influence data")
 			trafficInfluDataNotif.TrafficInfluData = modified
 
-			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPostRequest{
+			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationRequest{
 				RequestBody: []interface{}{trafficInfluDataNotif},
 			}
 			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
-				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
+				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotification(
 					ctx, influenceDataChangeNotificationUrl, &req)
 
 			if err != nil {
@@ -244,11 +243,11 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			// If positive, send notification about the removal
 			logger.HttpLog.Tracef("Send notification about removal of influence data")
 			trafficInfluDataNotif.TrafficInfluData = nil
-			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPostRequest{
+			req := DataRepository.CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationRequest{
 				RequestBody: []interface{}{trafficInfluDataNotif},
 			}
 			rsp, err := client.InfluenceDataSubscriptionsCollectionApi.
-				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotificationPost(
+				CreateIndividualInfluenceDataSubscriptionTrafficInfluenceDataChangeNotification(
 					ctx, influenceDataChangeNotificationUrl, &req)
 
 			if err != nil {
@@ -262,7 +261,7 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 	})
 }
 
-func checkInfluenceDataSubscription(data *models.TrafficInfluData, sub *models.TrafficInfluSub) bool {
+func checkInfluenceDataSubscription(data *models.Udr_DR_TrafficInfluData, sub *models.Udr_DR_TrafficInfluSub) bool {
 	if data == nil || sub == nil {
 		return false
 	}

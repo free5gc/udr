@@ -49,7 +49,7 @@ func (p *Processor) GetApplicationDataIndividualPfdFromDBProcedure(c *gin.Contex
 }
 
 func (p *Processor) PutApplicationDataIndividualPfdToDBProcedure(
-	c *gin.Context, appID string, pfdDataForApp *models.PfdDataForApp,
+	c *gin.Context, appID string, pfdDataForApp *models.Udr_DR_PfdDataForAppExt,
 ) {
 	filter := bson.M{"applicationId": appID}
 	data := util.ToBsonM(*pfdDataForApp)
@@ -117,7 +117,7 @@ func (p *Processor) PolicyDataBdtDataBdtReferenceIdGetProcedure(
 }
 
 func (p *Processor) PolicyDataBdtDataBdtReferenceIdPutProcedure(
-	c *gin.Context, collName string, bdtReferenceId string, bdtData models.BdtData,
+	c *gin.Context, collName string, bdtReferenceId string, bdtData models.Udr_DR_BdtData,
 ) {
 	putData := util.ToBsonM(bdtData)
 	putData["bdtReferenceId"] = bdtReferenceId
@@ -176,15 +176,15 @@ func (p *Processor) PolicyDataSponsorConnectivityDataSponsorIdGetProcedure(c *gi
 }
 
 func (p *Processor) PolicyDataSubsToNotifyPostProcedure(
-	c *gin.Context, PolicyDataSubscription models.PolicyDataSubscription,
+	c *gin.Context, PolicyDataSubscription models.Udr_DR_PolicyDataSubscription,
 ) {
 	udrSelf := udr_context.GetSelf()
 
 	newSubscriptionID := strconv.Itoa(udrSelf.PolicyDataSubscriptionIDGenerator)
 	target, ok := subscriptionCallbackTargetFromContext(
 		c,
-		models.ServiceName_NPCF_SMPOLICYCONTROL,
-		models.NrfNfManagementNfType_PCF,
+		models.Nrf_NFMgmt_ServiceName_NPCF_SMPOLICYCONTROL,
+		models.Nrf_NFMgmt_NFType_PCF,
 	)
 	if !ok {
 		rejectUnresolvedCallbackTarget(c)
@@ -219,7 +219,7 @@ func (p *Processor) PolicyDataSubsToNotifySubsIdDeleteProcedure(c *gin.Context, 
 }
 
 func (p *Processor) PolicyDataSubsToNotifySubsIdPutProcedure(c *gin.Context, subsId string,
-	policyDataSubscription models.PolicyDataSubscription,
+	policyDataSubscription models.Udr_DR_PolicyDataSubscription,
 ) {
 	udrSelf := udr_context.GetSelf()
 	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
@@ -296,7 +296,7 @@ func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPatchProcedure(c *gin.C
 }
 
 func (p *Processor) PolicyDataUesUeIdOperatorSpecificDataPutProcedure(c *gin.Context, collName string, ueId string,
-	OperatorSpecificDataContainer map[string]models.OperatorSpecificDataContainer,
+	OperatorSpecificDataContainer map[string]models.Udr_DR_OperatorSpecificDataContainer,
 ) {
 	filter := bson.M{"ueId": ueId}
 
@@ -363,14 +363,14 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 		return
 	}
 
-	var smPolicyDataResp models.SmPolicyData
+	var smPolicyDataResp models.Udr_DR_SmPolicyData
 	err := json.Unmarshal(util.MapToByte(smPolicyData), &smPolicyDataResp)
 	if err != nil {
 		logger.DataRepoLog.Warnln(err)
 	}
-	tmpSmPolicySnssaiData := make(map[string]models.SmPolicySnssaiData)
+	tmpSmPolicySnssaiData := make(map[string]models.Udr_DR_SmPolicySnssaiData)
 	for snssai, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
-		tmpSmPolicyDnnData := make(map[string]models.SmPolicyDnnData)
+		tmpSmPolicyDnnData := make(map[string]models.Udr_DR_SmPolicyDnnData)
 		for escapedDnn, dnnData := range snssaiData.SmPolicyDnnData {
 			dnn := util.UnescapeDnn(escapedDnn)
 			tmpSmPolicyDnnData[dnn] = dnnData
@@ -386,11 +386,11 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 	}
 
 	if !reflect.DeepEqual(usageMonDataMapArray, []map[string]interface{}{}) {
-		var usageMonDataArray []models.UsageMonData
+		var usageMonDataArray []models.Udr_DR_UsageMonData
 		if err := json.Unmarshal(util.MapArrayToByte(usageMonDataMapArray), &usageMonDataArray); err != nil {
 			logger.DataRepoLog.Warnln(err)
 		}
-		smPolicyDataResp.UmData = make(map[string]models.UsageMonData)
+		smPolicyDataResp.UmData = make(map[string]models.Udr_DR_UsageMonData)
 		for _, element := range usageMonDataArray {
 			smPolicyDataResp.UmData[element.LimitId] = element
 		}
@@ -400,7 +400,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 }
 
 func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collName string, ueId string,
-	UsageMonData map[string]models.UsageMonData,
+	UsageMonData map[string]models.Udr_DR_UsageMonData,
 ) {
 	filter := bson.M{"ueId": ueId}
 
@@ -411,7 +411,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 		if err := mongoapi.RestfulAPIMergePatch(collName, filterTmp, util.ToBsonM(usageMonData)); err != nil {
 			successAll = false
 		} else {
-			var usageMonData models.UsageMonData
+			var usageMonData models.Udr_DR_UsageMonData
 			usageMonDataBsonM, pd := p.GetDataFromDB(collName, filter)
 			if pd != nil && pd.Status == http.StatusInternalServerError {
 				logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataPatchProcedure err: %s", pd.Detail)
@@ -434,7 +434,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 			c.JSON(int(pd.Status), pd)
 			return
 		}
-		var smPolicyData models.SmPolicyData
+		var smPolicyData models.Udr_DR_SmPolicyData
 		if err := json.Unmarshal(util.MapToByte(smPolicyDataBsonM), &smPolicyData); err != nil {
 			logger.DataRepoLog.Warnln(err)
 		}
@@ -447,11 +447,11 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 		}
 
 		if !reflect.DeepEqual(usageMonDataMapArray, []map[string]interface{}{}) {
-			var usageMonDataArray []models.UsageMonData
+			var usageMonDataArray []models.Udr_DR_UsageMonData
 			if err := json.Unmarshal(util.MapArrayToByte(usageMonDataMapArray), &usageMonDataArray); err != nil {
 				logger.DataRepoLog.Warnln(err)
 			}
-			smPolicyData.UmData = make(map[string]models.UsageMonData)
+			smPolicyData.UmData = make(map[string]models.Udr_DR_UsageMonData)
 			for _, element := range usageMonDataArray {
 				smPolicyData.UmData[element.LimitId] = element
 			}
@@ -489,7 +489,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdGetProcedure(c *gin.Context
 
 func (p *Processor) PolicyDataUesUeIdSmDataUsageMonIdPutProcedure(
 	c *gin.Context, collName string, ueId string, usageMonId string,
-	usageMonData models.UsageMonData,
+	usageMonData models.Udr_DR_UsageMonData,
 ) {
 	putData := util.ToBsonM(usageMonData)
 	putData["ueId"] = ueId
@@ -521,7 +521,7 @@ func (p *Processor) PolicyDataUesUeIdUePolicySetGetProcedure(c *gin.Context, col
 }
 
 func (p *Processor) PolicyDataUesUeIdUePolicySetPatchProcedure(c *gin.Context, collName string, ueId string,
-	UePolicySet models.UePolicySet,
+	UePolicySet models.Udr_DR_UePolicySet,
 ) {
 	patchData := util.ToBsonM(UePolicySet)
 	patchData["ueId"] = ueId
@@ -535,7 +535,7 @@ func (p *Processor) PolicyDataUesUeIdUePolicySetPatchProcedure(c *gin.Context, c
 		return
 	}
 
-	var uePolicySet models.UePolicySet
+	var uePolicySet models.Udr_DR_UePolicySet
 	uePolicySetBsonM, pd := p.GetDataFromDB(collName, filter)
 	if pd != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdUePolicySetPatchProcedure err: %s", pd.Detail)
@@ -555,7 +555,7 @@ func (p *Processor) PolicyDataUesUeIdUePolicySetPatchProcedure(c *gin.Context, c
 }
 
 func (p *Processor) PolicyDataUesUeIdUePolicySetPutProcedure(c *gin.Context, collName string, ueId string,
-	UePolicySet models.UePolicySet,
+	UePolicySet models.Udr_DR_UePolicySet,
 ) {
 	putData := util.ToBsonM(UePolicySet)
 	putData["ueId"] = ueId

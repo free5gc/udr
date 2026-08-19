@@ -41,7 +41,7 @@ func (p *Processor) AmfContext3gppProcedure(
 }
 
 func (p *Processor) CreateAmfContext3gppProcedure(c *gin.Context, collName string, ueId string,
-	Amf3GppAccessRegistration models.Amf3GppAccessRegistration,
+	Amf3GppAccessRegistration models.Udr_DR_Amf3GppAccessRegistration,
 ) {
 	filter := bson.M{"ueId": ueId}
 	putData := util.ToBsonM(Amf3GppAccessRegistration)

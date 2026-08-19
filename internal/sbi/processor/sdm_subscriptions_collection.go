@@ -22,7 +22,7 @@ import (
 	"github.com/free5gc/util/metrics/sbi"
 )
 
-func (p *Processor) CreateSdmSubscriptionsProcedure(c *gin.Context, SdmSubscription models.SdmSubscription,
+func (p *Processor) CreateSdmSubscriptionsProcedure(c *gin.Context, SdmSubscription models.Udr_DR_SdmSubscription,
 	collName string, ueId string,
 ) {
 	udrSelf := udr_context.GetSelf()
@@ -34,7 +34,7 @@ func (p *Processor) CreateSdmSubscriptionsProcedure(c *gin.Context, SdmSubscript
 	}
 	UESubsData := value.(*udr_context.UESubsData)
 	if UESubsData.SdmSubscriptions == nil {
-		UESubsData.SdmSubscriptions = make(map[string]*models.SdmSubscription)
+		UESubsData.SdmSubscriptions = make(map[string]*models.Udr_DR_SdmSubscription)
 	}
 
 	newSubscriptionID := strconv.Itoa(udrSelf.SdmSubscriptionIDGenerator)
@@ -63,7 +63,7 @@ func (p *Processor) QuerysdmsubscriptionsProcedure(c *gin.Context, ueId string) 
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)
-	var sdmSubscriptionSlice []models.SdmSubscription
+	var sdmSubscriptionSlice []models.Udr_DR_SdmSubscription
 
 	for _, v := range UESubsData.SdmSubscriptions {
 		sdmSubscriptionSlice = append(sdmSubscriptionSlice, *v)

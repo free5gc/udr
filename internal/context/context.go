@@ -36,8 +36,8 @@ func Init() {
 	udrContext.PolicyDataSubscriptions = make(map[subsId]*PolicyDataSubscriptionRecord)
 	udrContext.InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
-	serviceName := []models.ServiceName{
-		models.ServiceName_NUDR_DR,
+	serviceName := []models.Nrf_NFMgmt_ServiceName{
+		models.Nrf_NFMgmt_ServiceName_NUDR_DR,
 	}
 	udrContext.NrfUri = fmt.Sprintf("%s://%s:%d", models.UriScheme_HTTPS, udrContext.RegisterIPv4, 29510)
 	initUdrContext()
@@ -51,7 +51,7 @@ type UDRContext struct {
 	UriScheme                               models.UriScheme
 	BindingIPv4                             string
 	SBIPort                                 int
-	NfService                               map[models.ServiceName]models.NrfNfManagementNfService
+	NfService                               map[models.Nrf_NFMgmt_ServiceName]models.Nrf_NFMgmt_NFService
 	RegisterIPv4                            string // IP register to NRF
 	HttpIPv6Address                         string
 	NfId                                    string
@@ -74,41 +74,41 @@ type UDRContext struct {
 
 type UESubsData struct {
 	EeSubscriptionCollection map[subsId]*EeSubscriptionCollection
-	SdmSubscriptions         map[subsId]*models.SdmSubscription
+	SdmSubscriptions         map[subsId]*models.Udr_DR_SdmSubscription
 }
 
 type UEGroupSubsData struct {
-	EeSubscriptions map[subsId]*models.EeSubscription
+	EeSubscriptions map[subsId]*models.Udr_DR_EeSubscription
 }
 
 type EeSubscriptionCollection struct {
-	EeSubscriptions      *models.EeSubscription
-	AmfSubscriptionInfos []models.AmfSubscriptionInfo
+	EeSubscriptions      *models.Udr_DR_EeSubscription
+	AmfSubscriptionInfos []models.Udr_DR_AmfSubscriptionInfo
 }
 
 type SubscriptionCallbackTarget struct {
-	ServiceName  models.ServiceName
-	NfType       models.NrfNfManagementNfType
+	ServiceName  models.Nrf_NFMgmt_ServiceName
+	NfType       models.Nrf_NFMgmt_NFType
 	NfInstanceID string
 }
 
 type SubscriptionDataSubscriptionRecord struct {
-	Subscription   *models.SubscriptionDataSubscriptions
+	Subscription   *models.Udr_DR_SubscriptionDataSubscriptions
 	CallbackTarget SubscriptionCallbackTarget
 }
 
 type PolicyDataSubscriptionRecord struct {
-	Subscription   *models.PolicyDataSubscription
+	Subscription   *models.Udr_DR_PolicyDataSubscription
 	CallbackTarget SubscriptionCallbackTarget
 }
 
 type InfluenceDataSubscriptionRecord struct {
-	Subscription   *models.TrafficInfluSub
+	Subscription   *models.Udr_DR_TrafficInfluSub
 	CallbackTarget SubscriptionCallbackTarget
 }
 
 type NFContext interface {
-	AuthorizationCheck(token string, serviceName models.ServiceName) error
+	AuthorizationCheck(token string, serviceName models.Nrf_NFMgmt_ServiceName) error
 }
 
 var _ NFContext = &UDRContext{}
@@ -178,28 +178,28 @@ func initUdrContext() {
 	udrContext.NrfCertPem = configuration.NrfCertPem
 }
 
-func initNfService(serviceName []models.ServiceName, version string) (
-	nfService map[models.ServiceName]models.NrfNfManagementNfService,
+func initNfService(serviceName []models.Nrf_NFMgmt_ServiceName, version string) (
+	nfService map[models.Nrf_NFMgmt_ServiceName]models.Nrf_NFMgmt_NFService,
 ) {
 	versionUri := "v" + strings.Split(version, ".")[0]
-	nfService = make(map[models.ServiceName]models.NrfNfManagementNfService)
+	nfService = make(map[models.Nrf_NFMgmt_ServiceName]models.Nrf_NFMgmt_NFService)
 	for idx, name := range serviceName {
-		nfService[name] = models.NrfNfManagementNfService{
+		nfService[name] = models.Nrf_NFMgmt_NFService{
 			ServiceInstanceId: strconv.Itoa(idx),
 			ServiceName:       name,
-			Versions: []models.NfServiceVersion{
+			Versions: []models.Nrf_NFMgmt_NFServiceVersion{
 				{
 					ApiFullVersion:  version,
 					ApiVersionInUri: versionUri,
 				},
 			},
 			Scheme:          udrContext.UriScheme,
-			NfServiceStatus: models.NfServiceStatus_REGISTERED,
+			NfServiceStatus: models.Nrf_NFMgmt_NFServiceStatus_REGISTERED,
 			ApiPrefix:       GetIPv4Uri(),
-			IpEndPoints: []models.IpEndPoint{
+			IpEndPoints: []models.Nrf_NFMgmt_IpEndPoint{
 				{
 					Ipv4Address: udrContext.RegisterIPv4,
-					Transport:   models.NrfNfManagementTransportProtocol_TCP,
+					Transport:   models.Nrf_NFMgmt_TransportProtocol_TCP,
 					Port:        int32(udrContext.SBIPort),
 				},
 			},
@@ -245,13 +245,13 @@ func NewInfluenceDataSubscriptionId() string {
 	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
 }
 
-func (c *UDRContext) GetTokenCtx(serviceName models.ServiceName, targetNF models.NrfNfManagementNfType) (
+func (c *UDRContext) GetTokenCtx(serviceName models.Nrf_NFMgmt_ServiceName, targetNF models.Nrf_NFMgmt_NFType) (
 	context.Context, *models.ProblemDetails, error,
 ) {
 	if !c.OAuth2Required {
 		return context.TODO(), nil, nil
 	}
-	return oauth.GetTokenCtx(models.NrfNfManagementNfType_UDR, targetNF,
+	return oauth.GetTokenCtx(models.Nrf_NFMgmt_NFType_UDR, targetNF,
 		c.NfId, c.NrfUri, string(serviceName))
 }
 
@@ -259,7 +259,7 @@ func (c *UDRContext) OAuth2Enabled() bool {
 	return c.OAuth2Required
 }
 
-func (c *UDRContext) AuthorizationCheck(token string, serviceName models.ServiceName) error {
+func (c *UDRContext) AuthorizationCheck(token string, serviceName models.Nrf_NFMgmt_ServiceName) error {
 	if !c.OAuth2Required {
 		logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: OAuth2 not required\n")
 		return nil

@@ -23,7 +23,7 @@ import (
 	"github.com/free5gc/util/mongoapi"
 )
 
-func (p *Processor) CreateSmfContextNon3gppProcedure(c *gin.Context, SmfRegistration models.SmfRegistration,
+func (p *Processor) CreateSmfContextNon3gppProcedure(c *gin.Context, SmfRegistration models.Udr_DR_SmfRegistration,
 	collName string, ueId string, pduSessionId int32,
 ) {
 	putData := util.ToBsonM(SmfRegistration)

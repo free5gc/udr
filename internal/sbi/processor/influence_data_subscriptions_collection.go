@@ -29,7 +29,7 @@ import (
 func (p *Processor) ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
 	c *gin.Context, dnn string, snssai *models.Snssai, internalGroupId, supi string,
 ) {
-	var response []models.TrafficInfluSub
+	var response []models.Udr_DR_TrafficInfluSub
 
 	udrSelf := udr_context.GetSelf()
 	udrSelf.InfluenceDataSubscriptions.Range(func(key, value interface{}) bool {
@@ -57,7 +57,7 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifyGetProcedure(
 }
 
 func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostProcedure(
-	c *gin.Context, subscriptionId string, request *models.TrafficInfluSub,
+	c *gin.Context, subscriptionId string, request *models.Udr_DR_TrafficInfluSub,
 ) {
 	if len(request.Dnns) == 0 &&
 		len(request.Snssais) == 0 &&
@@ -85,8 +85,8 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostPr
 	udrSelf := udr_context.GetSelf()
 	target, ok := subscriptionCallbackTargetFromContext(
 		c,
-		models.ServiceName_NPCF_SMPOLICYCONTROL,
-		models.NrfNfManagementNfType_PCF,
+		models.Nrf_NFMgmt_ServiceName_NPCF_SMPOLICYCONTROL,
+		models.Nrf_NFMgmt_NFType_PCF,
 	)
 	if !ok {
 		rejectUnresolvedCallbackTarget(c)
@@ -133,9 +133,9 @@ func (p *Processor) ApplicationDataInfluenceDataInfluenceIdDeleteProcedure(
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	var original *models.TrafficInfluData
+	var original *models.Udr_DR_TrafficInfluData
 	if len(mapData) != 0 {
-		original = new(models.TrafficInfluData)
+		original = new(models.Udr_DR_TrafficInfluData)
 		byteData, err := json.Marshal(mapData)
 		if err != nil {
 			logger.DataRepoLog.Error(err.Error())

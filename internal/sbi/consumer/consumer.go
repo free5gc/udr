@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"github.com/free5gc/openapi/nrf/NFManagement"
+	NFManagement "github.com/free5gc/openapi/nrf/NFMgmt"
 	"github.com/free5gc/udr/pkg/app"
 )
 

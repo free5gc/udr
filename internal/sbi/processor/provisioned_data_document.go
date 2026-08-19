@@ -26,7 +26,7 @@ import (
 )
 
 func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, servingPlmnId string,
-	provisionedDataSets models.ProvisionedDataSets,
+	provisionedDataSets models.Udr_DR_ProvisionedDataSets,
 ) {
 	var collName string
 	var filter bson.M
@@ -42,7 +42,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		return
 	}
 	if accessAndMobilitySubscriptionData != nil {
-		var tmp models.AccessAndMobilitySubscriptionData
+		var tmp models.Udm_SDM_AccessAndMobilitySubscriptionData
 		if err := mapstructure.Decode(accessAndMobilitySubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure accessAndMobilitySubscriptionData decode err: %+v", err)
@@ -64,7 +64,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		return
 	}
 	if smfSelectionSubscriptionData != nil {
-		var tmp models.SmfSelectionSubscriptionData
+		var tmp models.Udm_SDM_SmfSelectionSubscriptionData
 		if err := mapstructure.Decode(smfSelectionSubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smfSelectionSubscriptionData decode err: %+v", err)
@@ -85,7 +85,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		return
 	}
 	if smsSubscriptionData != nil {
-		var tmp models.SmsSubscriptionData
+		var tmp models.Udm_SDM_SmsSubscriptionData
 		if err := mapstructure.Decode(smsSubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smsSubscriptionData decode err: %+v", err)
@@ -109,7 +109,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		return
 	}
 	if sessionManagementSubscriptionDatas != nil {
-		var tmp []models.SessionManagementSubscriptionData
+		var tmp []models.Udm_SDM_SessionManagementSubscriptionData
 		if err := mapstructure.Decode(sessionManagementSubscriptionDatas, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure sessionManagementSubscriptionDatas decode err: %+v", err)
@@ -120,7 +120,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		}
 		for i := range tmp {
 			dnnConfigurations := tmp[i].DnnConfigurations
-			tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
+			tmpDnnConfigurations := make(map[string]models.Udm_SDM_DnnConfiguration)
 			for escapedDnn, dnnConf := range dnnConfigurations {
 				dnn := util.UnescapeDnn(escapedDnn)
 				tmpDnnConfigurations[dnn] = dnnConf
@@ -128,7 +128,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 			tmp[i].DnnConfigurations = tmpDnnConfigurations
 		}
 		if provisionedDataSets.SmData == nil {
-			provisionedDataSets.SmData = &models.SmSubsData{}
+			provisionedDataSets.SmData = &models.Udm_SDM_SmSubsData{}
 		}
 		provisionedDataSets.SmData.IndividualSmSubsData = tmp
 	}
@@ -165,7 +165,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		return
 	}
 	if smsManagementSubscriptionData != nil {
-		var tmp models.SmsManagementSubscriptionData
+		var tmp models.Udm_SDM_SmsManagementSubscriptionData
 		if err := mapstructure.Decode(smsManagementSubscriptionData, &tmp); err != nil {
 			logger.DataRepoLog.Errorf(
 				"QueryProvisionedDataProcedure smsManagementSubscriptionData decode err: %+v", err)
@@ -177,7 +177,7 @@ func (p *Processor) QueryProvisionedDataProcedure(c *gin.Context, ueId string, s
 		provisionedDataSets.SmsMngData = &tmp
 	}
 
-	if reflect.DeepEqual(provisionedDataSets, models.ProvisionedDataSets{}) {
+	if reflect.DeepEqual(provisionedDataSets, models.Udr_DR_ProvisionedDataSets{}) {
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)

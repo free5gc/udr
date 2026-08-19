@@ -79,7 +79,7 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	var modifiedData []models.AmfSubscriptionInfo
+	var modifiedData []models.Udr_DR_AmfSubscriptionInfo
 	err = json.Unmarshal(modified, &modifiedData)
 	if err != nil {
 		logger.DataRepoLog.Error(err)

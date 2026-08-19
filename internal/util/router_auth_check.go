@@ -43,10 +43,10 @@ func parseRequesterClaims(authorization string) (requesterClaims, bool) {
 }
 
 type RouterAuthorizationCheck struct {
-	serviceName models.ServiceName
+	serviceName models.Nrf_NFMgmt_ServiceName
 }
 
-func NewRouterAuthorizationCheck(serviceName models.ServiceName) *RouterAuthorizationCheck {
+func NewRouterAuthorizationCheck(serviceName models.Nrf_NFMgmt_ServiceName) *RouterAuthorizationCheck {
 	return &RouterAuthorizationCheck{
 		serviceName: serviceName,
 	}

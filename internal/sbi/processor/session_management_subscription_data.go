@@ -41,7 +41,8 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 		dnnKey := util.EscapeDnn(dnn)
 		filter["dnnConfigurations."+dnnKey] = bson.M{"$exists": true}
 	}
-	resp := models.SmSubsData{}
+
+	resp := models.Udm_SDM_SmSubsData{}
 
 	sessionManagementSubscriptionDatas, err := mongoapi.
 		RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
@@ -53,7 +54,7 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 		return
 	}
 	for _, smData := range sessionManagementSubscriptionDatas {
-		var tmpSmData models.SessionManagementSubscriptionData
+		var tmpSmData models.Udm_SDM_SessionManagementSubscriptionData
 		err := json.Unmarshal(util.MapToByte(smData), &tmpSmData)
 		if err != nil {
 			logger.DataRepoLog.Debug("SmData Unmarshal error")
@@ -62,7 +63,7 @@ func (p *Processor) QuerySmDataProcedure(c *gin.Context, collName string, ueId s
 		resp.IndividualSmSubsData = append(resp.IndividualSmSubsData, tmpSmData)
 
 		dnnConfigurations := tmpSmData.DnnConfigurations
-		tmpDnnConfigurations := make(map[string]models.DnnConfiguration)
+		tmpDnnConfigurations := make(map[string]models.Udm_SDM_DnnConfiguration)
 		for escapedDnn, dnnConf := range dnnConfigurations {
 			dnn := util.UnescapeDnn(escapedDnn)
 			tmpDnnConfigurations[dnn] = dnnConf

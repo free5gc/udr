@@ -40,7 +40,7 @@ func (p *Processor) AmfContextNon3gppProcedure(
 }
 
 func (p *Processor) CreateAmfContextNon3gppProcedure(
-	c *gin.Context, AmfNon3GppAccessRegistration models.AmfNon3GppAccessRegistration,
+	c *gin.Context, AmfNon3GppAccessRegistration models.Udr_DR_AmfNon3GppAccessRegistration,
 	collName string, ueId string,
 ) {
 	putData := util.ToBsonM(AmfNon3GppAccessRegistration)

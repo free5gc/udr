@@ -798,7 +798,7 @@ func (s *Server) HandleAmfContext3gpp(c *gin.Context) {
 
 // HTTPCreateAmfContext3gpp - To store the AMF context data of a UE using 3gpp access in the UDR
 func (s *Server) HandleCreateAmfContext3gpp(c *gin.Context) {
-	var amf3GppAccessRegistration models.Amf3GppAccessRegistration
+	var amf3GppAccessRegistration models.Udr_DR_Amf3GppAccessRegistration
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -905,7 +905,7 @@ func (s *Server) HandleAmfContextNon3gpp(c *gin.Context) {
 
 // HTTPCreateAmfContextNon3gpp - To store the AMF context data of a UE using non-3gpp access in the UDR
 func (s *Server) HandleCreateAmfContextNon3gpp(c *gin.Context) {
-	var amfNon3GppAccessRegistration models.AmfNon3GppAccessRegistration
+	var amfNon3GppAccessRegistration models.Udr_DR_AmfNon3GppAccessRegistration
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -976,7 +976,7 @@ func (s *Server) HandleQueryAmData(c *gin.Context) {
 
 // HTTPCreateAuthenticationStatus - To store the Authentication Status data of a UE
 func (s *Server) HandleCreateAuthenticationStatus(c *gin.Context) {
-	var authEvent models.AuthEvent
+	var authEvent models.Udm_UEAU_AuthEvent
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -1093,7 +1093,7 @@ func (s *Server) HandleQueryAuthSubsData(c *gin.Context) {
 
 // HTTPCreateAuthenticationSoR - To store the SoR acknowledgement information of a UE
 func (s *Server) HandleCreateAuthenticationSoR(c *gin.Context) {
-	var sorData models.SorData
+	var sorData models.Udr_DR_SorData
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -1258,7 +1258,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut
 	}
 
 	// Deserialize request body
-	var trafficInfluSub models.TrafficInfluSub
+	var trafficInfluSub models.Udr_DR_TrafficInfluSub
 	err = openapi.Deserialize(&trafficInfluSub, requestBody, "application/json")
 	if err != nil {
 		problemDetail := "[Request Body] " + err.Error()
@@ -1318,7 +1318,7 @@ func (s *Server) HandleApplicationDataPfdsAppIdGet(c *gin.Context) {
 
 // HTTPApplicationDataPfdsAppIdPut -
 func (s *Server) HandleApplicationDataPfdsAppIdPut(c *gin.Context) {
-	var pfdDataforApp models.PfdDataForApp
+	var pfdDataforApp models.Udr_DR_PfdDataForAppExt
 
 	if err := getDataFromRequestBody(c, &pfdDataforApp); err != nil {
 		return
@@ -1378,7 +1378,7 @@ func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdGet(c *gin.Context) {
 
 // HTTPPolicyDataBdtDataBdtReferenceIdPut -
 func (s *Server) HandlePolicyDataBdtDataBdtReferenceIdPut(c *gin.Context) {
-	var bdtData models.BdtData
+	var bdtData models.Udr_DR_BdtData
 
 	if err := getDataFromRequestBody(c, &bdtData); err != nil {
 		return
@@ -1422,7 +1422,7 @@ func (s *Server) HandlePolicyDataSponsorConnectivityDataSponsorIdGet(c *gin.Cont
 
 // HTTPPolicyDataSubsToNotifyPost -
 func (s *Server) HandlePolicyDataSubsToNotifyPost(c *gin.Context) {
-	var policyDataSubscription models.PolicyDataSubscription
+	var policyDataSubscription models.Udr_DR_PolicyDataSubscription
 
 	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
 		return
@@ -1442,7 +1442,7 @@ func (s *Server) HandlePolicyDataSubsToNotifySubsIdDelete(c *gin.Context) {
 
 // HTTPPolicyDataSubsToNotifySubsIdPut -
 func (s *Server) HandlePolicyDataSubsToNotifySubsIdPut(c *gin.Context) {
-	var policyDataSubscription models.PolicyDataSubscription
+	var policyDataSubscription models.Udr_DR_PolicyDataSubscription
 
 	if err := getDataFromRequestBody(c, &policyDataSubscription); err != nil {
 		return
@@ -1499,7 +1499,7 @@ func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPatch(c *gin.Context
 
 // HTTPPolicyDataUesUeIdOperatorSpecificDataPut -
 func (s *Server) HandlePolicyDataUesUeIdOperatorSpecificDataPut(c *gin.Context) {
-	var operatorSpecificDataContainerMap map[string]models.OperatorSpecificDataContainer
+	var operatorSpecificDataContainerMap map[string]models.Udr_DR_OperatorSpecificDataContainer
 
 	if err := getDataFromRequestBody(c, &operatorSpecificDataContainerMap); err != nil {
 		return
@@ -1538,7 +1538,7 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdSmDataPatch - Need to be fixed
 func (s *Server) HandlePolicyDataUesUeIdSmDataPatch(c *gin.Context) {
-	var usageMonDataMap map[string]models.UsageMonData
+	var usageMonDataMap map[string]models.Udr_DR_UsageMonData
 
 	if err := getDataFromRequestBody(c, &usageMonDataMap); err != nil {
 		return
@@ -1583,7 +1583,7 @@ func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdSmDataUsageMonIdPut -
 func (s *Server) HandlePolicyDataUesUeIdSmDataUsageMonIdPut(c *gin.Context) {
-	var usageMonData models.UsageMonData
+	var usageMonData models.Udr_DR_UsageMonData
 
 	if err := getDataFromRequestBody(c, &usageMonData); err != nil {
 		return
@@ -1613,7 +1613,7 @@ func (s *Server) HandlePolicyDataUesUeIdUePolicySetGet(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdUePolicySetPatch -
 func (s *Server) HandlePolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
-	var uePolicySet models.UePolicySet
+	var uePolicySet models.Udr_DR_UePolicySet
 
 	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {
 		return
@@ -1631,7 +1631,7 @@ func (s *Server) HandlePolicyDataUesUeIdUePolicySetPatch(c *gin.Context) {
 
 // HTTPPolicyDataUesUeIdUePolicySetPut -
 func (s *Server) HandlePolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
-	var uePolicySet models.UePolicySet
+	var uePolicySet models.Udr_DR_UePolicySet
 
 	if err := getDataFromRequestBody(c, &uePolicySet); err != nil {
 		return
@@ -1651,7 +1651,7 @@ func (s *Server) HandlePolicyDataUesUeIdUePolicySetPut(c *gin.Context) {
 func (s *Server) HandleQueryProvisionedData(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle QueryProvisionedData")
 
-	var provisionedDataSets models.ProvisionedDataSets
+	var provisionedDataSets models.Udr_DR_ProvisionedDataSets
 	ueId := c.Params.ByName("ueId")
 	if ueId == "" {
 		util.EmptyUeIdProblemJson(c)
@@ -1679,7 +1679,7 @@ func (s *Server) HandleRemovesdmSubscriptions(c *gin.Context) {
 
 // HTTPUpdatesdmsubscriptions - Stores an individual sdm subscriptions of a UE
 func (s *Server) HandleUpdatesdmsubscriptions(c *gin.Context) {
-	var sdmSubscription models.SdmSubscription
+	var sdmSubscription models.Udr_DR_SdmSubscription
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -1723,7 +1723,7 @@ func (s *Server) HandleUpdatesdmsubscriptions(c *gin.Context) {
 
 // HTTPCreateSdmSubscriptions - Create individual sdm subscription
 func (s *Server) HandleCreateSdmSubscriptions(c *gin.Context) {
-	var sdmSubscription models.SdmSubscription
+	var sdmSubscription models.Udr_DR_SdmSubscription
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -1780,7 +1780,7 @@ func (s *Server) HandleQuerysdmsubscriptions(c *gin.Context) {
 
 // HTTPCreateSmfContextNon3gpp - To create an individual SMF context data of a UE in the UDR
 func (s *Server) HandleCreateSmfContextNon3gpp(c *gin.Context) {
-	var smfRegistration models.SmfRegistration
+	var smfRegistration models.Udr_DR_SmfRegistration
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -1894,7 +1894,7 @@ func (s *Server) HandleQuerySmfSelectData(c *gin.Context) {
 
 // HTTPCreateSmsfContext3gpp - Create the SMSF context data of a UE via 3GPP access
 func (s *Server) HandleCreateSmsfContext3gpp(c *gin.Context) {
-	var smsfRegistration models.SmsfRegistration
+	var smsfRegistration models.Udr_DR_SmsfRegistration
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -1966,7 +1966,7 @@ func (s *Server) HandleQuerySmsfContext3gpp(c *gin.Context) {
 
 // HTTPCreateSmsfContextNon3gpp - Create the SMSF context data of a UE via non-3GPP access
 func (s *Server) HandleCreateSmsfContextNon3gpp(c *gin.Context) {
-	var smsfRegistration models.SmsfRegistration
+	var smsfRegistration models.Udr_DR_SmsfRegistration
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -2141,7 +2141,7 @@ func (s *Server) HandleQueryTraceData(c *gin.Context) {
 
 // HTTPCreateAMFSubscriptions - Creates AMF Subscription Info for an eeSubscription
 func (s *Server) HandleCreateAMFSubscriptions(c *gin.Context) {
-	var amfSubscriptionInfoArray []models.AmfSubscriptionInfo
+	var amfSubscriptionInfoArray []models.Udr_DR_AmfSubscriptionInfo
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -2274,7 +2274,7 @@ func (s *Server) HandleGetSharedData(c *gin.Context) {
 
 // HandlePostSubscriptionDataSubscriptions - Subscription data subscriptions
 func (s *Server) HandlePostSubscriptionDataSubscriptions(c *gin.Context) {
-	var subscriptionDataSubscriptions models.SubscriptionDataSubscriptions
+	var subscriptionDataSubscriptions models.Udr_DR_SubscriptionDataSubscriptions
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -2471,7 +2471,7 @@ func (s *Server) HandleGetOdbData(c *gin.Context) {
 
 // HTTPCreateEeGroupSubscriptions - Create individual EE subscription for a group of UEs or any UE
 func (s *Server) HandleCreateEeGroupSubscriptions(c *gin.Context) {
-	var eeSubscription models.EeSubscription
+	var eeSubscription models.Udr_DR_EeSubscription
 	requestBody, err := c.GetRawData()
 	if err != nil {
 		problemDetail := models.ProblemDetails{
@@ -2552,7 +2552,7 @@ func (s *Server) HandleQueryEeGroupSubscriptions(c *gin.Context) {
 
 // HTTPCreateEeSubscriptions - Create individual EE subscription
 func (s *Server) HandleCreateEeSubscriptions(c *gin.Context) {
-	var eeSubscription models.EeSubscription
+	var eeSubscription models.Udr_DR_EeSubscription
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -2661,7 +2661,7 @@ func (s *Server) HandleRemoveeeSubscriptions(c *gin.Context) {
 
 // HTTPUpdateEesubscriptions - Stores an individual ee subscriptions of a UE
 func (s *Server) HandleUpdateEesubscriptions(c *gin.Context) {
-	var eeSubscription models.EeSubscription
+	var eeSubscription models.Udr_DR_EeSubscription
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -2714,7 +2714,7 @@ func (s *Server) HandleRemoveEeGroupSubscriptions(c *gin.Context) {
 
 // HTTPUpdateEeGroupSubscriptions - Stores an individual ee subscription of a group of UEs or any UE
 func (s *Server) HandleUpdateEeGroupSubscriptions(c *gin.Context) {
-	var eeSubscription models.EeSubscription
+	var eeSubscription models.Udr_DR_EeSubscription
 
 	requestBody, err := c.GetRawData()
 	if err != nil {
@@ -2838,7 +2838,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifyPost(c *gin.Conte
 	}
 
 	// Deserialize request body
-	var trafficInfluSub models.TrafficInfluSub
+	var trafficInfluSub models.Udr_DR_TrafficInfluSub
 	err = openapi.Deserialize(&trafficInfluSub, requestBody, "application/json")
 	if err != nil {
 		problemDetail := "[Request Body] " + err.Error()
@@ -2891,7 +2891,7 @@ func (s *Server) HandleApplicationDataInfluenceDataInfluenceIdPut(c *gin.Context
 	}
 
 	// Deserialize request body
-	var trafficInfluData models.TrafficInfluData
+	var trafficInfluData models.Udr_DR_TrafficInfluData
 	err = openapi.Deserialize(&trafficInfluData, requestBody, "application/json")
 	if err != nil {
 		problemDetail := "[Request Body] " + err.Error()
