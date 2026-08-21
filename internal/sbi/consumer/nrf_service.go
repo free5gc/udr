@@ -74,7 +74,15 @@ func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.Nr
 	}
 
 	var services []models.Nrf_NFMgmt_NFService
-	for _, nfService := range context.NfService {
+	for serviceName, nfService := range context.NfService {
+		if nfService.ServiceName == "" {
+			nfService.ServiceName = serviceName
+		}
+		allowedNfTypes, known := udr_context.AllowedNfTypesForService(nfService.ServiceName)
+		if !known {
+			return profile, fmt.Errorf("no AllowedNfTypes policy for service %q", nfService.ServiceName)
+		}
+		nfService.AllowedNfTypes = allowedNfTypes
 		services = append(services, nfService)
 	}
 	if len(services) > 0 {
