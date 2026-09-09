@@ -187,6 +187,7 @@ func (a *UdrApp) Start() {
 	err := a.registerToNrf(a.ctx)
 	if err != nil {
 		logger.InitLog.Errorf("register to NRF failed: %v", err)
+		return
 	} else {
 		logger.InitLog.Infof("register to NRF successfully")
 	}

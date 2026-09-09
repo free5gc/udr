@@ -15,10 +15,13 @@ import (
 var CurrentResourceUri string
 
 func getCallbackTokenCtx(
-	serviceName models.Nrf_NFMgmt_ServiceName, targetNF models.Nrf_NFMgmt_NFType,
+	serviceName models.Nrf_NFMgmt_ServiceName,
+	targetNF models.Nrf_NFMgmt_NFType,
+	targetNFInstanceID string,
 	operation string,
 ) (context.Context, bool) {
-	ctx, pd, err := udr_context.GetSelf().GetTokenCtx(serviceName, targetNF)
+	ctx, pd, err := udr_context.GetSelf().GetTokenCtxForNFInstance(
+		serviceName, targetNF, targetNFInstanceID)
 	if err != nil {
 		logger.SBILog.Errorf("%s get token failed: %v", operation, err)
 		if pd != nil {
@@ -118,6 +121,7 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 			ctx, ok := getCallbackTokenCtx(
 				record.CallbackTarget.ServiceName,
 				record.CallbackTarget.NfType,
+				record.CallbackTarget.NfInstanceID,
 				"SendOnDataChangeNotify",
 			)
 			if !ok {
@@ -165,6 +169,7 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Udr_DR
 		ctx, ok := getCallbackTokenCtx(
 			record.CallbackTarget.ServiceName,
 			record.CallbackTarget.NfType,
+			record.CallbackTarget.NfInstanceID,
 			"SendPolicyDataChangeNotification",
 		)
 		if !ok {
@@ -212,6 +217,7 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 		ctx, ok := getCallbackTokenCtx(
 			record.CallbackTarget.ServiceName,
 			record.CallbackTarget.NfType,
+			record.CallbackTarget.NfInstanceID,
 			"SendInfluenceDataUpdateNotification",
 		)
 		if !ok {

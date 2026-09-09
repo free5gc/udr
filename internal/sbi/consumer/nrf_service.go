@@ -60,7 +60,15 @@ func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.Nr
 	}
 
 	var services []models.Nrf_NFMgmt_NFService
-	for _, nfService := range context.NfService {
+	for serviceName, nfService := range context.NfService {
+		if nfService.ServiceName == "" {
+			nfService.ServiceName = serviceName
+		}
+		allowedNfTypes, known := udr_context.AllowedNfTypesForService(nfService.ServiceName)
+		if !known {
+			return profile, fmt.Errorf("no AllowedNfTypes policy for service %q", nfService.ServiceName)
+		}
+		nfService.AllowedNfTypes = allowedNfTypes
 		services = append(services, nfService)
 	}
 	if len(services) > 0 {
@@ -117,9 +125,8 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 					logger.MainLog.Infoln("OAuth2 setting receive from NRF:", oauth2)
 				}
 			}
-			udr_context.GetSelf().OAuth2Required = oauth2
-			if oauth2 && udr_context.GetSelf().NrfCertPem == "" {
-				logger.CfgLog.Error("OAuth2 enable but no nrfCertPem provided in config.")
+			if oauthErr := udr_context.GetSelf().SetOAuth2Required(oauth2); oauthErr != nil {
+				return "", "", oauthErr
 			}
 			finish = true
 		}
@@ -130,7 +137,7 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, nrfUri string)
 func (ns *NrfService) SendDeregisterNFInstance() (err error) {
 	logger.ConsumerLog.Infof("Send Deregister NFInstance")
 
-	ctx, pd, err := udr_context.GetSelf().GetTokenCtx(models.Nrf_NFMgmt_ServiceName_NNRF_NFM, models.Nrf_NFMgmt_NFType_NRF)
+	ctx, pd, err := udr_context.GetSelf().GetTokenCtxForNRF(models.Nrf_NFMgmt_ServiceName_NNRF_NFM)
 	if err != nil {
 		logger.ConsumerLog.Errorf("Get token context failed: problem details: %+v", pd)
 		return err
@@ -162,7 +169,7 @@ func (ns *NrfService) SendSearchNFInstances(nrfUri string,
 	configuration.SetMetrics(sbi_metrics.SbiMetricHook)
 	client := NFDiscovery.NewAPIClient(configuration)
 
-	ctx, _, err := udr_context.GetSelf().GetTokenCtx(models.Nrf_NFMgmt_ServiceName_NNRF_DISC, models.Nrf_NFMgmt_NFType_NRF)
+	ctx, _, err := udr_context.GetSelf().GetTokenCtxForNRF(models.Nrf_NFMgmt_ServiceName_NNRF_DISC)
 	if err != nil {
 		return nil, err
 	}
