@@ -12,7 +12,6 @@ package processor
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -27,20 +26,17 @@ func (p *Processor) CreateSdmSubscriptionsProcedure(c *gin.Context, SdmSubscript
 ) {
 	udrSelf := udr_context.GetSelf()
 
-	value, ok := udrSelf.UESubsCollection.Load(ueId)
-	if !ok {
-		udrSelf.UESubsCollection.Store(ueId, new(udr_context.UESubsData))
-		value, _ = udrSelf.UESubsCollection.Load(ueId)
-	}
-	UESubsData := value.(*udr_context.UESubsData)
+	UESubsData := udrSelf.GetOrCreateUESubsData(ueId)
+
+	newSubscriptionID := udrSelf.NewSdmSubscriptionID()
+	SdmSubscription.SubscriptionId = newSubscriptionID
+
+	UESubsData.Lock()
 	if UESubsData.SdmSubscriptions == nil {
 		UESubsData.SdmSubscriptions = make(map[string]*models.Udr_DR_SdmSubscription)
 	}
-
-	newSubscriptionID := strconv.Itoa(udrSelf.SdmSubscriptionIDGenerator)
-	SdmSubscription.SubscriptionId = newSubscriptionID
 	UESubsData.SdmSubscriptions[newSubscriptionID] = &SdmSubscription
-	udrSelf.SdmSubscriptionIDGenerator++
+	UESubsData.Unlock()
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/subscription-data/{ueId}/context-data/sdm-subscriptions/{subsId}' */
@@ -65,9 +61,11 @@ func (p *Processor) QuerysdmsubscriptionsProcedure(c *gin.Context, ueId string) 
 	UESubsData := value.(*udr_context.UESubsData)
 	var sdmSubscriptionSlice []models.Udr_DR_SdmSubscription
 
+	UESubsData.RLock()
 	for _, v := range UESubsData.SdmSubscriptions {
 		sdmSubscriptionSlice = append(sdmSubscriptionSlice, *v)
 	}
+	UESubsData.RUnlock()
 
 	if len(sdmSubscriptionSlice) == 0 {
 		pd := util.ProblemDetailsNotFound("SDMSUBSCRIPTION_NOT_FOUND")

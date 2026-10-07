@@ -12,7 +12,6 @@ package processor
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -27,20 +26,18 @@ func (p *Processor) CreateEeSubscriptionsProcedure(
 ) {
 	udrSelf := udr_context.GetSelf()
 
-	value, ok := udrSelf.UESubsCollection.Load(ueId)
-	if !ok {
-		udrSelf.UESubsCollection.Store(ueId, new(udr_context.UESubsData))
-		value, _ = udrSelf.UESubsCollection.Load(ueId)
-	}
-	UESubsData := value.(*udr_context.UESubsData)
+	UESubsData := udrSelf.GetOrCreateUESubsData(ueId)
+
+	newSubscriptionID := udrSelf.NewEeSubscriptionID()
+
+	UESubsData.Lock()
 	if UESubsData.EeSubscriptionCollection == nil {
 		UESubsData.EeSubscriptionCollection = make(map[string]*udr_context.EeSubscriptionCollection)
 	}
-
-	newSubscriptionID := strconv.Itoa(udrSelf.EeSubscriptionIDGenerator)
-	UESubsData.EeSubscriptionCollection[newSubscriptionID] = new(udr_context.EeSubscriptionCollection)
-	UESubsData.EeSubscriptionCollection[newSubscriptionID].EeSubscriptions = &EeSubscription
-	udrSelf.EeSubscriptionIDGenerator++
+	UESubsData.EeSubscriptionCollection[newSubscriptionID] = &udr_context.EeSubscriptionCollection{
+		EeSubscriptions: &EeSubscription,
+	}
+	UESubsData.Unlock()
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/subscription-data/{ueId}/context-data/ee-subscriptions/{subsId} */
@@ -65,9 +62,11 @@ func (p *Processor) QueryeesubscriptionsProcedure(c *gin.Context, ueId string) {
 	UESubsData := value.(*udr_context.UESubsData)
 	var eeSubscriptionSlice []models.Udr_DR_EeSubscription
 
+	UESubsData.RLock()
 	for _, v := range UESubsData.EeSubscriptionCollection {
 		eeSubscriptionSlice = append(eeSubscriptionSlice, *v.EeSubscriptions)
 	}
+	UESubsData.RUnlock()
 
 	if len(eeSubscriptionSlice) == 0 {
 		pd := util.ProblemDetailsUpspecified("")

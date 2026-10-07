@@ -36,7 +36,11 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 	}
 	UESubsData := value.(*udr_context.UESubsData)
 
-	_, ok = UESubsData.EeSubscriptionCollection[subsId]
+	// Hold the lock across the whole read-modify-write so concurrent patches don't get lost.
+	UESubsData.Lock()
+	defer UESubsData.Unlock()
+
+	eeSub, ok := UESubsData.EeSubscriptionCollection[subsId]
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -45,7 +49,7 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 		return
 	}
 
-	if UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos == nil {
+	if eeSub.AmfSubscriptionInfos == nil {
 		pd := util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
@@ -67,7 +71,7 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 	} else {
 		patch = patchtemp
 	}
-	original, err := json.Marshal((UESubsData.EeSubscriptionCollection[subsId]).AmfSubscriptionInfos)
+	original, err := json.Marshal(eeSub.AmfSubscriptionInfos)
 	if err != nil {
 		logger.DataRepoLog.Warnln(err)
 	}
@@ -85,6 +89,6 @@ func (p *Processor) ModifyAmfSubscriptionInfoProcedure(c *gin.Context, ueId stri
 		logger.DataRepoLog.Error(err)
 	}
 
-	UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos = modifiedData
+	eeSub.AmfSubscriptionInfos = modifiedData
 	c.Status(http.StatusNoContent)
 }

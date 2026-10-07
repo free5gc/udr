@@ -35,7 +35,13 @@ func (p *Processor) CreateAMFSubscriptionsProcedure(c *gin.Context, subsId strin
 	}
 	UESubsData := value.(*udr_context.UESubsData)
 
-	_, ok = UESubsData.EeSubscriptionCollection[subsId]
+	UESubsData.Lock()
+	eeSub, ok := UESubsData.EeSubscriptionCollection[subsId]
+	if ok {
+		eeSub.AmfSubscriptionInfos = AmfSubscriptionInfo
+	}
+	UESubsData.Unlock()
+
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		logger.DataRepoLog.Errorf("CreateAMFSubscriptionsProcedure err: %s", pd.Detail)
@@ -44,7 +50,6 @@ func (p *Processor) CreateAMFSubscriptionsProcedure(c *gin.Context, subsId strin
 		return
 	}
 
-	UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos = AmfSubscriptionInfo
 	c.Status(http.StatusNoContent)
 }
 
@@ -62,19 +67,17 @@ func (p *Processor) RemoveAmfSubscriptionsInfoProcedure(c *gin.Context, subsId s
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)
+	UESubsData.Lock()
 	eeSub, ok := UESubsData.EeSubscriptionCollection[subsId]
-
-	if !ok {
+	switch {
+	case !ok:
 		pd = util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
-		logger.DataRepoLog.Errorf("RemoveAmfSubscriptionsInfoProcedure err: %s", pd.Detail)
-		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-		c.JSON(int(pd.Status), pd)
-		return
-	}
-
-	if eeSub == nil || eeSub.AmfSubscriptionInfos == nil {
+	case eeSub == nil || eeSub.AmfSubscriptionInfos == nil:
 		pd = util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
+	default:
+		eeSub.AmfSubscriptionInfos = nil
 	}
+	UESubsData.Unlock()
 
 	if pd != nil {
 		logger.DataRepoLog.Errorf("RemoveAmfSubscriptionsInfoProcedure err: %s", pd.Detail)
@@ -83,6 +86,5 @@ func (p *Processor) RemoveAmfSubscriptionsInfoProcedure(c *gin.Context, subsId s
 		return
 	}
 
-	UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos = nil
 	c.Status(http.StatusNoContent)
 }
