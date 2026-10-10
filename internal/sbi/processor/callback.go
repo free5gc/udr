@@ -108,7 +108,9 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 	configuration := DataRepository.NewConfiguration()
 	client := DataRepository.NewAPIClient(configuration)
 
-	for _, record := range udrSelf.SubscriptionDataSubscriptions {
+	// Snapshot under the context lock, then fan out unlocked: each iteration
+	// acquires a token and issues an outbound HTTP request.
+	for _, record := range udrSelf.SubscriptionDataSubscriptionsSnapshot() {
 		if record == nil || record.Subscription == nil {
 			logger.SBILog.Errorln("Invalid subscription data subscription record")
 			continue
@@ -157,7 +159,7 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Udr_DR
 
 	udrSelf := udr_context.GetSelf()
 
-	for _, record := range udrSelf.PolicyDataSubscriptions {
+	for _, record := range udrSelf.PolicyDataSubscriptionsSnapshot() {
 		if record == nil || record.Subscription == nil {
 			logger.SBILog.Errorln("Invalid policy data subscription record")
 			continue
