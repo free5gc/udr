@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/google/uuid"
@@ -67,13 +68,14 @@ const (
 )
 
 type Configuration struct {
-	NfInstanceId    string   `yaml:"nfInstanceId,omitempty" valid:"optional,uuidv4"`
-	Sbi             *Sbi     `yaml:"sbi" valid:"required"`
-	Metrics         *Metrics `yaml:"metrics,omitempty" valid:"optional"`
-	DbConnectorType DbType   `yaml:"dbConnectorType" valid:"required,in(mongodb)"`
-	Mongodb         *Mongodb `yaml:"mongodb" valid:"optional"`
-	NrfUri          string   `yaml:"nrfUri" valid:"url,required"`
-	NrfCertPem      string   `yaml:"nrfCertPem,omitempty" valid:"optional"`
+	IdleTimeout     *time.Duration `yaml:"idleTimeout,omitempty" valid:"optional"`
+	NfInstanceId    string         `yaml:"nfInstanceId,omitempty" valid:"optional,uuidv4"`
+	Sbi             *Sbi           `yaml:"sbi" valid:"required"`
+	Metrics         *Metrics       `yaml:"metrics,omitempty" valid:"optional"`
+	DbConnectorType DbType         `yaml:"dbConnectorType" valid:"required,in(mongodb)"`
+	Mongodb         *Mongodb       `yaml:"mongodb" valid:"optional"`
+	NrfUri          string         `yaml:"nrfUri" valid:"url,required"`
+	NrfCertPem      string         `yaml:"nrfCertPem,omitempty" valid:"optional"`
 }
 
 type Logger struct {
@@ -379,4 +381,15 @@ func (c *Config) GetMetricsNamespace() string {
 		return c.Configuration.Metrics.Namespace
 	}
 	return UdrMetricsDefaultNamespace
+}
+
+// GetIdleTimeout returns the HTTP server idle timeout. Omitted values preserve
+// the previous 1ms timeout; an explicit zero disables the timeout.
+func (c *Config) GetIdleTimeout() time.Duration {
+	c.RLock()
+	defer c.RUnlock()
+	if c.Configuration == nil || c.Configuration.IdleTimeout == nil {
+		return time.Millisecond
+	}
+	return *c.Configuration.IdleTimeout
 }

@@ -89,7 +89,7 @@ func bindRouter(udr app.App, router *gin.Engine, tlsKeyLogPath string) (*http.Se
 	sbiConfig := udr.Config().Configuration.Sbi
 	bindAddr := fmt.Sprintf("%s:%d", sbiConfig.BindingIPv4, sbiConfig.Port)
 
-	return httpwrapper.NewHttp2Server(bindAddr, tlsKeyLogPath, router)
+	return httpwrapper.NewHttp2Server(bindAddr, tlsKeyLogPath, router, udr.Config().GetIdleTimeout())
 }
 
 func newRouter(s *Server) *gin.Engine {
