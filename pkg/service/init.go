@@ -8,10 +8,10 @@ import (
 	"runtime/debug"
 	"sync"
 
+	"github.com/free5gc/openapi"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 
-	"github.com/free5gc/openapi"
 	NFManagement "github.com/free5gc/openapi/nrf/NFMgmt"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
@@ -42,6 +42,9 @@ type UdrApp struct {
 var _ app.App = &UdrApp{}
 
 func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
+	if err := openapi.ConfigureHTTP2Clients(cfg.GetReadIdleTimeout(), cfg.GetPingTimeout()); err != nil {
+		return nil, err
+	}
 	udr_context.Init()
 
 	udr := &UdrApp{
