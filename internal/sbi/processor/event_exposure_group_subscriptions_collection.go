@@ -12,7 +12,6 @@ package processor
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -38,9 +37,8 @@ func (p *Processor) CreateEeGroupSubscriptionsProcedure(
 		UEGroupSubsData.EeSubscriptions = make(map[string]*models.Udr_DR_EeSubscription)
 	}
 
-	newSubscriptionID := strconv.Itoa(udrSelf.EeSubscriptionIDGenerator)
+	newSubscriptionID := udrSelf.NewEeSubscriptionID()
 	UEGroupSubsData.EeSubscriptions[newSubscriptionID] = &EeSubscription
-	udrSelf.EeSubscriptionIDGenerator++
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/nudr-dr/v1/subscription-data/group-data/{ueGroupId}/ee-subscriptions */

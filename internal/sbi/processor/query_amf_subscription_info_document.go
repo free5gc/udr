@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/free5gc/openapi/models"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
@@ -33,7 +34,13 @@ func (p *Processor) GetAmfSubscriptionInfoProcedure(c *gin.Context, subsId strin
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)
-	_, ok = UESubsData.EeSubscriptionCollection[subsId]
+	UESubsData.RLock()
+	var amfInfos []models.Udr_DR_AmfSubscriptionInfo
+	eeSub, ok := UESubsData.EeSubscriptionCollection[subsId]
+	if ok {
+		amfInfos = eeSub.AmfSubscriptionInfos
+	}
+	UESubsData.RUnlock()
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -43,12 +50,12 @@ func (p *Processor) GetAmfSubscriptionInfoProcedure(c *gin.Context, subsId strin
 		return
 	}
 
-	if UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos == nil {
+	if amfInfos == nil {
 		pd := util.ProblemDetailsNotFound("AMFSUBSCRIPTION_NOT_FOUND")
 		logger.DataRepoLog.Errorf("GetAmfSubscriptionInfoProcedure err: %s", pd.Detail)
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	c.JSON(http.StatusOK, UESubsData.EeSubscriptionCollection[subsId].AmfSubscriptionInfos)
+	c.JSON(http.StatusOK, amfInfos)
 }

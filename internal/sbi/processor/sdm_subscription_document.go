@@ -31,7 +31,12 @@ func (p *Processor) RemovesdmSubscriptionsProcedure(c *gin.Context, ueId string,
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)
+	UESubsData.Lock()
 	_, ok = UESubsData.SdmSubscriptions[subsId]
+	if ok {
+		delete(UESubsData.SdmSubscriptions, subsId)
+	}
+	UESubsData.Unlock()
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -39,7 +44,6 @@ func (p *Processor) RemovesdmSubscriptionsProcedure(c *gin.Context, ueId string,
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	delete(UESubsData.SdmSubscriptions, subsId)
 
 	c.Status(http.StatusNoContent)
 }
@@ -57,7 +61,13 @@ func (p *Processor) UpdatesdmsubscriptionsProcedure(c *gin.Context, ueId string,
 	}
 
 	UESubsData := value.(*udr_context.UESubsData)
+	UESubsData.Lock()
 	_, ok = UESubsData.SdmSubscriptions[subsId]
+	if ok {
+		SdmSubscription.SubscriptionId = subsId
+		UESubsData.SdmSubscriptions[subsId] = &SdmSubscription
+	}
+	UESubsData.Unlock()
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -65,8 +75,6 @@ func (p *Processor) UpdatesdmsubscriptionsProcedure(c *gin.Context, ueId string,
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	SdmSubscription.SubscriptionId = subsId
-	UESubsData.SdmSubscriptions[subsId] = &SdmSubscription
 
 	c.Status(http.StatusNoContent)
 }
