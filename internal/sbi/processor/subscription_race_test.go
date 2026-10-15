@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -33,7 +34,7 @@ func resetUESubsCollection() {
 func newTestContext() (*gin.Context, *httptest.ResponseRecorder) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
+	c.Request = httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/", nil)
 	return c, w
 }
 
