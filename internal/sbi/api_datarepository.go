@@ -1204,13 +1204,29 @@ func (s *Server) HandleApplicationDataInfluenceDataGet(c *gin.Context) {
 	s.Processor().ApplicationDataInfluenceDataGetProcedure(c, collName, filter)
 }
 
+// resourceUriStructureNotFound rejects a request that reached the Nudr_DR API
+// but names no resource of it with the ProblemDetails required by
+// TS 29.500 Table 5.2.7.2-1 (RESOURCE_URI_STRUCTURE_NOT_FOUND) and the
+// Content-Type required by TS 29.501 clause 4.8.2.
+func resourceUriStructureNotFound(c *gin.Context) {
+	problemDetail := models.ProblemDetails{
+		Title:  "Resource URI structure not found",
+		Status: http.StatusNotFound,
+		Detail: c.Request.URL.Path + " does not name a resource of this API",
+		Cause:  "RESOURCE_URI_STRUCTURE_NOT_FOUND",
+	}
+	c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
+	c.Header("Content-Type", "application/problem+json")
+	c.JSON(http.StatusNotFound, problemDetail)
+}
+
 // HTTPApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete -
 func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete(c *gin.Context) {
 	logger.DataRepoLog.Tracef("Handle ApplicationDataInfluenceDataSubsToNotifySubscriptionIdDelete")
 
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
-		c.String(http.StatusNotFound, "404 page not found")
+		resourceUriStructureNotFound(c)
 		return
 	}
 
@@ -1225,7 +1241,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet
 
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
-		c.String(http.StatusNotFound, "404 page not found")
+		resourceUriStructureNotFound(c)
 		return
 	}
 
@@ -1238,7 +1254,7 @@ func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdGet
 func (s *Server) HandleApplicationDataInfluenceDataSubsToNotifySubscriptionIdPut(c *gin.Context) {
 	influenceId := c.Param("influenceId")
 	if influenceId != "subs-to-notify" {
-		c.String(http.StatusNotFound, "404 page not found")
+		resourceUriStructureNotFound(c)
 		return
 	}
 
