@@ -12,7 +12,6 @@ package processor
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -25,7 +24,6 @@ func (p *Processor) PostSubscriptionDataSubscriptionsProcedure(
 ) {
 	udrSelf := udr_context.GetSelf()
 
-	newSubscriptionID := strconv.Itoa(udrSelf.SubscriptionDataSubscriptionIDGenerator)
 	target, ok := subscriptionCallbackTargetFromContext(
 		c,
 		models.Nrf_NFMgmt_ServiceName_NUDM_SDM,
@@ -35,11 +33,7 @@ func (p *Processor) PostSubscriptionDataSubscriptionsProcedure(
 		rejectUnresolvedCallbackTarget(c)
 		return
 	}
-	udrSelf.SubscriptionDataSubscriptions[newSubscriptionID] = &udr_context.SubscriptionDataSubscriptionRecord{
-		Subscription:   &SubscriptionDataSubscriptions,
-		CallbackTarget: target,
-	}
-	udrSelf.SubscriptionDataSubscriptionIDGenerator++
+	newSubscriptionID := udrSelf.CreateSubscriptionDataSubscription(&SubscriptionDataSubscriptions, target)
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/subscription-data/subs-to-notify/{subsId} */
