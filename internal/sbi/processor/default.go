@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -180,7 +179,6 @@ func (p *Processor) PolicyDataSubsToNotifyPostProcedure(
 ) {
 	udrSelf := udr_context.GetSelf()
 
-	newSubscriptionID := strconv.Itoa(udrSelf.PolicyDataSubscriptionIDGenerator)
 	target, ok := subscriptionCallbackTargetFromContext(
 		c,
 		models.Nrf_NFMgmt_ServiceName_NPCF_SMPOLICYCONTROL,
@@ -190,11 +188,7 @@ func (p *Processor) PolicyDataSubsToNotifyPostProcedure(
 		rejectUnresolvedCallbackTarget(c)
 		return
 	}
-	udrSelf.PolicyDataSubscriptions[newSubscriptionID] = &udr_context.PolicyDataSubscriptionRecord{
-		Subscription:   &PolicyDataSubscription,
-		CallbackTarget: target,
-	}
-	udrSelf.PolicyDataSubscriptionIDGenerator++
+	newSubscriptionID := udrSelf.CreatePolicyDataSubscription(&PolicyDataSubscription, target)
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/subscription-data/subs-to-notify/{subsId} */
@@ -207,14 +201,12 @@ func (p *Processor) PolicyDataSubsToNotifyPostProcedure(
 
 func (p *Processor) PolicyDataSubsToNotifySubsIdDeleteProcedure(c *gin.Context, subsId string) {
 	udrSelf := udr_context.GetSelf()
-	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
-	if !ok {
+	if !udrSelf.DeletePolicyDataSubscription(subsId) {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	delete(udrSelf.PolicyDataSubscriptions, subsId)
 	c.Status(http.StatusNoContent)
 }
 
@@ -222,22 +214,12 @@ func (p *Processor) PolicyDataSubsToNotifySubsIdPutProcedure(c *gin.Context, sub
 	policyDataSubscription models.Udr_DR_PolicyDataSubscription,
 ) {
 	udrSelf := udr_context.GetSelf()
-	_, ok := udrSelf.PolicyDataSubscriptions[subsId]
-	if !ok {
+	if !udrSelf.PutPolicyDataSubscription(subsId, &policyDataSubscription) {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-
-	record := udrSelf.PolicyDataSubscriptions[subsId]
-	if record == nil {
-		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
-		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-		c.JSON(int(pd.Status), pd)
-		return
-	}
-	record.Subscription = &policyDataSubscription
 	c.JSON(http.StatusOK, policyDataSubscription)
 }
 

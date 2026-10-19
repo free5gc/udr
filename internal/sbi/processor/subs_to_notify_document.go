@@ -22,14 +22,12 @@ import (
 
 func (p *Processor) RemovesubscriptionDataSubscriptionsProcedure(c *gin.Context, subsId string) {
 	udrSelf := udr_context.GetSelf()
-	_, ok := udrSelf.SubscriptionDataSubscriptions[subsId]
-	if !ok {
+	if !udrSelf.DeleteSubscriptionDataSubscription(subsId) {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
 		logger.DataRepoLog.Errorf("RemovesubscriptionDataSubscriptionsProcedure err: %s", pd.Detail)
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	delete(udrSelf.SubscriptionDataSubscriptions, subsId)
 	c.Status(http.StatusNoContent)
 }

@@ -265,6 +265,105 @@ func NewInfluenceDataSubscriptionId() string {
 	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
 }
 
+// The subs-to-notify maps below are written by HTTP handlers while notification
+// goroutines read them; every access must go through context.mtx. Snapshots copy
+// the record pointers under the lock so callers can fan out unlocked — safe
+// because handlers only insert, delete, or replace whole records and never
+// mutate a record in place.
+
+// CreateSubscriptionDataSubscription allocates the subscription ID and inserts
+// the record inside one critical section so concurrent POSTs can neither race
+// on the map nor hand out duplicate IDs.
+func (context *UDRContext) CreateSubscriptionDataSubscription(
+	subscription *models.Udr_DR_SubscriptionDataSubscriptions,
+	callbackTarget SubscriptionCallbackTarget,
+) string {
+	context.mtx.Lock()
+	defer context.mtx.Unlock()
+	newSubscriptionID := strconv.Itoa(context.SubscriptionDataSubscriptionIDGenerator)
+	context.SubscriptionDataSubscriptions[newSubscriptionID] = &SubscriptionDataSubscriptionRecord{
+		Subscription:   subscription,
+		CallbackTarget: callbackTarget,
+	}
+	context.SubscriptionDataSubscriptionIDGenerator++
+	return newSubscriptionID
+}
+
+func (context *UDRContext) DeleteSubscriptionDataSubscription(subsId string) bool {
+	context.mtx.Lock()
+	defer context.mtx.Unlock()
+	if _, ok := context.SubscriptionDataSubscriptions[subsId]; !ok {
+		return false
+	}
+	delete(context.SubscriptionDataSubscriptions, subsId)
+	return true
+}
+
+func (context *UDRContext) SubscriptionDataSubscriptionsSnapshot() []*SubscriptionDataSubscriptionRecord {
+	context.mtx.RLock()
+	defer context.mtx.RUnlock()
+	snapshot := make([]*SubscriptionDataSubscriptionRecord, 0, len(context.SubscriptionDataSubscriptions))
+	for _, record := range context.SubscriptionDataSubscriptions {
+		snapshot = append(snapshot, record)
+	}
+	return snapshot
+}
+
+// CreatePolicyDataSubscription is the policy-data counterpart of
+// CreateSubscriptionDataSubscription.
+func (context *UDRContext) CreatePolicyDataSubscription(
+	subscription *models.Udr_DR_PolicyDataSubscription,
+	callbackTarget SubscriptionCallbackTarget,
+) string {
+	context.mtx.Lock()
+	defer context.mtx.Unlock()
+	newSubscriptionID := strconv.Itoa(context.PolicyDataSubscriptionIDGenerator)
+	context.PolicyDataSubscriptions[newSubscriptionID] = &PolicyDataSubscriptionRecord{
+		Subscription:   subscription,
+		CallbackTarget: callbackTarget,
+	}
+	context.PolicyDataSubscriptionIDGenerator++
+	return newSubscriptionID
+}
+
+// PutPolicyDataSubscription replaces the record instead of writing through it,
+// so a snapshot taken before the PUT never observes a half-updated record.
+func (context *UDRContext) PutPolicyDataSubscription(
+	subsId string, subscription *models.Udr_DR_PolicyDataSubscription,
+) bool {
+	context.mtx.Lock()
+	defer context.mtx.Unlock()
+	record, ok := context.PolicyDataSubscriptions[subsId]
+	if !ok || record == nil {
+		return false
+	}
+	context.PolicyDataSubscriptions[subsId] = &PolicyDataSubscriptionRecord{
+		Subscription:   subscription,
+		CallbackTarget: record.CallbackTarget,
+	}
+	return true
+}
+
+func (context *UDRContext) DeletePolicyDataSubscription(subsId string) bool {
+	context.mtx.Lock()
+	defer context.mtx.Unlock()
+	if _, ok := context.PolicyDataSubscriptions[subsId]; !ok {
+		return false
+	}
+	delete(context.PolicyDataSubscriptions, subsId)
+	return true
+}
+
+func (context *UDRContext) PolicyDataSubscriptionsSnapshot() []*PolicyDataSubscriptionRecord {
+	context.mtx.RLock()
+	defer context.mtx.RUnlock()
+	snapshot := make([]*PolicyDataSubscriptionRecord, 0, len(context.PolicyDataSubscriptions))
+	for _, record := range context.PolicyDataSubscriptions {
+		snapshot = append(snapshot, record)
+	}
+	return snapshot
+}
+
 func (c *UDRContext) GetTokenCtx(serviceName models.Nrf_NFMgmt_ServiceName, targetNF models.Nrf_NFMgmt_NFType) (
 	context.Context, *models.ProblemDetails, error,
 ) {
