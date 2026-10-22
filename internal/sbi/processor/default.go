@@ -305,35 +305,33 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 		return
 	}
 
-	hex_snssai := util.SnssaiModelsToHex(snssai)
-	found := false
-	smPolicySnssaiDatas, ok := smPolicyData["smPolicySnssaiData"].(map[string]interface{})
-	if !ok {
-		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+	var smPolicyDataResp models.Udr_DR_SmPolicyData
+	if err := json.Unmarshal(util.MapToByte(smPolicyData), &smPolicyDataResp); err != nil {
+		pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy data")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	for cmpSnssai, v := range smPolicySnssaiDatas {
-		if !strings.EqualFold(cmpSnssai, hex_snssai) {
+	entries, err := normalizeSMPolicySnssaiData(smPolicyDataResp.SmPolicySnssaiData)
+	if err != nil {
+		logger.DataRepoLog.Warnln(err)
+		pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy S-NSSAI data")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	smPolicyDataResp.SmPolicySnssaiData = entries
+	found := false
+	for _, entry := range entries {
+		if !openapi.SnssaiEqualFold(*entry.Snssai, snssai) {
 			continue
 		}
-		smPolicySnssaiData, ok := v.(map[string]interface{})
-		if !ok {
-			break
-		}
-		smPolicyDnnDatas, ok := smPolicySnssaiData["smPolicyDnnData"].(map[string]interface{})
-		if !ok {
-			break
-		}
-
-		for cmpDnn := range smPolicyDnnDatas {
+		for cmpDnn := range entry.SmPolicyDnnData {
 			if strings.EqualFold(cmpDnn, util.EscapeDnn(dnn)) {
 				found = true
 				break
 			}
 		}
-
 		if found {
 			break
 		}
@@ -345,11 +343,6 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 		return
 	}
 
-	var smPolicyDataResp models.Udr_DR_SmPolicyData
-	err := json.Unmarshal(util.MapToByte(smPolicyData), &smPolicyDataResp)
-	if err != nil {
-		logger.DataRepoLog.Warnln(err)
-	}
 	tmpSmPolicySnssaiData := make(map[string]models.Udr_DR_SmPolicySnssaiData)
 	for snssai, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
 		tmpSmPolicyDnnData := make(map[string]models.Udr_DR_SmPolicyDnnData)
@@ -438,6 +431,15 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 				smPolicyData.UmData[element.LimitId] = element
 			}
 		}
+		entries, err := normalizeSMPolicySnssaiData(smPolicyData.SmPolicySnssaiData)
+		if err != nil {
+			logger.DataRepoLog.Warnln(err)
+			pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy S-NSSAI data")
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
+			c.JSON(int(pd.Status), pd)
+			return
+		}
+		smPolicyData.SmPolicySnssaiData = entries
 		PreHandlePolicyDataChangeNotification(ueId, "", smPolicyData)
 		c.Status(http.StatusNoContent)
 	}
