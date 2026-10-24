@@ -42,7 +42,9 @@ type UdrApp struct {
 var _ app.App = &UdrApp{}
 
 func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
-	if err := openapi.ConfigureHTTP2Clients(cfg.GetReadIdleTimeout(), cfg.GetPingTimeout()); err != nil {
+	if err := openapi.ConfigureHTTP2Clients(
+		cfg.GetReadIdleTimeout(), cfg.GetPingTimeout(), cfg.GetTLSVerify(),
+	); err != nil {
 		return nil, err
 	}
 	udr_context.Init()
