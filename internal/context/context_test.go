@@ -12,14 +12,15 @@ import (
 	tlsAtomic "sync/atomic"
 	"testing"
 
+	"github.com/gin-gonic/gin"
+	tlsYAML "gopkg.in/yaml.v2"
+
 	tlsOpenAPI "github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	tlsNFM "github.com/free5gc/openapi/nrf/NFMgmt"
 	udr_context "github.com/free5gc/udr/internal/context"
 	"github.com/free5gc/udr/internal/sbi/processor"
 	tlsFactory "github.com/free5gc/udr/pkg/factory"
-	"github.com/gin-gonic/gin"
-	tlsYAML "gopkg.in/yaml.v2"
 )
 
 const (
@@ -87,13 +88,19 @@ func TestPostSubscriptionDataSubscriptionsConcurrentAccess(t *testing.T) {
 // generated NRF client used in production. No deployment files are modified.
 func TestSBIConfigTLSVerification(t *testing.T) {
 	t.Cleanup(func() {
-		_ = tlsOpenAPI.ConfigureHTTP2Clients(tlsOpenAPI.TransportReadIdleTimeout, tlsOpenAPI.TransportPingTimeout, false)
+		if err := tlsOpenAPI.ConfigureHTTP2Clients(
+			tlsOpenAPI.TransportReadIdleTimeout, tlsOpenAPI.TransportPingTimeout, false,
+		); err != nil {
+			t.Errorf("restore HTTP clients: %v", err)
+		}
 	})
 	var requests tlsAtomic.Int32
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests.Add(1)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = tlsIO.WriteString(w, `{}`)
+		if _, err := tlsIO.WriteString(w, `{}`); err != nil {
+			t.Errorf("write response: %v", err)
+		}
 	}))
 	server.EnableHTTP2 = true
 	server.Config.ErrorLog = tlsLog.New(tlsIO.Discard, "", 0)
@@ -112,7 +119,9 @@ func TestSBIConfigTLSVerification(t *testing.T) {
 			if cfg.GetTLSVerify() != (value == "true") {
 				t.Fatal("verify parsing mismatch")
 			}
-			if err := tlsOpenAPI.ConfigureHTTP2Clients(cfg.GetReadIdleTimeout(), cfg.GetPingTimeout(), cfg.GetTLSVerify()); err != nil {
+			if err := tlsOpenAPI.ConfigureHTTP2Clients(
+				cfg.GetReadIdleTimeout(), cfg.GetPingTimeout(), cfg.GetTLSVerify(),
+			); err != nil {
 				t.Fatal(err)
 			}
 			apiCfg := tlsNFM.NewConfiguration()
