@@ -431,9 +431,9 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 				smPolicyData.UmData[element.LimitId] = element
 			}
 		}
-		entries, err := normalizeSMPolicySnssaiData(smPolicyData.SmPolicySnssaiData)
-		if err != nil {
-			logger.DataRepoLog.Warnln(err)
+		entries, normalizeErr := normalizeSMPolicySnssaiData(smPolicyData.SmPolicySnssaiData)
+		if normalizeErr != nil {
+			logger.DataRepoLog.Warnln(normalizeErr)
 			pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy S-NSSAI data")
 			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 			c.JSON(int(pd.Status), pd)

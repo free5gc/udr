@@ -45,7 +45,7 @@ func normalizeSMPolicySnssaiData(entries map[string]models.Udr_DR_SmPolicySnssai
 		// A hyphenated key has an unambiguous standard identity. Do not silently
 		// repair a contradictory identity. Unseparated legacy keys are ambiguous.
 		if strings.Contains(oldKey, "-") && !strings.EqualFold(oldKey, key) &&
-			!(snssai.Sd == "" && strings.EqualFold(oldKey, key+"-ffffff")) {
+			(snssai.Sd != "" || !strings.EqualFold(oldKey, key+"-ffffff")) {
 			return nil, fmt.Errorf("SM policy key %q disagrees with snssai", oldKey)
 		}
 		entry.Snssai = &snssai
