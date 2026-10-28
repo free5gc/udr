@@ -312,7 +312,35 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	entries, err := normalizeSMPolicySnssaiData(smPolicyDataResp.SmPolicySnssaiData)
+	entries := make(map[string]models.Udr_DR_SmPolicySnssaiData, len(smPolicyDataResp.SmPolicySnssaiData))
+	found := false
+	var err error
+	for _, entry := range smPolicyDataResp.SmPolicySnssaiData {
+		if entry.Snssai == nil {
+			err = fmt.Errorf("SM policy entry is missing snssai")
+			break
+		}
+		var key string
+		key, err = openapi.SnssaiModelsToMapKey(*entry.Snssai)
+		if err != nil {
+			break
+		}
+		if previous, ok := entries[key]; ok &&
+			(!reflect.DeepEqual(previous.SmPolicyDnnData, entry.SmPolicyDnnData) ||
+				!reflect.DeepEqual(previous.UeSliceMbr, entry.UeSliceMbr)) {
+			err = fmt.Errorf("conflicting SM policy entries for %q", key)
+			break
+		}
+		entries[key] = entry
+		if openapi.SnssaiEqualFold(*entry.Snssai, snssai) {
+			for cmpDnn := range entry.SmPolicyDnnData {
+				if strings.EqualFold(cmpDnn, util.EscapeDnn(dnn)) {
+					found = true
+					break
+				}
+			}
+		}
+	}
 	if err != nil {
 		logger.DataRepoLog.Warnln(err)
 		pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy S-NSSAI data")
@@ -321,21 +349,6 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 		return
 	}
 	smPolicyDataResp.SmPolicySnssaiData = entries
-	found := false
-	for _, entry := range entries {
-		if !openapi.SnssaiEqualFold(*entry.Snssai, snssai) {
-			continue
-		}
-		for cmpDnn := range entry.SmPolicyDnnData {
-			if strings.EqualFold(cmpDnn, util.EscapeDnn(dnn)) {
-				found = true
-				break
-			}
-		}
-		if found {
-			break
-		}
-	}
 	if !found {
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
@@ -431,9 +444,28 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 				smPolicyData.UmData[element.LimitId] = element
 			}
 		}
-		entries, normalizeErr := normalizeSMPolicySnssaiData(smPolicyData.SmPolicySnssaiData)
-		if normalizeErr != nil {
-			logger.DataRepoLog.Warnln(normalizeErr)
+		entries := make(map[string]models.Udr_DR_SmPolicySnssaiData, len(smPolicyData.SmPolicySnssaiData))
+		var keyErr error
+		for _, entry := range smPolicyData.SmPolicySnssaiData {
+			if entry.Snssai == nil {
+				keyErr = fmt.Errorf("SM policy entry is missing snssai")
+				break
+			}
+			var key string
+			key, keyErr = openapi.SnssaiModelsToMapKey(*entry.Snssai)
+			if keyErr != nil {
+				break
+			}
+			if previous, ok := entries[key]; ok &&
+				(!reflect.DeepEqual(previous.SmPolicyDnnData, entry.SmPolicyDnnData) ||
+					!reflect.DeepEqual(previous.UeSliceMbr, entry.UeSliceMbr)) {
+				keyErr = fmt.Errorf("conflicting SM policy entries for %q", key)
+				break
+			}
+			entries[key] = entry
+		}
+		if keyErr != nil {
+			logger.DataRepoLog.Warnln(keyErr)
 			pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy S-NSSAI data")
 			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 			c.JSON(int(pd.Status), pd)
