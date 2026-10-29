@@ -305,39 +305,50 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 		return
 	}
 
-	hex_snssai := util.SnssaiModelsToHex(snssai)
-	found := false
-	smPolicySnssaiDatas, ok := smPolicyData["smPolicySnssaiData"].(map[string]interface{})
-	if !ok {
-		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
+	var smPolicyDataResp models.Udr_DR_SmPolicyData
+	if err := json.Unmarshal(util.MapToByte(smPolicyData), &smPolicyDataResp); err != nil {
+		pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy data")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	for cmpSnssai, v := range smPolicySnssaiDatas {
-		if !strings.EqualFold(cmpSnssai, hex_snssai) {
-			continue
-		}
-		smPolicySnssaiData, ok := v.(map[string]interface{})
-		if !ok {
+	entries := make(map[string]models.Udr_DR_SmPolicySnssaiData, len(smPolicyDataResp.SmPolicySnssaiData))
+	found := false
+	var err error
+	for _, entry := range smPolicyDataResp.SmPolicySnssaiData {
+		if entry.Snssai == nil {
+			err = fmt.Errorf("SM policy entry is missing snssai")
 			break
 		}
-		smPolicyDnnDatas, ok := smPolicySnssaiData["smPolicyDnnData"].(map[string]interface{})
-		if !ok {
+		var key string
+		key, err = openapi.SnssaiModelsToMapKey(*entry.Snssai)
+		if err != nil {
 			break
 		}
-
-		for cmpDnn := range smPolicyDnnDatas {
-			if strings.EqualFold(cmpDnn, util.EscapeDnn(dnn)) {
-				found = true
-				break
+		if previous, ok := entries[key]; ok &&
+			(!reflect.DeepEqual(previous.SmPolicyDnnData, entry.SmPolicyDnnData) ||
+				!reflect.DeepEqual(previous.UeSliceMbr, entry.UeSliceMbr)) {
+			err = fmt.Errorf("conflicting SM policy entries for %q", key)
+			break
+		}
+		entries[key] = entry
+		if openapi.SnssaiEqualFold(*entry.Snssai, snssai) {
+			for cmpDnn := range entry.SmPolicyDnnData {
+				if strings.EqualFold(cmpDnn, util.EscapeDnn(dnn)) {
+					found = true
+					break
+				}
 			}
 		}
-
-		if found {
-			break
-		}
 	}
+	if err != nil {
+		logger.DataRepoLog.Warnln(err)
+		pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy S-NSSAI data")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
+		c.JSON(int(pd.Status), pd)
+		return
+	}
+	smPolicyDataResp.SmPolicySnssaiData = entries
 	if !found {
 		pd := util.ProblemDetailsNotFound("DATA_NOT_FOUND")
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
@@ -345,11 +356,6 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 		return
 	}
 
-	var smPolicyDataResp models.Udr_DR_SmPolicyData
-	err := json.Unmarshal(util.MapToByte(smPolicyData), &smPolicyDataResp)
-	if err != nil {
-		logger.DataRepoLog.Warnln(err)
-	}
 	tmpSmPolicySnssaiData := make(map[string]models.Udr_DR_SmPolicySnssaiData)
 	for snssai, snssaiData := range smPolicyDataResp.SmPolicySnssaiData {
 		tmpSmPolicyDnnData := make(map[string]models.Udr_DR_SmPolicyDnnData)
@@ -438,6 +444,34 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 				smPolicyData.UmData[element.LimitId] = element
 			}
 		}
+		entries := make(map[string]models.Udr_DR_SmPolicySnssaiData, len(smPolicyData.SmPolicySnssaiData))
+		var keyErr error
+		for _, entry := range smPolicyData.SmPolicySnssaiData {
+			if entry.Snssai == nil {
+				keyErr = fmt.Errorf("SM policy entry is missing snssai")
+				break
+			}
+			var key string
+			key, keyErr = openapi.SnssaiModelsToMapKey(*entry.Snssai)
+			if keyErr != nil {
+				break
+			}
+			if previous, ok := entries[key]; ok &&
+				(!reflect.DeepEqual(previous.SmPolicyDnnData, entry.SmPolicyDnnData) ||
+					!reflect.DeepEqual(previous.UeSliceMbr, entry.UeSliceMbr)) {
+				keyErr = fmt.Errorf("conflicting SM policy entries for %q", key)
+				break
+			}
+			entries[key] = entry
+		}
+		if keyErr != nil {
+			logger.DataRepoLog.Warnln(keyErr)
+			pd := util.ProblemDetailsSystemFailure("Invalid stored SM policy S-NSSAI data")
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
+			c.JSON(int(pd.Status), pd)
+			return
+		}
+		smPolicyData.SmPolicySnssaiData = entries
 		PreHandlePolicyDataChangeNotification(ueId, "", smPolicyData)
 		c.Status(http.StatusNoContent)
 	}
