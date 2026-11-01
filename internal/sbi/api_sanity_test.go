@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/free5gc/openapi/models"
 	db "github.com/free5gc/udr/internal/database"
@@ -422,4 +424,71 @@ func TestUDR_InfluData_CreateThenGet(t *testing.T) {
 			require.Equal(t, http.StatusOK, rsp.Code)
 			require.Equal(t, 0, len(testRsp))
 		})
+}
+
+func TestUDR_SMPolicyKeys(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping testing in short mode")
+	}
+	setupMongoDB(t)
+	const collection = "policyData.ues.smData"
+	const supi = "imsi-snssai-key-test"
+	filter := bson.M{"ueId": supi}
+	t.Cleanup(func() { require.NoError(t, mongoapi.RestfulAPIDeleteOne(collection, filter)) })
+	query := url.Values{"snssai": {`{"sst":222,"sd":"00007b"}`}, "dnn": {"default"}}
+	uri := factory.UdrDrResUriPrefix + "/policy-data/ues/" + supi + "/sm-data?" + query.Encode()
+	entry := models.Udr_DR_SmPolicySnssaiData{
+		Snssai:          &models.Snssai{Sst: 222, Sd: "00007B"},
+		SmPolicyDnnData: map[string]models.Udr_DR_SmPolicyDnnData{"default": {Dnn: "default", GbrDl: "100 Mbps"}},
+	}
+	for _, tc := range []struct {
+		name, key string
+		alias     bool
+		conflict  bool
+		missing   bool
+		status    int
+	}{
+		{name: "standard", key: "222-00007b", status: http.StatusOK},
+		{name: "legacy decimal", key: "22200007b", status: http.StatusOK},
+		{name: "legacy hex", key: "de00007b", status: http.StatusOK},
+		{name: "entry identity", key: "1-010203", status: http.StatusOK},
+		{name: "duplicate", key: "de00007b", alias: true, status: http.StatusOK},
+		{name: "conflict", key: "de00007b", alias: true, conflict: true, status: http.StatusInternalServerError},
+		{name: "missing snssai", key: "old", missing: true, status: http.StatusInternalServerError},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			entries := map[string]models.Udr_DR_SmPolicySnssaiData{tc.key: entry}
+			if tc.alias {
+				alias := entry
+				alias.Snssai = &models.Snssai{Sst: 222, Sd: "00007b"}
+				if tc.conflict {
+					alias.UeSliceMbr = &models.SliceMbr{Downlink: "1 Gbps"}
+				}
+				entries["222-00007b"] = alias
+			}
+			if tc.missing {
+				entries[tc.key] = models.Udr_DR_SmPolicySnssaiData{}
+			}
+			_, err := mongoapi.RestfulAPIPutOne(collection, filter,
+				map[string]interface{}{"ueId": supi, "smPolicySnssaiData": entries})
+			require.NoError(t, err)
+			rsp := getUri(t, uri, "")
+			require.Equal(t, tc.status, rsp.Code, rsp.Body.String())
+			if tc.status == http.StatusOK {
+				var got models.Udr_DR_SmPolicyData
+				require.NoError(t, json.Unmarshal(rsp.Body.Bytes(), &got))
+				require.Len(t, got.SmPolicySnssaiData, 1)
+				result := got.SmPolicySnssaiData["222-00007b"]
+				require.Equal(t, entry.SmPolicyDnnData, result.SmPolicyDnnData)
+				if !tc.alias {
+					require.Equal(t, entry.Snssai, result.Snssai)
+				}
+				stored, getErr := mongoapi.RestfulAPIGetOne(collection, filter)
+				require.NoError(t, getErr)
+				data, ok := stored["smPolicySnssaiData"].(map[string]interface{})
+				require.True(t, ok)
+				require.Contains(t, data, tc.key)
+			}
+		})
+	}
 }
