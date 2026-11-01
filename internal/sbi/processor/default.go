@@ -415,7 +415,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 	}
 
 	if successAll {
-		smPolicyDataBsonM, pd := p.GetDataFromDB(collName, filter)
+		smPolicyDataBsonM, pd := p.GetDataFromDB("policyData.ues.smData", filter)
 		if pd != nil {
 			logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataPatchProcedure err: %s", pd.Detail)
 			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
@@ -474,6 +474,7 @@ func (p *Processor) PolicyDataUesUeIdSmDataPatchProcedure(c *gin.Context, collNa
 		smPolicyData.SmPolicySnssaiData = entries
 		PreHandlePolicyDataChangeNotification(ueId, "", smPolicyData)
 		c.Status(http.StatusNoContent)
+		return
 	}
 	pd := util.ProblemDetailsModifyNotAllowed("")
 	c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
