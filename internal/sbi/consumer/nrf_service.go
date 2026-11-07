@@ -118,8 +118,8 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, applyOAuth2 bo
 			if rsp.Nrf_NFMgmt_NFProfile != nil {
 				nf = *rsp.Nrf_NFMgmt_NFProfile
 			}
-			if err := ns.processRegisterResponse(udrContext, nf, applyOAuth2); err != nil {
-				return err
+			if processErr := ns.processRegisterResponse(udrContext, nf, applyOAuth2); processErr != nil {
+				return processErr
 			}
 			return nil
 		}
