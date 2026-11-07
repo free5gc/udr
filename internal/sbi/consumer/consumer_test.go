@@ -42,14 +42,20 @@ func newTestConsumer(t *testing.T, nfId, nrfUri string) *Consumer {
 
 	udrContext := udr_context.GetSelf()
 	prevNfId, prevNrfUri, prevOAuth2 := udrContext.NfId, udrContext.NrfUri, udrContext.OAuth2Required
+	prevNrfCertPem := udrContext.NrfCertPem
+	prevNrfNfInstanceID := udrContext.NrfNfInstanceID
 	t.Cleanup(func() {
 		udrContext.NfId = prevNfId
 		udrContext.NrfUri = prevNrfUri
 		udrContext.OAuth2Required = prevOAuth2
+		udrContext.NrfCertPem = prevNrfCertPem
+		udrContext.NrfNfInstanceID = prevNrfNfInstanceID
 	})
 	udrContext.NfId = nfId
 	udrContext.NrfUri = nrfUri
 	udrContext.OAuth2Required = false
+	udrContext.NrfCertPem = ""
+	udrContext.NrfNfInstanceID = ""
 
 	testConsumer, err := NewConsumer(&fakeApp{
 		cfg: &factory.Config{Configuration: &factory.Configuration{}},

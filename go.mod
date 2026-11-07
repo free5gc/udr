@@ -5,7 +5,7 @@ go 1.26.2
 require (
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d
 	github.com/evanphx/json-patch v0.5.2
-	github.com/free5gc/openapi v1.3.1-0.20261014070323-89accd9890ce
+	github.com/free5gc/openapi v1.3.1-0.20261104070955-7fad8e868cb2
 	github.com/free5gc/util v1.4.1-0.20261014070359-d865b0ce854b
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
@@ -21,8 +21,6 @@ require (
 	go.mongodb.org/mongo-driver v1.17.7
 	gopkg.in/yaml.v2 v2.4.0
 )
-
-replace github.com/free5gc/openapi => github.com/carlhus/openapi v0.0.0-20260831123630-67c603f8c589
 
 require (
 	github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 // indirect

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"path/filepath"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -14,13 +15,15 @@ import (
 	"github.com/free5gc/openapi"
 	"github.com/free5gc/openapi/models"
 	NFDiscovery "github.com/free5gc/openapi/nrf/NFDisc"
+	"github.com/free5gc/openapi/oauth"
 	"github.com/free5gc/util/nfheartbeat"
 )
 
 const (
-	testNrfUri   = "http://127.0.0.10:8000"
-	testNfId     = "6ba7b810-9dad-41d1-80b4-00c04fd430c8"
-	testNfIdPath = "/nnrf-nfm/v1/nf-instances/" + testNfId
+	testNrfUri        = "http://127.0.0.10:8000"
+	testNfId          = "6ba7b810-9dad-41d1-80b4-00c04fd430c8"
+	testNfIdPath      = "/nnrf-nfm/v1/nf-instances/" + testNfId
+	testNrfInstanceID = "c8080a4c-5a1a-4c84-95a5-4ba241b2e3c4"
 
 	causeNotFound      = "RESOURCE_URI_STRUCTURE_NOT_FOUND"
 	causeSystemFailure = "SYSTEM_FAILURE"
@@ -322,6 +325,24 @@ func TestSendRegisterNFInstance(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			consumer := newNrfTestConsumer(t)
 
+			if tt.applyOAuth2 {
+				certPath := filepath.Join(t.TempDir(), "nrf.pem")
+
+				privateKey, err := oauth.GenerateRSAKeyPair("", "")
+				require.NoError(t, err)
+
+				_, err = oauth.GenerateCertificate(
+					"NRF",
+					testNrfInstanceID,
+					certPath,
+					&privateKey.PublicKey,
+					nil,
+					privateKey,
+				)
+				require.NoError(t, err)
+
+				consumer.Context().NrfCertPem = certPath
+			}
 			gock.New(testNrfUri).
 				Put(testNfIdPath).
 				Reply(tt.status).
@@ -338,6 +359,9 @@ func TestSendRegisterNFInstance(t *testing.T) {
 			}
 			if got := consumer.Context().OAuth2Required; got != tt.wantOAuth2 {
 				t.Errorf("OAuth2Required = %v, want %v", got, tt.wantOAuth2)
+			}
+			if tt.applyOAuth2 {
+				require.Equal(t, testNrfInstanceID, consumer.Context().NrfNfInstanceID)
 			}
 			// The UDR keeps the instance ID it chose, whatever the NRF echoes back.
 			if got := consumer.Context().NfId; got != testNfId {

@@ -389,7 +389,7 @@ func (c *UDRContext) GetTokenCtxForNFInstance(serviceName models.Nrf_NFMgmt_Serv
 	if targetID.Version() != 4 {
 		return nil, nil, fmt.Errorf("invalid target NF instance ID: UUID must be version 4")
 	}
-	return oauth.GetTokenCtx(c.tokenRequestForNFInstance(serviceName, targetNF, targetNFInstanceID))
+	return oauth.GetTokenCtx(c.tokenRequestForNFInstance(serviceName, targetNF, targetID.String()))
 }
 
 func (c *UDRContext) GetTokenCtxForNRF(serviceName models.Nrf_NFMgmt_ServiceName) (
@@ -450,7 +450,7 @@ func (c *UDRContext) AuthorizationCheck(token string, serviceName models.Nrf_NFM
 		return nil
 	}
 
-	logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: token[%s] serviceName[%s]\n", token, serviceName)
+	logger.UtilLog.Debugf("UDRContext::AuthorizationCheck: serviceName[%s]", serviceName)
 	return oauth.VerifyOAuth(token, string(serviceName), oauth.AudiencePolicy{
 		NFInstanceID: c.NfId,
 		NFType:       models.Nrf_NFMgmt_NFType_UDR,
