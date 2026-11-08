@@ -2554,7 +2554,8 @@ func (s *Server) HandleQueryEeGroupSubscriptions(c *gin.Context) {
 			Detail: "Invalid ueGroupId",
 			Cause:  "INVALID_PARAMETER",
 		}
-		logger.DataRepoLog.Errorf("Invalid ueGroupId: %s", ueGroupId)
+		// Quote the untrusted ueGroupId to prevent newline injection in logs.
+		logger.DataRepoLog.Errorf("Invalid ueGroupId: %q", ueGroupId)
 		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetail.Cause)
 		c.JSON(http.StatusBadRequest, problemDetail)
 		return
