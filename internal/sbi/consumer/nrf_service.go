@@ -122,7 +122,6 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, applyOAuth2 bo
 				if nf.NfInstanceId != profile.NfInstanceId ||
 					nf.NfType != models.Nrf_NFMgmt_NFType_UDR ||
 					nf.NfStatus != models.Nrf_NFMgmt_NFStatus_REGISTERED {
-
 					err = fmt.Errorf(
 						"invalid NRF registration NFProfile: id=%q type=%q status=%q",
 						nf.NfInstanceId, nf.NfType, nf.NfStatus,
