@@ -113,15 +113,29 @@ func (ns *NrfService) SendRegisterNFInstance(ctx context.Context, applyOAuth2 bo
 	}
 	for ctx.Err() == nil {
 		rsp, err = client.NFInstanceIDDocumentApi.RegisterNFInstance(ctx, registerReq)
-		if err == nil && rsp != nil {
-			var nf models.Nrf_NFMgmt_NFProfile
-			if rsp.Nrf_NFMgmt_NFProfile != nil {
-				nf = *rsp.Nrf_NFMgmt_NFProfile
+		if err == nil {
+			if rsp == nil || rsp.Nrf_NFMgmt_NFProfile == nil {
+				err = fmt.Errorf("NRF registration response missing NFProfile")
+			} else {
+				nf := rsp.Nrf_NFMgmt_NFProfile
+
+				if nf.NfInstanceId != profile.NfInstanceId ||
+					nf.NfType != models.Nrf_NFMgmt_NFType_UDR ||
+					nf.NfStatus != models.Nrf_NFMgmt_NFStatus_REGISTERED {
+
+					err = fmt.Errorf(
+						"invalid NRF registration NFProfile: id=%q type=%q status=%q",
+						nf.NfInstanceId, nf.NfType, nf.NfStatus,
+					)
+				} else {
+					if processErr := ns.processRegisterResponse(
+						udrContext, *nf, applyOAuth2,
+					); processErr != nil {
+						return processErr
+					}
+					return nil
+				}
 			}
-			if processErr := ns.processRegisterResponse(udrContext, nf, applyOAuth2); processErr != nil {
-				return processErr
-			}
-			return nil
 		}
 		logger.ConsumerLog.Errorf("UDR register to NRF Error[%v]", err)
 		select {

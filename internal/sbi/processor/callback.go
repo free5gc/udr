@@ -14,28 +14,6 @@ import (
 
 var CurrentResourceUri string
 
-func getCallbackTokenCtx(
-	serviceName models.Nrf_NFMgmt_ServiceName,
-	targetNF models.Nrf_NFMgmt_NFType,
-	targetNFInstanceID string,
-	operation string,
-) (context.Context, bool) {
-	ctx, pd, err := udr_context.GetSelf().GetTokenCtxForNFInstance(
-		serviceName, targetNF, targetNFInstanceID)
-	if err != nil {
-		logger.SBILog.Errorf("%s get token failed: %v", operation, err)
-		if pd != nil {
-			logger.SBILog.Errorf("%s get token problem details: %+v", operation, pd)
-		}
-		return nil, false
-	}
-	if pd != nil {
-		logger.SBILog.Errorf("%s get token problem details: %+v", operation, pd)
-		return nil, false
-	}
-	return ctx, true
-}
-
 func PreHandleOnDataChangeNotify(ueId string, resourceId string, patchItems []models.PatchItem,
 	origValue map[string]interface{}, newValue map[string]interface{},
 ) {
@@ -112,7 +90,6 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 	client := DataRepository.NewAPIClient(configuration)
 
 	// Snapshot under the context lock, then fan out unlocked: each iteration
-	// acquires a token and issues an outbound HTTP request.
 	for _, record := range udrSelf.SubscriptionDataSubscriptionsSnapshot() {
 		if record == nil || record.Subscription == nil {
 			logger.SBILog.Errorln("Invalid subscription data subscription record")
@@ -120,15 +97,7 @@ func SendOnDataChangeNotify(ueId string, notifyItems []models.NotifyItem) {
 		}
 		subscriptionDataSubscription := record.Subscription
 		if ueId == subscriptionDataSubscription.UeId {
-			ctx, ok := getCallbackTokenCtx(
-				record.CallbackTarget.ServiceName,
-				record.CallbackTarget.NfType,
-				record.CallbackTarget.NfInstanceID,
-				"SendOnDataChangeNotify",
-			)
-			if !ok {
-				continue
-			}
+			ctx := context.Background()
 
 			onDataChangeNotifyUrl := subscriptionDataSubscription.CallbackReference
 
@@ -168,15 +137,7 @@ func SendPolicyDataChangeNotification(policyDataChangeNotification models.Udr_DR
 			logger.SBILog.Errorln("Invalid policy data subscription record")
 			continue
 		}
-		ctx, ok := getCallbackTokenCtx(
-			record.CallbackTarget.ServiceName,
-			record.CallbackTarget.NfType,
-			record.CallbackTarget.NfInstanceID,
-			"SendPolicyDataChangeNotification",
-		)
-		if !ok {
-			continue
-		}
+		ctx := context.Background()
 
 		policyDataSubscription := record.Subscription
 		policyDataChangeNotificationUrl := policyDataSubscription.NotificationUri
@@ -216,15 +177,7 @@ func SendInfluenceDataUpdateNotification(resUri string, original, modified *mode
 			return true
 		}
 		influenceDataSubscription := record.Subscription
-		ctx, ok := getCallbackTokenCtx(
-			record.CallbackTarget.ServiceName,
-			record.CallbackTarget.NfType,
-			record.CallbackTarget.NfInstanceID,
-			"SendInfluenceDataUpdateNotification",
-		)
-		if !ok {
-			return true
-		}
+		ctx := context.Background()
 		influenceDataChangeNotificationUrl := influenceDataSubscription.NotificationUri
 
 		// Check if the modified data is subscribed
