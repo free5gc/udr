@@ -2,6 +2,7 @@ package sbi
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -50,7 +51,9 @@ func TestQueryEeGroupSubscriptionsLogForging(t *testing.T) {
 				"/subscription-data/group-data/invalid" +
 				tt.encoded + marker + "/ee-subscriptions"
 
-			req := httptest.NewRequest(http.MethodGet, url, nil)
+			req := httptest.NewRequestWithContext(
+				context.Background(), http.MethodGet, url, nil,
+			)
 			rsp := httptest.NewRecorder()
 			router.ServeHTTP(rsp, req)
 
