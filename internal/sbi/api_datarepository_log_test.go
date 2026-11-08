@@ -15,7 +15,7 @@ import (
 	logger_util "github.com/free5gc/util/logger"
 )
 
-func TestQueryEeGroupSubscriptionsLogForging(t *testing.T) {
+func TestEeGroupSubscriptionsLogForging(t *testing.T) {
 	const marker = "FORGED_LOG_LINE_1231"
 
 	// Capture UDR logs and restore the original logger after testing.
@@ -29,11 +29,14 @@ func TestQueryEeGroupSubscriptionsLogForging(t *testing.T) {
 
 	tests := []struct {
 		name       string
+		method     string
 		encoded    string
 		wantEscape string
 	}{
-		{"LF injection", "%0A", `\n`},
-		{"CRLF injection", "%0D%0A", `\r\n`},
+		{"GET LF injection", http.MethodGet, "%0A", `\n`},
+		{"GET CRLF injection", http.MethodGet, "%0D%0A", `\r\n`},
+		{"POST LF injection", http.MethodPost, "%0A", `\n`},
+		{"POST CRLF injection", http.MethodPost, "%0D%0A", `\r\n`},
 	}
 
 	for _, tt := range tests {
@@ -46,14 +49,24 @@ func TestQueryEeGroupSubscriptionsLogForging(t *testing.T) {
 			path := factory.UdrDrResUriPrefix +
 				"/subscription-data/group-data/:ueGroupId/ee-subscriptions"
 			router.GET(path, (&Server{}).HandleQueryEeGroupSubscriptions)
-
+			router.POST(path, (&Server{}).HandleCreateEeGroupSubscriptions)
 			url := factory.UdrDrResUriPrefix +
 				"/subscription-data/group-data/invalid" +
 				tt.encoded + marker + "/ee-subscriptions"
 
+			// POST requires a valid JSON body before ueGroupId validation.
+			body := ""
+			if tt.method == http.MethodPost {
+				body = "{}"
+			}
+
 			req := httptest.NewRequestWithContext(
-				context.Background(), http.MethodGet, url, nil,
+				context.Background(), tt.method, url, strings.NewReader(body),
 			)
+
+			if tt.method == http.MethodPost {
+				req.Header.Set("Content-Type", "application/json")
+			}
 			rsp := httptest.NewRecorder()
 			router.ServeHTTP(rsp, req)
 
