@@ -1,6 +1,8 @@
 package logger
 
 import (
+	"strings"
+
 	"github.com/sirupsen/logrus"
 
 	logger_util "github.com/free5gc/util/logger"
@@ -23,6 +25,30 @@ var (
 	DbLog       *logrus.Entry
 )
 
+// ginLogSanitizer prevents log forging through untrusted HTTP request data.
+type ginLogSanitizer struct{}
+
+// Levels enables the sanitizer for all log levels.
+func (ginLogSanitizer) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+
+// Fire escapes newline characters in Gin access logs before they are written.
+func (ginLogSanitizer) Fire(entry *logrus.Entry) error {
+	// Only sanitize Gin access logs to avoid changing other log categories.
+	if entry.Data[logger_util.FieldCategory] != "GIN" {
+		return nil
+	}
+
+	// Escape CR and LF to prevent injected content from creating fake log lines.
+	entry.Message = strings.NewReplacer(
+		"\r", `\r`,
+		"\n", `\n`,
+	).Replace(entry.Message)
+
+	return nil
+}
+
 func init() {
 	fieldsOrder := []string{
 		logger_util.FieldNF,
@@ -30,6 +56,8 @@ func init() {
 	}
 
 	Log = logger_util.New(fieldsOrder)
+	// Register the sanitizer to protect Gin access logs from log forging.
+	Log.AddHook(ginLogSanitizer{})
 	NfLog = Log.WithField(logger_util.FieldNF, "UDR")
 	MainLog = NfLog.WithField(logger_util.FieldCategory, "Main")
 	InitLog = NfLog.WithField(logger_util.FieldCategory, "Init")
