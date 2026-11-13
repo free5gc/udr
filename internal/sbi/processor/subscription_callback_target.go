@@ -13,6 +13,8 @@ import (
 	"github.com/free5gc/util/metrics/sbi"
 )
 
+const serviceNameNPCFCallback models.Nrf_NFMgmt_ServiceName = "npcf-callback"
+
 func callbackServiceNameForNfType(
 	nfType models.Nrf_NFMgmt_NFType,
 	defaultServiceName models.Nrf_NFMgmt_ServiceName,
@@ -21,11 +23,23 @@ func callbackServiceNameForNfType(
 	case models.Nrf_NFMgmt_NFType_UDM:
 		return models.Nrf_NFMgmt_ServiceName_NUDM_SDM
 	case models.Nrf_NFMgmt_NFType_PCF:
-		return defaultServiceName
+		return serviceNameNPCFCallback
 	case models.Nrf_NFMgmt_NFType_NEF:
 		return models.Nrf_NFMgmt_ServiceName_NNEF_EVENTEXPOSURE
 	default:
 		return defaultServiceName
+	}
+}
+
+func callbackTargetForRequester(
+	nfInstanceID string,
+	nfType models.Nrf_NFMgmt_NFType,
+	defaultServiceName models.Nrf_NFMgmt_ServiceName,
+) udr_context.SubscriptionCallbackTarget {
+	return udr_context.SubscriptionCallbackTarget{
+		ServiceName:  callbackServiceNameForNfType(nfType, defaultServiceName),
+		NfType:       nfType,
+		NfInstanceID: nfInstanceID,
 	}
 }
 
@@ -39,7 +53,7 @@ func requesterNFTypeFromNRF(nfInstanceID string) (models.Nrf_NFMgmt_NFType, bool
 		return "", false
 	}
 
-	ctx, pd, err := udrSelf.GetTokenCtx(models.Nrf_NFMgmt_ServiceName_NNRF_NFM, models.Nrf_NFMgmt_NFType_NRF)
+	ctx, pd, err := udrSelf.GetTokenCtxForNRF(models.Nrf_NFMgmt_ServiceName_NNRF_NFM)
 	if err != nil {
 		logger.SBILog.Errorf("Get requester NF profile token failed: %v", err)
 		if pd != nil {
@@ -100,9 +114,7 @@ func subscriptionCallbackTargetFromContext(
 	}
 
 	if nfType, ok := requesterNFTypeFromNRF(target.NfInstanceID); ok {
-		target.NfType = nfType
-		target.ServiceName = callbackServiceNameForNfType(nfType, defaultServiceName)
-		return target, true
+		return callbackTargetForRequester(target.NfInstanceID, nfType, defaultServiceName), true
 	}
 
 	return target, false

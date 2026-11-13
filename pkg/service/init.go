@@ -192,6 +192,7 @@ func (a *UdrApp) Start() {
 	registered := err == nil
 	if err != nil {
 		logger.InitLog.Errorf("register to NRF failed: %v", err)
+		return
 	} else {
 		logger.InitLog.Infof("register to NRF successfully")
 	}
