@@ -142,7 +142,9 @@ func (p *Processor) PolicyDataBdtDataGetProcedure(c *gin.Context, collName strin
 	bdtDataArray, err := mongoapi.RestfulAPIGetMany(collName, filter)
 	if err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataBdtDataGetProcedure err: %+v", err)
-		c.JSON(http.StatusOK, nil)
+		problemDetails := util.ProblemDetailsSystemFailure("Failed to query BDT policy data")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetails.Cause)
+		c.JSON(int(problemDetails.Status), problemDetails)
 		return
 	}
 	c.JSON(http.StatusOK, bdtDataArray)
