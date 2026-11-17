@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/util/nfheartbeat"
 )
 
 const (
@@ -78,6 +79,10 @@ type Configuration struct {
 	Mongodb         *Mongodb       `yaml:"mongodb" valid:"optional"`
 	NrfUri          string         `yaml:"nrfUri" valid:"url,required"`
 	NrfCertPem      string         `yaml:"nrfCertPem,omitempty" valid:"optional"`
+
+	// NfHeartBeatTimer is the fallback heartbeat interval in seconds, from 1 to
+	// 3600 as the NRF accepts. The interval the NRF assigns always wins.
+	NfHeartBeatTimer int32 `yaml:"nfHeartBeatTimer,omitempty" valid:"optional,range(1|3600)"`
 }
 
 type Logger struct {
@@ -111,6 +116,17 @@ func (c *Configuration) validate() (bool, error) {
 
 	result, err := govalidator.ValidateStruct(c)
 	return result, appendInvalid(err)
+}
+
+// GetNfHeartBeatTimer returns the fallback heartbeat interval in seconds.
+func (c *Config) GetNfHeartBeatTimer() int32 {
+	c.RLock()
+	defer c.RUnlock()
+
+	if c.Configuration != nil && c.Configuration.NfHeartBeatTimer > 0 {
+		return c.Configuration.NfHeartBeatTimer
+	}
+	return nfheartbeat.DefaultTimer
 }
 
 func (c *Config) GetNfInstanceId() string {
@@ -148,8 +164,9 @@ type Sbi struct {
 }
 
 type Tls struct {
-	Pem string `yaml:"pem,omitempty" valid:"type(string),minstringlength(1),required"`
-	Key string `yaml:"key,omitempty" valid:"type(string),minstringlength(1),required"`
+	Verify bool   `yaml:"verify,omitempty" valid:"type(bool)"`
+	Pem    string `yaml:"pem,omitempty" valid:"type(string),minstringlength(1),required"`
+	Key    string `yaml:"key,omitempty" valid:"type(string),minstringlength(1),required"`
 }
 
 func (t *Tls) validate() (bool, error) {
@@ -414,4 +431,16 @@ func (c *Config) GetPingTimeout() time.Duration {
 		return 2 * time.Second
 	}
 	return *c.Configuration.PingTimeout
+}
+
+// GetTLSVerify controls outgoing SBI server certificate verification.
+// Configuration is read before traffic starts; omitted verify retains false.
+func (c *Config) GetTLSVerify() bool {
+	if c == nil {
+		return false
+	}
+	c.RLock()
+	defer c.RUnlock()
+	return c.Configuration != nil && c.Configuration.Sbi != nil &&
+		c.Configuration.Sbi.Tls != nil && c.Configuration.Sbi.Tls.Verify
 }

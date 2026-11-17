@@ -42,7 +42,9 @@ type UdrApp struct {
 var _ app.App = &UdrApp{}
 
 func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*UdrApp, error) {
-	if err := openapi.ConfigureHTTP2Clients(cfg.GetReadIdleTimeout(), cfg.GetPingTimeout()); err != nil {
+	if err := openapi.ConfigureHTTP2Clients(
+		cfg.GetReadIdleTimeout(), cfg.GetPingTimeout(), cfg.GetTLSVerify(),
+	); err != nil {
 		return nil, err
 	}
 	udr_context.Init()
@@ -61,7 +63,10 @@ func NewApp(ctx context.Context, cfg *factory.Config, tlsKeyLogPath string) (*Ud
 	processor := processor.NewProcessor(udr)
 	udr.processor = processor
 
-	consumer := consumer.NewConsumer(udr)
+	consumer, err := consumer.NewConsumer(udr)
+	if err != nil {
+		return nil, err
+	}
 	udr.consumer = consumer
 
 	udr.sbiServer = sbi.NewServer(udr, tlsKeyLogPath)
@@ -154,14 +159,9 @@ func (a *UdrApp) SetReportCaller(reportCaller bool) {
 }
 
 func (u *UdrApp) registerToNrf(ctx context.Context) error {
-	udrContext := u.udrCtx
-
-	nrfUri, nfId, err := u.consumer.SendRegisterNFInstance(ctx, udrContext.NrfUri)
-	if err != nil {
+	if err := u.consumer.SendRegisterNFInstance(ctx, true); err != nil {
 		return fmt.Errorf("send register NFInstance error[%s]", err.Error())
 	}
-	udrContext.NrfUri = nrfUri
-	udrContext.NfId = nfId
 
 	return nil
 }
@@ -189,8 +189,10 @@ func (a *UdrApp) deregisterFromNrf() {
 
 func (a *UdrApp) Start() {
 	err := a.registerToNrf(a.ctx)
+	registered := err == nil
 	if err != nil {
 		logger.InitLog.Errorf("register to NRF failed: %v", err)
+		return
 	} else {
 		logger.InitLog.Infof("register to NRF successfully")
 	}
@@ -215,6 +217,11 @@ func (a *UdrApp) Start() {
 			a.deregisterFromNrf()
 		}
 	}()
+
+	if registered {
+		// Only a registered profile has something to keep alive.
+		a.Consumer().StartHeartbeat(a.ctx, &a.wg)
+	}
 
 	a.sbiServer.Run(&a.wg)
 	if a.cfg.AreMetricsEnabled() && a.metricsServer != nil {
@@ -243,6 +250,10 @@ func (a *UdrApp) Terminate() {
 func (a *UdrApp) terminateProcedure() {
 	logger.MainLog.Infof("Terminating UDR...")
 	a.CallServerStop()
+
+	// no heartbeat PATCH or re-registration PUT may land after the deregistration
+	a.Consumer().WaitHeartbeatStopped()
+
 	a.deregisterFromNrf()
 }
 
