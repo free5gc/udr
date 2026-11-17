@@ -365,6 +365,10 @@ func (p *Processor) PolicyDataUesUeIdSmDataGetProcedure(
 	usageMonDataMapArray, err := mongoapi.RestfulAPIGetMany("policyData.ues.smData.usageMonData", filter)
 	if err != nil {
 		logger.DataRepoLog.Errorf("PolicyDataUesUeIdSmDataGetProcedure err: %+v", err)
+		problemDetails := util.ProblemDetailsSystemFailure("Failed to query SM policy usage monitoring data")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetails.Cause)
+		c.JSON(int(problemDetails.Status), problemDetails)
+		return
 	}
 
 	if !reflect.DeepEqual(usageMonDataMapArray, []map[string]interface{}{}) {
