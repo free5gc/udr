@@ -3,13 +3,11 @@ package context
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -37,7 +35,7 @@ func Init() {
 	udrContext.PolicyDataSubscriptionIDGenerator = 1
 	udrContext.SubscriptionDataSubscriptions = make(map[subsId]*SubscriptionDataSubscriptionRecord)
 	udrContext.PolicyDataSubscriptions = make(map[subsId]*PolicyDataSubscriptionRecord)
-	udrContext.InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+	udrContext.InfluenceDataSubscriptionIDGenerator.Store(0)
 
 	serviceName := []models.Nrf_NFMgmt_ServiceName{
 		models.Nrf_NFMgmt_ServiceName_NUDR_DR,
@@ -65,7 +63,7 @@ type UDRContext struct {
 	SdmSubscriptionIDGenerator              atomic.Uint64
 	SubscriptionDataSubscriptionIDGenerator int
 	PolicyDataSubscriptionIDGenerator       int
-	InfluenceDataSubscriptionIDGenerator    *rand.Rand
+	InfluenceDataSubscriptionIDGenerator    atomic.Uint64
 	UESubsCollection                        sync.Map // map[ueId]*UESubsData
 	UEGroupCollection                       sync.Map // map[ueGroupId]*UEGroupSubsData
 	SubscriptionDataSubscriptions           map[subsId]*SubscriptionDataSubscriptionRecord
@@ -146,7 +144,7 @@ func (context *UDRContext) Reset() {
 	context.SdmSubscriptionIDGenerator.Store(0)
 	context.SubscriptionDataSubscriptionIDGenerator = 1
 	context.PolicyDataSubscriptionIDGenerator = 1
-	context.InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
+	context.InfluenceDataSubscriptionIDGenerator.Store(0)
 	context.UriScheme = models.UriScheme_HTTPS
 	context.Name = "udr"
 }
@@ -270,10 +268,7 @@ func (context *UDRContext) NewAppDataInfluDataSubscriptionID() uint64 {
 }
 
 func NewInfluenceDataSubscriptionId() string {
-	if GetSelf().InfluenceDataSubscriptionIDGenerator == nil {
-		GetSelf().InfluenceDataSubscriptionIDGenerator = rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
-	}
-	return fmt.Sprintf("%08x", GetSelf().InfluenceDataSubscriptionIDGenerator.Uint32())
+	return strconv.FormatUint(GetSelf().InfluenceDataSubscriptionIDGenerator.Add(1), 10)
 }
 
 // The subs-to-notify maps below are written by HTTP handlers while notification
