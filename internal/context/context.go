@@ -84,7 +84,9 @@ type UESubsData struct {
 	SdmSubscriptions         map[subsId]*models.Udr_DR_SdmSubscription
 }
 
+// UEGroupSubsData holds group subscriptions. The embedded mutex guards EeSubscriptions.
 type UEGroupSubsData struct {
+	sync.RWMutex
 	EeSubscriptions map[subsId]*models.Udr_DR_EeSubscription
 }
 
@@ -237,6 +239,12 @@ func (context *UDRContext) GetIPv4GroupUri(udrServiceType UDRServiceType) string
 func (context *UDRContext) GetOrCreateUESubsData(ueId string) *UESubsData {
 	value, _ := context.UESubsCollection.LoadOrStore(ueId, new(UESubsData))
 	return value.(*UESubsData)
+}
+
+// GetOrCreateUEGroupSubsData returns the UEGroupSubsData of ueGroupId, creating it if absent.
+func (context *UDRContext) GetOrCreateUEGroupSubsData(ueGroupId string) *UEGroupSubsData {
+	value, _ := context.UEGroupCollection.LoadOrStore(ueGroupId, new(UEGroupSubsData))
+	return value.(*UEGroupSubsData)
 }
 
 // NewSdmSubscriptionID returns a unique SDM subscription ID (starting from 1).
