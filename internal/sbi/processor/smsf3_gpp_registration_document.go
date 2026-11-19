@@ -32,6 +32,10 @@ func (p *Processor) CreateSmsfContext3gppProcedure(
 	_, err := mongoapi.RestfulAPIPutOne(collName, filter, putData)
 	if err != nil {
 		logger.DataRepoLog.Errorf("CreateSmsfContext3gppProcedure err: %+v", err)
+		problemDetails := util.ProblemDetailsSystemFailure("Failed to save 3GPP SMSF registration")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetails.Cause)
+		c.JSON(int(problemDetails.Status), problemDetails)
+		return
 	}
 
 	c.Status(http.StatusNoContent)
