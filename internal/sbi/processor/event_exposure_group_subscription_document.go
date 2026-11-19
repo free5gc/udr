@@ -31,7 +31,12 @@ func (p *Processor) RemoveEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 	}
 
 	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
+	UEGroupSubsData.Lock()
 	_, ok = UEGroupSubsData.EeSubscriptions[subsId]
+	if ok {
+		delete(UEGroupSubsData.EeSubscriptions, subsId)
+	}
+	UEGroupSubsData.Unlock()
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -39,7 +44,6 @@ func (p *Processor) RemoveEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	delete(UEGroupSubsData.EeSubscriptions, subsId)
 
 	c.Status(http.StatusNoContent)
 }
@@ -57,7 +61,12 @@ func (p *Processor) UpdateEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 	}
 
 	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
+	UEGroupSubsData.Lock()
 	_, ok = UEGroupSubsData.EeSubscriptions[subsId]
+	if ok {
+		UEGroupSubsData.EeSubscriptions[subsId] = &EeSubscription
+	}
+	UEGroupSubsData.Unlock()
 
 	if !ok {
 		pd := util.ProblemDetailsNotFound("SUBSCRIPTION_NOT_FOUND")
@@ -65,7 +74,6 @@ func (p *Processor) UpdateEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupI
 		c.JSON(int(pd.Status), pd)
 		return
 	}
-	UEGroupSubsData.EeSubscriptions[subsId] = &EeSubscription
 
 	c.Status(http.StatusNoContent)
 }
