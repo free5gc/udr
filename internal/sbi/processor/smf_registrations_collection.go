@@ -12,11 +12,12 @@ package processor
 import (
 	"net/http"
 
+	"github.com/free5gc/udr/internal/logger"
+	"github.com/free5gc/udr/internal/util"
+	"github.com/free5gc/util/metrics/sbi"
+	"github.com/free5gc/util/mongoapi"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-
-	"github.com/free5gc/udr/internal/logger"
-	"github.com/free5gc/util/mongoapi"
 )
 
 func (p *Processor) QuerySmfRegListProcedure(c *gin.Context, collName string, ueId string) {
@@ -24,7 +25,9 @@ func (p *Processor) QuerySmfRegListProcedure(c *gin.Context, collName string, ue
 	smfRegList, err := mongoapi.RestfulAPIGetMany(collName, filter, mongoapi.COLLATION_STRENGTH_IGNORE_CASE)
 	if err != nil {
 		logger.DataRepoLog.Errorf("QuerySmfRegListProcedure err: %+v", err)
-		c.JSON(http.StatusOK, nil)
+		problemDetails := util.ProblemDetailsSystemFailure("Failed to query SMF registration list")
+		c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetails.Cause)
+		c.JSON(int(problemDetails.Status), problemDetails)
 		return
 	}
 	c.JSON(http.StatusOK, smfRegList)
