@@ -15,6 +15,7 @@ import (
 	"github.com/free5gc/udr/internal/logger"
 	sbi_metrics "github.com/free5gc/util/metrics/sbi"
 	"github.com/free5gc/util/nfheartbeat"
+	"github.com/free5gc/util/serviceuri"
 )
 
 const registerRetryInterval = 2 * time.Second
@@ -61,11 +62,14 @@ func (ns *NrfService) getNFManagementClient(uri string) *NFManagement.APIClient 
 func (ns *NrfService) buildNFProfile(context *udr_context.UDRContext) (models.Nrf_NFMgmt_NFProfile, error) {
 	// config := factory.UdrConfig
 
+	addr := serviceuri.NewAddressing(context.RegisterIPv4)
 	profile := models.Nrf_NFMgmt_NFProfile{
 		NfInstanceId:  context.NfId,
 		NfType:        models.Nrf_NFMgmt_NFType_UDR,
 		NfStatus:      models.Nrf_NFMgmt_NFStatus_REGISTERED,
-		Ipv4Addresses: []string{context.RegisterIPv4},
+		Fqdn:          addr.FQDN,
+		Ipv4Addresses: addr.IPv4Addresses,
+		Ipv6Addresses: addr.IPv6Addresses,
 		UdrInfo: &models.Nrf_NFMgmt_UdrInfo{
 			SupportedDataSets: []models.Nrf_NFMgmt_DataSetId{
 				models.Nrf_NFMgmt_DataSetId_SUBSCRIPTION,

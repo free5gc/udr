@@ -17,6 +17,7 @@ import (
 	"github.com/free5gc/openapi/oauth"
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/pkg/factory"
+	"github.com/free5gc/util/serviceuri"
 )
 
 var udrContext = UDRContext{}
@@ -190,6 +191,7 @@ func initNfService(serviceName []models.Nrf_NFMgmt_ServiceName, version string) 
 ) {
 	versionUri := "v" + strings.Split(version, ".")[0]
 	nfService = make(map[models.Nrf_NFMgmt_ServiceName]models.Nrf_NFMgmt_NFService)
+	addr := serviceuri.NewAddressing(udrContext.RegisterIPv4)
 	for idx, name := range serviceName {
 		nfService[name] = models.Nrf_NFMgmt_NFService{
 			ServiceInstanceId: strconv.Itoa(idx),
@@ -202,22 +204,12 @@ func initNfService(serviceName []models.Nrf_NFMgmt_ServiceName, version string) 
 			},
 			Scheme:          udrContext.UriScheme,
 			NfServiceStatus: models.Nrf_NFMgmt_NFServiceStatus_REGISTERED,
-			ApiPrefix:       GetIPv4Uri(),
-			IpEndPoints: []models.Nrf_NFMgmt_IpEndPoint{
-				{
-					Ipv4Address: udrContext.RegisterIPv4,
-					Transport:   models.Nrf_NFMgmt_TransportProtocol_TCP,
-					Port:        int32(udrContext.SBIPort),
-				},
-			},
+			Fqdn:            addr.FQDN,
+			IpEndPoints:     addr.IpEndPoints(int32(udrContext.SBIPort)),
 		}
 	}
 
 	return
-}
-
-func GetIPv4Uri() string {
-	return fmt.Sprintf("%s://%s:%d", udrContext.UriScheme, udrContext.RegisterIPv4, udrContext.SBIPort)
 }
 
 func (context *UDRContext) GetIPv4GroupUri(udrServiceType UDRServiceType) string {
