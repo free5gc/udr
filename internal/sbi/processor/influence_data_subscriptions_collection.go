@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -92,26 +91,17 @@ func (p *Processor) ApplicationDataInfluenceDataSubsToNotifySubscriptionIdPostPr
 		rejectUnresolvedCallbackTarget(c)
 		return
 	}
-	if value, ok := udrSelf.InfluenceDataSubscriptions.Load(subscriptionId); ok {
-		record, valid := value.(*udr_context.InfluenceDataSubscriptionRecord)
-		if valid {
-			target = record.CallbackTarget
-		}
-		if valid && record.Subscription != nil && reflect.DeepEqual(*request, *record.Subscription) {
-			pd := &models.ProblemDetails{
-				Status: http.StatusForbidden,
-				Cause:  "UNSPECIFIED",
-			}
-			c.Set(sbi.IN_PB_DETAILS_CTX_STR, pd.Cause)
-			c.JSON(int(pd.Status), pd)
-			return
-		}
-	}
-
-	udrSelf.InfluenceDataSubscriptions.Store(subscriptionId, &udr_context.InfluenceDataSubscriptionRecord{
+	record := &udr_context.InfluenceDataSubscriptionRecord{
 		Subscription:   request,
 		CallbackTarget: target,
-	})
+	}
+	// PUT may have already created a subscription with the generated ID.
+	for {
+		if _, loaded := udrSelf.InfluenceDataSubscriptions.LoadOrStore(subscriptionId, record); !loaded {
+			break
+		}
+		subscriptionId = udr_context.NewInfluenceDataSubscriptionId()
+	}
 
 	locationHeader := fmt.Sprintf(
 		"%s/application-data/influenceData/subs-to-notify/%s",

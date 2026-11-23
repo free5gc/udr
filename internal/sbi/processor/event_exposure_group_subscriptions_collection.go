@@ -27,18 +27,15 @@ func (p *Processor) CreateEeGroupSubscriptionsProcedure(
 ) {
 	udrSelf := udr_context.GetSelf()
 
-	value, ok := udrSelf.UEGroupCollection.Load(ueGroupId)
-	if !ok {
-		udrSelf.UEGroupCollection.Store(ueGroupId, new(udr_context.UEGroupSubsData))
-		value, _ = udrSelf.UEGroupCollection.Load(ueGroupId)
-	}
-	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
+	UEGroupSubsData := udrSelf.GetOrCreateUEGroupSubsData(ueGroupId)
+	newSubscriptionID := udrSelf.NewEeSubscriptionID()
+
+	UEGroupSubsData.Lock()
 	if UEGroupSubsData.EeSubscriptions == nil {
 		UEGroupSubsData.EeSubscriptions = make(map[string]*models.Udr_DR_EeSubscription)
 	}
-
-	newSubscriptionID := udrSelf.NewEeSubscriptionID()
 	UEGroupSubsData.EeSubscriptions[newSubscriptionID] = &EeSubscription
+	UEGroupSubsData.Unlock()
 
 	/* Contains the URI of the newly created resource, according
 	   to the structure: {apiRoot}/nudr-dr/v1/subscription-data/group-data/{ueGroupId}/ee-subscriptions */
@@ -63,9 +60,11 @@ func (p *Processor) QueryEeGroupSubscriptionsProcedure(c *gin.Context, ueGroupId
 	UEGroupSubsData := value.(*udr_context.UEGroupSubsData)
 	var eeSubscriptionSlice []models.Udr_DR_EeSubscription
 
+	UEGroupSubsData.RLock()
 	for _, v := range UEGroupSubsData.EeSubscriptions {
 		eeSubscriptionSlice = append(eeSubscriptionSlice, *v)
 	}
+	UEGroupSubsData.RUnlock()
 
 	if len(eeSubscriptionSlice) == 0 {
 		pd := util.ProblemDetailsUpspecified("")
