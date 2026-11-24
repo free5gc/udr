@@ -12,12 +12,13 @@ package processor
 import (
 	"net/http"
 
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/free5gc/udr/internal/logger"
 	"github.com/free5gc/udr/internal/util"
 	"github.com/free5gc/util/metrics/sbi"
 	"github.com/free5gc/util/mongoapi"
-	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (p *Processor) QuerySmfRegListProcedure(c *gin.Context, collName string, ueId string) {
