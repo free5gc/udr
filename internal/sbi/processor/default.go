@@ -78,7 +78,9 @@ func (p *Processor) GetApplicationDataPfdsFromDBProcedure(c *gin.Context, pfdsAp
 		matchedPfds, err = mongoapi.RestfulAPIGetMany(db.APPDATA_PFD_DB_COLLECTION_NAME, filter)
 		if err != nil {
 			logger.DataRepoLog.Errorf("getApplicationDataPfdsFromDB err: %+v", err)
-			c.JSON(http.StatusOK, nil)
+			problemDetails := util.ProblemDetailsSystemFailure("Failed to query PFD application data")
+			c.Set(sbi.IN_PB_DETAILS_CTX_STR, problemDetails.Cause)
+			c.JSON(int(problemDetails.Status), problemDetails)
 			return
 		}
 	} else {
